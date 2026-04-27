@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="MannaMila interactive studio visualization">
+    <title>MannaMila Interactive Studio</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="studio-widget" aria-label="MannaMila interactive studio visualization">
+      <canvas class="mesh-canvas" aria-hidden="true"></canvas>
+      <canvas class="object-canvas" aria-hidden="true"></canvas>
+
+      <section class="content-layer" aria-label="MannaMila LLC">
+        <div class="brand-stack">
+          <p class="eyebrow">MannaMila LLC</p>
+          <h1>Software that feels considered.</h1>
+          <p class="subline">Boutique engineering for products, workflows, and intelligent systems.</p>
+        </div>
+
+        <div class="signal-strip" aria-label="Studio focus areas">
+          <span>Product systems</span>
+          <span>AI interfaces</span>
+          <span>Operational tools</span>
+        </div>
+      </section>
+
+      <div class="fallback-panel" role="img" aria-label="MannaMila abstract mark">
+        <div class="fallback-mark">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
