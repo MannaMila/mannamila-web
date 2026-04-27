@@ -92,7 +92,7 @@ body {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(280px, 1.08fr);
   align-items: end;
   gap: clamp(20px, 5vw, 72px);
   width: min(1120px, calc(100% - 40px));
@@ -103,7 +103,7 @@ body {
 }
 
 .brand-stack {
-  max-width: 480px;
+  max-width: 560px;
 }
 
 .eyebrow {
@@ -116,9 +116,9 @@ body {
 }
 
 h1 {
-  max-width: 10ch;
+  max-width: 11.5ch;
   margin: 0;
-  font-size: clamp(2.4rem, 8vw, 5.6rem);
+  font-size: clamp(2.2rem, 6.8vw, 5.1rem);
   line-height: 0.94;
   font-weight: 650;
   letter-spacing: 0;
@@ -132,36 +132,6 @@ h1 {
   color: var(--muted);
 }
 
-.signal-strip {
-  align-self: end;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-bottom: 2px;
-}
-
-.signal-strip span {
-  min-height: 34px;
-  padding: 9px 12px;
-  border: 1px solid var(--line);
-  background: rgba(16, 20, 23, 0.55);
-  color: rgba(244, 245, 240, 0.78);
-  font-size: 0.78rem;
-  line-height: 1;
-  white-space: nowrap;
-  backdrop-filter: blur(12px);
-}
-
-.signal-strip span:nth-child(2) {
-  border-color: rgba(84, 214, 198, 0.34);
-  color: rgba(173, 247, 238, 0.9);
-}
-
-.signal-strip span:nth-child(3) {
-  border-color: rgba(217, 184, 111, 0.32);
-}
-
 .fallback-panel {
   position: absolute;
   inset: 0;
@@ -169,40 +139,57 @@ h1 {
   display: grid;
   place-items: center;
   opacity: 0;
-  transform: translateX(18%);
+  transform: translateX(22%);
   pointer-events: none;
 }
 
-.fallback-mark {
+.fallback-field {
   position: relative;
-  width: min(220px, 44vw);
+  width: min(270px, 46vw);
   aspect-ratio: 1;
-  transform: rotate(-8deg);
+  transform: rotate(-7deg);
 }
 
-.fallback-mark span {
+.fallback-field span {
   position: absolute;
-  top: 16%;
-  width: 24%;
-  height: 68%;
-  border: 1px solid rgba(244, 245, 240, 0.34);
-  background: linear-gradient(180deg, rgba(84, 214, 198, 0.36), rgba(217, 184, 111, 0.18));
+  border: 1px solid rgba(244, 245, 240, 0.26);
+  background: linear-gradient(135deg, rgba(84, 214, 198, 0.28), rgba(217, 184, 111, 0.12));
   box-shadow: 0 24px 90px rgba(84, 214, 198, 0.16);
+  clip-path: polygon(50% 0, 100% 28%, 82% 100%, 18% 100%, 0 28%);
 }
 
-.fallback-mark span:nth-child(1) {
-  left: 18%;
-  transform: skewY(-18deg);
+.fallback-field span:nth-child(1) {
+  left: 15%;
+  top: 18%;
+  width: 34%;
+  height: 34%;
 }
 
-.fallback-mark span:nth-child(2) {
-  left: 38%;
-  transform: skewY(18deg);
+.fallback-field span:nth-child(2) {
+  left: 43%;
+  top: 11%;
+  width: 38%;
+  height: 44%;
+  transform: rotate(18deg);
 }
 
-.fallback-mark span:nth-child(3) {
-  right: 18%;
-  transform: skewY(-18deg);
+.fallback-field span:nth-child(3) {
+  left: 24%;
+  top: 52%;
+  width: 46%;
+  height: 30%;
+  transform: rotate(-16deg);
+  background: linear-gradient(135deg, rgba(217, 184, 111, 0.26), rgba(84, 214, 198, 0.1));
+}
+
+.fallback-field span:nth-child(4) {
+  left: 61%;
+  top: 48%;
+  width: 22%;
+  height: 22%;
+  border-radius: 999px;
+  clip-path: none;
+  background: rgba(244, 245, 240, 0.1);
 }
 
 .webgl-unavailable .object-canvas {
@@ -226,40 +213,20 @@ h1 {
   }
 
   .brand-stack {
-    max-width: 390px;
+    max-width: 360px;
   }
 
   h1 {
-    max-width: 9ch;
-    font-size: clamp(2.15rem, 13vw, 3.6rem);
+    max-width: 10.5ch;
+    font-size: clamp(2rem, 11.5vw, 3.25rem);
   }
 
   .subline {
     max-width: 27rem;
   }
 
-  .signal-strip {
-    justify-content: flex-start;
-  }
-
   .fallback-panel {
-    transform: translate(34%, -22%) scale(0.74);
-  }
-
-  .signal-strip span {
-    min-height: 32px;
-    padding: 8px 10px;
-    font-size: 0.72rem;
-  }
-}
-
-@media (max-width: 430px) {
-  .signal-strip {
-    max-width: 260px;
-  }
-
-  .signal-strip span {
-    white-space: normal;
+    transform: translate(34%, -30%) scale(0.7);
   }
 }
 

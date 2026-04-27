@@ -24,7 +24,7 @@ function clamp(value, min, max) {
 
 function setupMesh() {
   const context = meshCanvas.getContext("2d", { alpha: true });
-  const snippets = ["model", "ship", "flow", "system", "craft", "signal", "studio"];
+  const snippets = ["play", "learn", "practice", "explore", "communicate", "craft", "humane"];
   let nodes = [];
   let width = 0;
   let height = 0;
@@ -112,8 +112,8 @@ function setupMesh() {
   requestAnimationFrame(draw);
 }
 
-function createBar(width, height, depth, color, opacity) {
-  const geometry = new THREE.BoxGeometry(width, height, depth, 6, 6, 2);
+function createFacet(radius, depth, color, opacity) {
+  const geometry = new THREE.CylinderGeometry(radius, radius * 0.82, depth, 5, 1, false);
   const material = new THREE.MeshPhysicalMaterial({
     color,
     transparent: true,
@@ -145,36 +145,54 @@ function setupObject() {
   group.position.set(1.36, 0.12, 0);
   scene.add(group);
 
-  const left = createBar(0.42, 2.9, 0.34, accent.teal, 0.68);
-  const mid = createBar(0.42, 2.45, 0.34, accent.gold, 0.62);
-  const right = createBar(0.42, 2.9, 0.34, accent.paper, 0.54);
-  left.position.x = -0.82;
-  right.position.x = 0.82;
-  mid.rotation.z = -0.62;
-  mid.position.y = 0.08;
+  const facets = [
+    { mesh: createFacet(0.72, 0.3, accent.teal, 0.46), position: [-0.58, 0.34, 0.1], rotation: [0.82, 0.34, -0.16] },
+    { mesh: createFacet(0.58, 0.24, accent.gold, 0.38), position: [0.42, 0.18, -0.12], rotation: [1.1, -0.36, 0.34] },
+    { mesh: createFacet(0.46, 0.2, accent.paper, 0.28), position: [0.08, -0.62, 0.28], rotation: [0.72, 0.72, 0.06] },
+  ];
 
-  const cross = createBar(0.38, 2.42, 0.28, accent.teal, 0.5);
-  cross.rotation.z = 0.62;
-  cross.position.y = 0.08;
+  facets.forEach(({ mesh, position, rotation }) => {
+    mesh.position.set(...position);
+    mesh.rotation.set(...rotation);
+    group.add(mesh);
+  });
 
-  group.add(left, mid, cross, right);
+  const pointMaterial = new THREE.MeshBasicMaterial({ color: accent.teal, transparent: true, opacity: 0.72 });
+  const pointGeometry = new THREE.SphereGeometry(0.045, 16, 16);
+  const pointPositions = [
+    [-1.15, 0.82, 0.18],
+    [1.12, 0.54, -0.18],
+    [0.86, -0.96, 0.3],
+    [-0.78, -0.8, -0.28],
+  ];
+  pointPositions.forEach((position, index) => {
+    const point = new THREE.Mesh(pointGeometry, pointMaterial.clone());
+    point.material.opacity = index === 1 ? 0.46 : 0.68;
+    point.position.set(...position);
+    group.add(point);
+  });
 
   const ringMaterial = new THREE.MeshBasicMaterial({
     color: accent.teal,
     transparent: true,
-    opacity: 0.22,
+    opacity: 0.18,
     wireframe: true,
   });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.72, 0.018, 12, 128), ringMaterial);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.62, 0.012, 12, 128), ringMaterial);
   ring.rotation.set(1.26, 0.1, 0.1);
   group.add(ring);
 
+  const secondRing = new THREE.Mesh(new THREE.TorusGeometry(1.16, 0.01, 12, 128), ringMaterial.clone());
+  secondRing.material.opacity = 0.14;
+  secondRing.rotation.set(0.36, 1.08, 0.26);
+  group.add(secondRing);
+
   const shell = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(2.06, 2),
+    new THREE.IcosahedronGeometry(1.84, 2),
     new THREE.MeshBasicMaterial({
       color: accent.paper,
       transparent: true,
-      opacity: 0.075,
+      opacity: 0.06,
       wireframe: true,
     }),
   );
@@ -214,10 +232,12 @@ function setupObject() {
       group.rotation.y = time * 0.00035 + pointer.x * 0.22;
       group.rotation.x = Math.sin(time * 0.0005) * 0.07 + pointer.y * 0.12;
       ring.rotation.z = time * 0.00042;
+      secondRing.rotation.z = -time * 0.00032;
       shell.rotation.y = -time * 0.00022;
     } else {
       group.rotation.set(0.08, -0.16, 0);
       ring.rotation.z = 0.38;
+      secondRing.rotation.z = -0.22;
       shell.rotation.y = -0.18;
     }
 
