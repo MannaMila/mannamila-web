@@ -4,6 +4,12 @@ if (supportsIntersectionObserver) {
   document.documentElement.classList.add("enhanced");
 }
 
+// When rendered inside a host page (e.g. the Google Sites embed at
+// mannamila.com/skald), drop the standalone header/chrome so it reads as one page.
+if (new URLSearchParams(window.location.search).has("embed")) {
+  document.documentElement.classList.add("embed");
+}
+
 const header = document.querySelector("[data-header]");
 const threadStage = document.querySelector(".thread-stage");
 const threadProgress = document.querySelector("[data-thread-progress]");

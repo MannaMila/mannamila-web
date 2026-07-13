@@ -1457,6 +1457,21 @@ h3 {
   }
 }
 
+/* Embedded inside a host page (?embed): render as one seamless page, no duplicate chrome. */
+.embed .site-header,
+.embed .skip-link {
+  display: none;
+}
+
+.embed {
+  scroll-padding-top: 0;
+}
+
+.embed .hero {
+  min-height: 0;
+  padding-top: clamp(32px, 4vw, 64px);
+}
+
 @media print {
   .site-header,
   .thread-line,
