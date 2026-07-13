@@ -6,27 +6,97 @@
     <meta name="description" content="Privacy policy for Skald, an Odyssey reader app by MannaMila LLC">
     <title>Skald — Privacy Policy | MannaMila LLC</title>
     <style>
-      :root { color-scheme: light; }
-      body {
-        margin: 0 auto;
-        max-width: 44rem;
-        padding: 2.5rem 1.25rem 4rem;
-        font-family: Georgia, "Times New Roman", serif;
-        line-height: 1.6;
-        color: #2a2118;
-        background: #faf6ee;
+      :root {
+        color-scheme: dark;
+        --graphite: #101417;
+        --graphite-2: #171e22;
+        --line: rgba(190, 211, 213, 0.16);
+        --line-strong: rgba(190, 211, 213, 0.34);
+        --paper: #f4f5f0;
+        --muted: rgba(244, 245, 240, 0.72);
+        --teal: #54d6c6;
+        --gold: #d9b86f;
+        --copper: #c87752;
       }
-      h1 { font-size: 1.9rem; margin-bottom: 0.25rem; }
-      h2 { font-size: 1.3rem; margin-top: 2.2rem; border-bottom: 1px solid #d8cdb8; padding-bottom: 0.25rem; }
-      h3 { font-size: 1.05rem; margin-top: 1.6rem; }
-      .meta { color: #6b5d4a; font-size: 0.95rem; margin-bottom: 2rem; }
-      a { color: #7a4a12; }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+        color: var(--paper);
+        background:
+          linear-gradient(90deg, rgba(16, 20, 23, 0.96), rgba(19, 27, 31, 0.72) 46%, rgba(16, 20, 23, 0.9)),
+          repeating-linear-gradient(90deg, transparent 0 85px, rgba(255, 255, 255, 0.035) 86px),
+          repeating-linear-gradient(0deg, transparent 0 85px, rgba(255, 255, 255, 0.025) 86px),
+          var(--graphite);
+      }
+      main {
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: clamp(2rem, 6vw, 3.5rem) 1.25rem 4.5rem;
+      }
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(1.9rem, 5vw, 2.6rem);
+        line-height: 1.05;
+        font-weight: 650;
+        letter-spacing: 0;
+      }
+      h2 {
+        margin-top: 2.6rem;
+        padding-bottom: 0.35rem;
+        font-size: 1.25rem;
+        font-weight: 650;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 {
+        margin-top: 1.7rem;
+        font-size: 1.02rem;
+        font-weight: 650;
+        color: var(--teal);
+      }
+      .meta {
+        margin: 1.4rem 0 2.4rem;
+        padding: 0.9rem 1.1rem;
+        font-size: 0.92rem;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-left: 2px solid var(--gold);
+        background: rgba(23, 30, 34, 0.6);
+      }
+      p, li { color: var(--muted); }
+      a { color: var(--teal); text-decoration-color: rgba(84, 214, 198, 0.45); }
+      a:hover { text-decoration-color: var(--teal); }
       ul { padding-left: 1.3rem; }
-      li { margin-bottom: 0.35rem; }
-      strong { color: #1e1810; }
+      li { margin-bottom: 0.4rem; }
+      li::marker { color: var(--gold); }
+      strong { color: var(--paper); font-weight: 650; }
+      code {
+        padding: 0.1em 0.35em;
+        font-size: 0.9em;
+        color: var(--gold);
+        background: rgba(217, 184, 111, 0.08);
+        border: 1px solid rgba(217, 184, 111, 0.22);
+        border-radius: 4px;
+      }
     </style>
   </head>
   <body>
+    <main>
+    <p class="eyebrow">MannaMila LLC</p>
     <h1>Skald — Privacy Policy</h1>
     <p class="meta">
       <strong>Effective date:</strong> 2026-07-09<br>
@@ -122,5 +192,6 @@
     <p>Privacy and data requests: <strong>privacy@mannamila.com</strong><br>
     Product support: <strong>support@mannamila.com</strong></p>
     <p>For a processor-data deletion request, include the Analytics ID shown in the app's About &amp; Privacy screen. For other questions, include the device platform (Android) and app version where relevant.</p>
+    </main>
   </body>
 </html>
