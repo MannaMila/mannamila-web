@@ -278,10 +278,10 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(370px, 0.72fr);
   align-items: center;
-  gap: clamp(50px, 8vw, 110px);
+  gap: clamp(50px, 7vw, 96px);
   min-height: calc(100svh - 78px);
-  padding-top: clamp(70px, 8vw, 112px);
-  padding-bottom: clamp(96px, 10vw, 140px);
+  padding-top: clamp(48px, 5vw, 80px);
+  padding-bottom: clamp(64px, 7vw, 104px);
 }
 
 .hero::after {
@@ -350,7 +350,7 @@ h3 {
 }
 
 .microcopy {
-  margin: 18px 0 0 4px;
+  margin: 18px 0 0;
   color: var(--ink-soft);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
@@ -358,9 +358,9 @@ h3 {
 
 .hero-visual {
   position: relative;
-  width: min(100%, 470px);
+  width: min(100%, 412px);
   justify-self: end;
-  padding: 54px 15px 45px 34px;
+  padding: 40px 15px 34px 34px;
 }
 
 .hero-visual::before {
@@ -400,9 +400,10 @@ h3 {
 
 .shot-card-phone img {
   width: 100%;
+  height: auto;
   aspect-ratio: 9 / 16;
   object-fit: cover;
-  object-position: center;
+  object-position: top;
   filter: sepia(0.06) contrast(1.01);
 }
 
@@ -473,6 +474,7 @@ h3 {
   margin: 0;
   padding: 0;
   border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
   list-style: none;
 }
 
@@ -1279,6 +1281,8 @@ h3 {
 
   h1 {
     font-size: clamp(3.45rem, 17vw, 5.3rem);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
   }
 
   h2 {
