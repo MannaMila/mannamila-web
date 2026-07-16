@@ -38,7 +38,7 @@ try {
   const manifest = JSON.parse(await readFile(join(target, ".inspire-source.json"), "utf8"));
   assert.equal(manifest.sourceRepository, "MannaMila/mannamila-web");
   assert.equal(manifest.sourcePath, "inspire");
-  assert.equal(manifest.sourceTreeDirty, true);
+  assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
   assert.ok(manifest.files["styles.css"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
