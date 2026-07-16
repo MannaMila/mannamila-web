@@ -8,6 +8,7 @@ This repository owns MannaMila's shared public web source and the GitHub Pages w
 | --- | --- | --- | --- |
 | `MannaMila/mannamila-web` | `https://mannamila.github.io/mannamila-web/` | None | Shared widget and product source pages, including `skald/` |
 | `MannaMila/skald-web` | `https://skald.mannamila.com/` | `skald.mannamila.com` | Standalone Skald product site at a domain root |
+| `MannaMila/inspire-web` | `https://inspire.mannamila.com/` | `inspire.mannamila.com` | Standalone Mila Inspire placeholder at a domain root |
 
 The custom domain belongs to the deployment repository, not automatically to the corresponding directory in this repository. Keep any copy or promotion from a source directory to a standalone Pages repository explicit and reviewable.
 
