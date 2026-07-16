@@ -42,6 +42,25 @@ node scripts/promote-skald.mjs --target ../skald-web --check
 
 Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.skald-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
 
+## Mila Inspire site
+
+The reviewed source for the Mila Inspire placeholder at `inspire.mannamila.com` lives under `inspire/`. Verify it before promotion:
+
+```sh
+node inspire/verify-site.mjs
+node scripts/test-promote-inspire.mjs
+```
+
+After the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `inspire-web` checkout:
+
+```sh
+node scripts/promote-inspire.mjs --target ../inspire-web --dry-run
+node scripts/promote-inspire.mjs --target ../inspire-web --apply
+node scripts/promote-inspire.mjs --target ../inspire-web --check
+```
+
+Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no JavaScript, forms, analytics, cookies, or third-party assets.
+
 ## Documentation
 
 - [GitHub Pages custom domains](docs/github-pages-custom-domains.md) — provision a new MannaMila product subdomain, recover stalled TLS certificate issuance, and verify the live deployment.
