@@ -42,6 +42,33 @@ node scripts/promote-skald.mjs --target ../skald-web --check
 
 Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.skald-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
 
+## Mila Squash site
+
+The reviewed source for `squash.mannamila.com` lives under `squash/`. Verify it before promotion:
+
+```sh
+node squash/verify-site.mjs
+node scripts/test-promote-squash.mjs
+```
+
+The site verifier intentionally fails while `squash/site-config.json` still contains the temporary Google Form URL. During local development only, the non-publishable structure can be checked with:
+
+```sh
+SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
+```
+
+Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
+
+After the public Form URL is configured and the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:
+
+```sh
+node scripts/promote-squash.mjs --target ../squash-web --dry-run
+node scripts/promote-squash.mjs --target ../squash-web --apply
+node scripts/promote-squash.mjs --target ../squash-web --check
+```
+
+Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.squash-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
+
 ## Mila Inspire site
 
 The reviewed source for the Mila Inspire placeholder at `inspire.mannamila.com` lives under `inspire/`. Verify it before promotion:
