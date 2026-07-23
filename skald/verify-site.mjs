@@ -174,9 +174,17 @@ const feedbackFormBase =
   "https://docs.google.com/forms/d/e/1FAIpQLScGu1umz6mnHZlqETLozIl0cxc4qgZ61wVpJLrOoPbo0PcBLA/viewform";
 assert.match(feedback, /https:\/\/skald\.mannamila\.com\/feedback\//g);
 assert.ok(feedback.includes(feedbackFormBase), "feedback page must link to the public form");
-assert.match(feedback, /entry\.1597449040=Apple\+early\+reader/);
-assert.match(feedback, /entry\.1597449040=Android\+early\+reader/);
-assert.match(feedback, /entry\.1597449040=Skald\+website/);
+assert.match(feedback, /entry\.1597449040=I\+was\+on\+the\+waitlist/);
+assert.match(feedback, /entry\.1597449040=Press\+or\+review\+copy/);
+assert.match(feedback, /entry\.1597449040=Another\+route/);
+assert.doesNotMatch(
+  feedback,
+  /entry\.1597449040=(?:Apple\+early\+reader|Android\+early\+reader|Skald\+website)/,
+);
+assert.doesNotMatch(feedback, /Apple early reader|Android early reader|Skald website/);
+assert.match(feedback, /Each link only preselects a visible source answer/);
+assert.match(feedback, /Prefer to begin without a preselected source/);
+assert.match(feedback, /U\.S\. \$9\.99 price and a written explanation are optional/);
 assert.match(feedback, /without signing in to Google/i);
 assert.match(feedback, /does not collect your email address automatically/i);
 assert.match(feedback, /rating or review/i);
@@ -192,6 +200,15 @@ assert.match(feedbackPrivacy, /privacy@mannamila\.com/);
 assert.match(feedbackPrivacy, /correct, or delete/i);
 assert.match(feedbackPrivacy, /optional quotation permission/i);
 assert.match(feedbackPrivacy, /quote your written feedback anonymously/i);
+assert.match(
+  feedbackPrivacy,
+  /U\.S\. \$9\.99 price feels too high, too low, or just right, and an optional written explanation/,
+);
+assert.match(
+  feedbackPrivacy,
+  /whether you were on the waitlist, received a press or review copy, or reached the form by another route/,
+);
+assert.doesNotMatch(feedbackPrivacy, /Apple early reader|Android early reader|the public site/);
 assert.match(feedbackPrivacy, /href="\.\.\/"/);
 assert.match(feedbackStyles, /:focus-visible/);
 assert.match(feedbackStyles, /prefers-reduced-motion/);
