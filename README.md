@@ -19,6 +19,12 @@ node skald/verify-site.mjs
 node scripts/test-promote-skald.mjs
 ```
 
+The Skald verifier includes a rendered feedback-page regression in installed Google Chrome using CDP device emulation at a 390×844 CSS viewport. Run it directly, with optional desktop and mobile evidence captures, using:
+
+```sh
+node skald/verify-feedback-render.mjs --screenshots-dir /path/to/existing/output-directory
+```
+
 The site verifier intentionally fails while `skald/site-config.json` still contains the temporary Google Form URL. During local development only, the non-publishable structure can be checked with:
 
 ```sh
@@ -41,6 +47,16 @@ node scripts/promote-skald.mjs --target ../skald-web --check
 ```
 
 Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.skald-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
+
+When only the reviewed feedback routes are authorized for release, use the scoped lane:
+
+```sh
+node scripts/promote-skald.mjs --target ../skald-web --feedback-only --dry-run
+node scripts/promote-skald.mjs --target ../skald-web --feedback-only --apply
+node scripts/promote-skald.mjs --target ../skald-web --feedback-only --check
+```
+
+The feedback-only lane replaces only `feedback/**`. It does not update the landing page, availability, site configuration, assets, other routes, or `.skald-source.json`.
 
 ## Mila Squash site
 

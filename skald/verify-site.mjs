@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +16,9 @@ const requiredFiles = [
   "privacy/index.html",
   "waitlist-privacy/index.html",
   "support/index.html",
+  "feedback/index.html",
+  "feedback/privacy/index.html",
+  "feedback/styles.css",
   "assets/reader-art.webp",
   "assets/greek-split.webp",
   "assets/museum-guide.webp",
@@ -24,7 +28,19 @@ const requiredFiles = [
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
 
-const [index, styles, app, privacy, waitlistPrivacy, support, availabilityRaw, configRaw] =
+const [
+  index,
+  styles,
+  app,
+  privacy,
+  waitlistPrivacy,
+  support,
+  feedback,
+  feedbackPrivacy,
+  feedbackStyles,
+  availabilityRaw,
+  configRaw,
+] =
   await Promise.all([
     read("index.html"),
     read("styles.css"),
@@ -32,6 +48,9 @@ const [index, styles, app, privacy, waitlistPrivacy, support, availabilityRaw, c
     read("privacy/index.html"),
     read("waitlist-privacy/index.html"),
     read("support/index.html"),
+    read("feedback/index.html"),
+    read("feedback/privacy/index.html"),
+    read("feedback/styles.css"),
     read("availability.json"),
     read("site-config.json"),
   ]);
@@ -150,5 +169,54 @@ assert.match(waitlistPrivacy, /unsubscribe/i);
 assert.match(support, /https:\/\/skald\.mannamila\.com\/support\//g);
 assert.match(support, /href="\.\.\/"/);
 assert.match(support, /href="\.\.\/privacy\/"/);
+
+const feedbackFormBase =
+  "https://docs.google.com/forms/d/e/1FAIpQLScGu1umz6mnHZlqETLozIl0cxc4qgZ61wVpJLrOoPbo0PcBLA/viewform";
+assert.match(feedback, /https:\/\/skald\.mannamila\.com\/feedback\//g);
+assert.ok(feedback.includes(feedbackFormBase), "feedback page must link to the public form");
+assert.match(feedback, /entry\.1597449040=Apple\+early\+reader/);
+assert.match(feedback, /entry\.1597449040=Android\+early\+reader/);
+assert.match(feedback, /entry\.1597449040=Skald\+website/);
+assert.match(feedback, /without signing in to Google/i);
+assert.match(feedback, /does not collect your email address automatically/i);
+assert.match(feedback, /rating or review/i);
+assert.match(feedback, /href="\.\/privacy\/"/);
+assert.match(feedback, /href="\.\.\/support\/"/);
+
+assert.match(feedbackPrivacy, /https:\/\/skald\.mannamila\.com\/feedback\/privacy\//g);
+assert.match(feedbackPrivacy, /within 12 months of submission/i);
+assert.match(feedbackPrivacy, /Google Forms? and Google Sheets?/i);
+assert.match(feedbackPrivacy, /Amplitude/);
+assert.match(feedbackPrivacy, /Sentry/);
+assert.match(feedbackPrivacy, /privacy@mannamila\.com/);
+assert.match(feedbackPrivacy, /correct, or delete/i);
+assert.match(feedbackPrivacy, /optional quotation permission/i);
+assert.match(feedbackPrivacy, /quote your written feedback anonymously/i);
+assert.match(feedbackPrivacy, /href="\.\.\/"/);
+assert.match(feedbackStyles, /:focus-visible/);
+assert.match(feedbackStyles, /prefers-reduced-motion/);
+assert.match(feedbackStyles, /@media \(max-width: 640px\)/);
+assert.match(
+  feedbackStyles,
+  /--page:\s*min\(calc\(100% - 32px\),\s*1160px\)/,
+  "mobile page width must use a valid calc() expression",
+);
+assert.doesNotMatch(
+  feedbackStyles,
+  /overflow-x:\s*(?:hidden|clip)/,
+  "feedback layout defects must not be hidden or clipped",
+);
+assert.match(feedbackStyles, /\.hero-copy[\s\S]*?min-width:\s*0/, "hero copy must be allowed to shrink on mobile");
+
+const renderedVerification = spawnSync(process.execPath, [join(root, "verify-feedback-render.mjs")], {
+  cwd: root,
+  encoding: "utf8",
+});
+if (renderedVerification.status !== 0) {
+  throw new Error(
+    `Rendered feedback verification failed:\n${renderedVerification.stderr || renderedVerification.stdout}`,
+  );
+}
+process.stdout.write(renderedVerification.stdout);
 
 console.log("Skald site verification passed.");

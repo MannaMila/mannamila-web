@@ -29,7 +29,9 @@ const publicRoots = [
   "privacy",
   "waitlist-privacy",
   "support",
+  "feedback",
 ];
+const feedbackRoots = ["feedback"];
 const preservedTopLevel = new Set([
   ".git",
   ".gitignore",
@@ -46,7 +48,7 @@ const generatedManifest = ".skald-source.json";
 
 const usage = () => {
   console.error(
-    "Usage: node scripts/promote-skald.mjs --target /path/to/skald-web [--dry-run|--apply|--check] [--allow-placeholder-form] [--allow-dirty-source]",
+    "Usage: node scripts/promote-skald.mjs --target /path/to/skald-web [--dry-run|--apply|--check] [--feedback-only] [--allow-placeholder-form] [--allow-dirty-source]",
   );
 };
 
@@ -55,6 +57,7 @@ const parseArgs = () => {
   const result = {
     target: null,
     mode: "dry-run",
+    feedbackOnly: false,
     allowPlaceholderForm: false,
     allowDirtySource: false,
   };
@@ -66,6 +69,8 @@ const parseArgs = () => {
       index += 1;
     } else if (["--dry-run", "--apply", "--check"].includes(arg)) {
       result.mode = arg.slice(2);
+    } else if (arg === "--feedback-only") {
+      result.feedbackOnly = true;
     } else if (arg === "--allow-placeholder-form") {
       result.allowPlaceholderForm = true;
     } else if (arg === "--allow-dirty-source") {
@@ -126,9 +131,9 @@ const walkFiles = async (root, current = root) => {
   return files;
 };
 
-const sourceFiles = async () => {
+const sourceFiles = async (roots) => {
   const files = [];
-  for (const root of publicRoots) {
+  for (const root of roots) {
     const absolute = join(sourceRoot, root);
     const info = await lstat(absolute);
     if (info.isSymbolicLink()) throw new Error(`Symlinks are not allowed in the public tree: ${absolute}`);
@@ -139,9 +144,9 @@ const sourceFiles = async () => {
   return [...new Set(files)].sort();
 };
 
-const targetFiles = async (target) => {
+const targetFiles = async (target, roots) => {
   const files = [];
-  for (const root of publicRoots) {
+  for (const root of roots) {
     const absolute = join(target, root);
     if (!(await pathExists(absolute))) continue;
     const info = await lstat(absolute);
@@ -205,8 +210,8 @@ const manifestFor = (identity, fileChecksums) => ({
   files: fileChecksums,
 });
 
-const copyPublicTree = async (target, files) => {
-  for (const root of publicRoots) await rm(join(target, root), { recursive: true, force: true });
+const copyPublicTree = async (target, files, roots) => {
+  for (const root of roots) await rm(join(target, root), { recursive: true, force: true });
 
   for (const file of files) {
     const destination = join(target, file);
@@ -238,33 +243,52 @@ const main = async () => {
   const options = parseArgs();
   verifySource(options);
   const target = await assertTarget(options.target);
+  const roots = options.feedbackOnly ? feedbackRoots : publicRoots;
   const identity = sourceIdentity();
   if (identity.sourceTreeDirty && !options.allowDirtySource) {
     throw new Error("The skald source tree is dirty. Promote a reviewed source commit, or use --allow-dirty-source only for an isolated test.");
   }
 
-  const files = await sourceFiles();
+  const files = await sourceFiles(roots);
   const expectedChecksums = await checksums(sourceRoot, files);
-  const manifest = manifestFor(identity, expectedChecksums);
-  const existingFiles = await targetFiles(target);
+  const existingFiles = await targetFiles(target, roots);
   const existingChecksums = await checksums(target, existingFiles);
   const changes = compare(expectedChecksums, existingChecksums);
 
   if (options.mode === "dry-run") {
-    console.log(`Dry run: ${files.length} approved public files from ${identity.sourceCommit}`);
+    const label = options.feedbackOnly ? "Feedback-only dry run" : "Dry run";
+    console.log(`${label}: ${files.length} approved public files from ${identity.sourceCommit}`);
     console.log(formatChanges(changes));
-    console.log(`  record  ${generatedManifest}`);
+    if (!options.feedbackOnly) console.log(`  record  ${generatedManifest}`);
     return;
   }
 
   if (options.mode === "apply") {
-    await copyPublicTree(target, files);
-    await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(`Promoted ${files.length} approved public files from ${identity.sourceCommit}.`);
+    await copyPublicTree(target, files, roots);
+    if (!options.feedbackOnly) {
+      const manifest = manifestFor(identity, expectedChecksums);
+      await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
+    }
+    const label = options.feedbackOnly
+      ? `${files.length} feedback files`
+      : `${files.length} approved public files`;
+    console.log(`Promoted ${label} from ${identity.sourceCommit}.`);
     console.log(formatChanges(changes));
     return;
   }
 
+  if (options.feedbackOnly) {
+    const parityFailed =
+      changes.added.length > 0 || changes.removed.length > 0 || changes.changed.length > 0;
+    if (parityFailed) {
+      throw new Error(`Feedback parity check failed:\n${formatChanges(changes)}`);
+    }
+
+    console.log(`Feedback parity check passed for ${files.length} files from ${identity.sourceCommit}.`);
+    return;
+  }
+
+  const manifest = manifestFor(identity, expectedChecksums);
   const actualManifest = await readFile(join(target, generatedManifest), "utf8").catch(() => null);
   const expectedManifest = `${JSON.stringify(manifest, null, 2)}\n`;
   const parityFailed =
