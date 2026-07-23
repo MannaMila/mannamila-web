@@ -206,7 +206,7 @@ assert.match(support, /href="\.\.\/privacy\/"/);
 assert.match(support, /href="\.\.\/updates-privacy\/"/);
 
 const feedbackFormBase =
-  "https://docs.google.com/forms/d/e/1FAIpQLScGu1umz6mnHZlqETLozIl0cxc4qgZ61wVpJLrOoPbo0PcBLA/viewform";
+  "https://docs.google.com/forms/d/e/1FAIpQLSdHuak6kgyQNb3jyt2wxv_0YVPgX0Mp2nap1M3iKy5ZJG3emw/viewform";
 assert.match(feedback, /https:\/\/skald\.mannamila\.com\/feedback\//g);
 assert.ok(feedback.includes(feedbackFormBase), "feedback page must link to the public form");
 assert.match(feedback, /entry\.1597449040=I\+was\+on\+the\+waitlist/);
@@ -220,6 +220,8 @@ assert.doesNotMatch(feedback, /Apple early reader|Android early reader|Skald web
 assert.match(feedback, /Each link only preselects a visible source answer/);
 assert.match(feedback, /Prefer to begin without a preselected source/);
 assert.match(feedback, /U\.S\. \$9\.99 price and a written explanation are optional/);
+assert.match(feedback, /Your device, and one honest thought/);
+assert.doesNotMatch(feedback, /app version/i);
 assert.match(feedback, /without signing in to Google/i);
 assert.match(feedback, /does not collect your email address automatically/i);
 assert.match(feedback, /rating or review/i);
@@ -243,6 +245,7 @@ assert.match(
   feedbackPrivacy,
   /whether you were on the waitlist, received a press or review copy, or reached the form by another route/,
 );
+assert.doesNotMatch(feedbackPrivacy, /app version/i);
 assert.doesNotMatch(feedbackPrivacy, /Apple early reader|Android early reader|the public site/);
 assert.match(feedbackPrivacy, /href="\.\.\/"/);
 assert.match(feedbackStyles, /:focus-visible/);
