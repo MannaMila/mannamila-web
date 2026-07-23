@@ -33,10 +33,12 @@ try {
   await mkdir(join(target, ".git"));
   await mkdir(join(target, ".github/workflows"), { recursive: true });
   await mkdir(join(target, "docs"));
+  await mkdir(join(target, "feedback"));
   await writeFile(join(target, "CNAME"), "skald.mannamila.com\n");
   await writeFile(join(target, ".nojekyll"), "");
   await writeFile(join(target, ".github/workflows/pages.yml"), "name: Pages\n");
   await writeFile(join(target, "docs/deploy.md"), "deployment notes\n");
+  await writeFile(join(target, "feedback/index.html"), "Feedback form\n");
   await writeFile(join(target, "README.md"), "Skald web deployment\n");
 
   const dryRun = run("--dry-run", "--allow-placeholder-form", "--allow-dirty-source");
@@ -53,6 +55,10 @@ try {
     /within 12 months of submission/i,
   );
   assert.match(await readFile(join(target, "feedback/styles.css"), "utf8"), /\.route-card/);
+  assert.match(
+    await readFile(join(target, "updates-privacy/index.html"), "utf8"),
+    /Product Updates Privacy Notice/,
+  );
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "skald.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -66,6 +72,7 @@ try {
   assert.ok(manifest.files["feedback/index.html"]);
   assert.ok(manifest.files["feedback/privacy/index.html"]);
   assert.ok(manifest.files["feedback/styles.css"]);
+  assert.ok(manifest.files["updates-privacy/index.html"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
