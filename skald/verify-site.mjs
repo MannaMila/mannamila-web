@@ -13,8 +13,11 @@ const requiredFiles = [
   "availability.json",
   "site-config.json",
   "privacy/index.html",
+  "updates-privacy/index.html",
   "waitlist-privacy/index.html",
   "support/index.html",
+  "assets/app-store-badge.svg",
+  "assets/google-play-badge.png",
   "assets/reader-art.webp",
   "assets/greek-split.webp",
   "assets/museum-guide.webp",
@@ -24,12 +27,13 @@ const requiredFiles = [
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
 
-const [index, styles, app, privacy, waitlistPrivacy, support, availabilityRaw, configRaw] =
+const [index, styles, app, privacy, updatesPrivacy, waitlistPrivacy, support, availabilityRaw, configRaw] =
   await Promise.all([
     read("index.html"),
     read("styles.css"),
     read("app.js"),
     read("privacy/index.html"),
+    read("updates-privacy/index.html"),
     read("waitlist-privacy/index.html"),
     read("support/index.html"),
     read("availability.json"),
@@ -38,26 +42,25 @@ const [index, styles, app, privacy, waitlistPrivacy, support, availabilityRaw, c
 
 const availability = JSON.parse(availabilityRaw);
 const config = JSON.parse(configRaw);
-const allowedStates = new Set(["review", "available"]);
-
 for (const platform of ["android", "ios"]) {
   assert.equal(typeof availability[platform], "object", `${platform} availability is required`);
-  assert.ok(allowedStates.has(availability[platform].state), `${platform} state must be review or available`);
-  if (availability[platform].state === "available") {
-    assert.match(
-      availability[platform].storeUrl ?? "",
-      /^https:\/\//,
-      `${platform} needs an HTTPS store URL when available`,
-    );
-  }
+  assert.equal(availability[platform].state, "available", `${platform} must be launched`);
 }
+assert.equal(
+  availability.android.storeUrl,
+  "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+);
+assert.equal(
+  availability.ios.storeUrl,
+  "https://apps.apple.com/us/app/skald-odyssey/id6790579937",
+);
 assert.match(availability.lastVerifiedAt, /^\d{4}-\d{2}-\d{2}T/, "lastVerifiedAt must be ISO-8601");
 
-assert.equal(typeof config.waitlistFormUrl, "string", "waitlistFormUrl must be centralized in site-config.json");
-assert.match(config.waitlistFormUrl, /^https:\/\/docs\.google\.com\/forms\//, "waitlistFormUrl must be a Google Forms URL");
+assert.equal(typeof config.updatesFormUrl, "string", "updatesFormUrl must be centralized in site-config.json");
+assert.match(config.updatesFormUrl, /^https:\/\/docs\.google\.com\/forms\//, "updatesFormUrl must be a Google Forms URL");
 if (!process.env.SKALD_ALLOW_PLACEHOLDER_FORM) {
   assert.doesNotMatch(
-    config.waitlistFormUrl,
+    config.updatesFormUrl,
     /REPLACE_WITH_PUBLIC_FORM_ID/,
     "replace the temporary public Google Form URL before publishing",
   );
@@ -66,8 +69,8 @@ if (!process.env.SKALD_ALLOW_PLACEHOLDER_FORM) {
 const expectedIndexText = [
   "One Odyssey.",
   "A shelf of ways through.",
-  "Coming soon to Android, iPhone, and iPad.",
-  "Currently under store review.",
+  "Launched July 22, 2026",
+  "Available now on Android, iPhone, and iPad.",
   "all 24 books",
   "1-, 5-, or 20-minute",
   "nine historical public-domain translations",
@@ -76,25 +79,36 @@ const expectedIndexText = [
   "One-time purchase",
   "No subscription, ads, app account, or in-app purchases.",
   "United States, Canada, Australia, and New Zealand",
-  "Join the launch waitlist",
+  "Get the app",
+  "Product updates",
+  "Keep following the voyage.",
   "Questions before you set sail",
 ];
 for (const expected of expectedIndexText) {
   assert.ok(index.includes(expected), `index.html must include: ${expected}`);
 }
 
-for (const id of ["inside", "depth", "translations", "journey", "art", "offline", "edition", "waitlist", "faq"]) {
+for (const id of ["get-skald", "inside", "depth", "translations", "journey", "art", "offline", "edition", "updates", "waitlist", "faq"]) {
   assert.match(index, new RegExp(`id=["']${id}["']`), `index.html must expose #${id}`);
 }
 
 assert.match(index, /<link rel="canonical" href="https:\/\/skald\.mannamila\.com\/">/);
+assert.match(index, /href="\.\/styles\.css\?v=20260722"/);
 assert.match(index, /data-availability-copy/);
-assert.match(index, /data-store-link="android"/);
-assert.match(index, /data-store-link="ios"/);
-assert.match(index, /data-waitlist-container/);
+assert.match(
+  index,
+  /data-store-link="android" href="https:\/\/play\.google\.com\/store\/apps\/details\?id=com\.mannamila\.skald"/,
+);
+assert.match(
+  index,
+  /data-store-link="ios" href="https:\/\/apps\.apple\.com\/us\/app\/skald-odyssey\/id6790579937"/,
+);
+assert.match(index, /src="\.\/assets\/app-store-badge\.svg"/);
+assert.match(index, /src="\.\/assets\/google-play-badge\.png"/);
+assert.match(index, /data-updates-container/);
 assert.match(index, /src="\.\/assets\/nostos-route\.webp"/);
 assert.match(index, /alt="Skald voyage map tracing Odysseus's route from Troy across the Mediterranean and back to Ithaca\."/);
-assert.match(index, /href="\.\/waitlist-privacy\/"/);
+assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
 assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og\.jpg">/);
 assert.doesNotMatch(
@@ -104,6 +118,10 @@ assert.doesNotMatch(
 );
 
 const forbiddenIndexText = [
+  /coming soon/i,
+  /under store review/i,
+  /planned for/i,
+  />[^<]*waitlist[^<]*</i,
   /android beta/i,
   /join the beta/i,
   /\$\s*\d/,
@@ -132,7 +150,8 @@ for (const match of index.matchAll(/(?:src|href)="\.\/([^"#?]+)"/g)) {
   await access(join(root, target));
 }
 
-assert.match(app, /REVIEW_AVAILABILITY/);
+assert.match(app, /LAUNCHED_AVAILABILITY/);
+assert.doesNotMatch(app, /REVIEW_AVAILABILITY/);
 assert.match(app, /normalizePlatform/);
 assert.match(app, /availability\.json/);
 assert.match(app, /site-config\.json/);
@@ -140,15 +159,24 @@ assert.match(app, /\.catch\(/, "runtime configuration must fail safely");
 assert.match(styles, /:focus-visible/);
 assert.match(styles, /prefers-reduced-motion/);
 assert.match(styles, /@media \(max-width: 560px\)/);
+assert.match(styles, /main\s*\{[^}]*overflow-x:\s*clip;/s);
 
 assert.match(privacy, /https:\/\/skald\.mannamila\.com\/privacy\//g);
-assert.match(privacy, /\.\.\/waitlist-privacy\//);
-assert.match(waitlistPrivacy, /https:\/\/skald\.mannamila\.com\/waitlist-privacy\//g);
-assert.match(waitlistPrivacy, /Google Forms and Google Sheets/);
-assert.match(waitlistPrivacy, /once per calendar month/i);
-assert.match(waitlistPrivacy, /unsubscribe/i);
+assert.match(privacy, /\.\.\/updates-privacy\//);
+assert.match(updatesPrivacy, /https:\/\/skald\.mannamila\.com\/updates-privacy\//g);
+assert.match(updatesPrivacy, /Google Forms and Google Sheets/);
+assert.match(updatesPrivacy, /once per calendar month/i);
+assert.match(updatesPrivacy, /24 months after you sign up/i);
+assert.match(updatesPrivacy, /90 days after we notified you that your selected platform was available/i);
+assert.match(updatesPrivacy, /responses submitted before July 22, 2026/i);
+assert.doesNotMatch(updatesPrivacy, /consent text or version associated with it/i);
+assert.match(updatesPrivacy, /unsubscribe/i);
+assert.match(waitlistPrivacy, /http-equiv="refresh"/i);
+assert.match(waitlistPrivacy, /url=\.\.\/updates-privacy\//i);
+assert.match(waitlistPrivacy, /rel="canonical" href="https:\/\/skald\.mannamila\.com\/updates-privacy\/"/);
 assert.match(support, /https:\/\/skald\.mannamila\.com\/support\//g);
 assert.match(support, /href="\.\.\/"/);
 assert.match(support, /href="\.\.\/privacy\/"/);
+assert.match(support, /href="\.\.\/updates-privacy\/"/);
 
 console.log("Skald site verification passed.");

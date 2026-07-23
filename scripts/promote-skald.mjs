@@ -27,6 +27,7 @@ const publicRoots = [
   "site-config.json",
   "assets",
   "privacy",
+  "updates-privacy",
   "waitlist-privacy",
   "support",
 ];
@@ -41,6 +42,7 @@ const preservedTopLevel = new Set([
   "CODEOWNERS",
   "SECURITY.md",
   "docs",
+  "feedback",
 ]);
 const generatedManifest = ".skald-source.json";
 
