@@ -163,6 +163,12 @@ assert.match(styles, /main\s*\{[^}]*overflow-x:\s*clip;/s);
 
 assert.match(privacy, /https:\/\/skald\.mannamila\.com\/privacy\//g);
 assert.match(privacy, /\.\.\/updates-privacy\//);
+assert.match(privacy, /On Android, product analytics and crash diagnostics are required/);
+assert.match(privacy, /On iPhone and iPad, they are optional, off by default/);
+assert.match(privacy, /Share usage analytics and crash diagnostics/);
+assert.match(privacy, /Turning them off stops new collection; it does not delete data already sent/);
+assert.doesNotMatch(privacy, /acknowledge the first-run data notice/);
+assert.doesNotMatch(privacy, /there is no in-app opt-out/);
 assert.match(updatesPrivacy, /https:\/\/skald\.mannamila\.com\/updates-privacy\//g);
 assert.match(updatesPrivacy, /Google Forms and Google Sheets/);
 assert.match(updatesPrivacy, /once per calendar month/i);
