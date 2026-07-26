@@ -27,6 +27,7 @@ const publicRoots = [
   "site-config.json",
   "assets",
   "privacy",
+  "updates",
   "updates-privacy",
   "waitlist-privacy",
   "support",
