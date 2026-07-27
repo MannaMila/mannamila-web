@@ -78,8 +78,10 @@ node scripts/test-promote-inspire.mjs
 
 The Squash site verifier intentionally remains non-publishable while
 `squash/site-config.json` contains its temporary Google Form placeholder. Use
-`SQUASH_ALLOW_PLACEHOLDER_FORM=1` only for a structural local check; do not use
-that override to approve a release.
+`SQUASH_ALLOW_PLACEHOLDER_FORM=1` only for a structural local check. An
+analytics-only deployment must use the tested `--analytics-only` promotion
+lane, which fails if any file outside the analytics loader and its four HTML
+entry points differs.
 
 After promotion and GitHub Pages deployment:
 

@@ -89,6 +89,19 @@ The site verifier intentionally fails while `squash/site-config.json` still cont
 SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
 ```
 
+For an analytics-only release while that exact placeholder is already deployed,
+use the scoped lane:
+
+```sh
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --dry-run
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --apply
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --check
+```
+
+This lane permits changes only to `analytics.js` and the four HTML files that
+load it. It fails if any other source/deployment byte differs, so it cannot be
+used to introduce or alter the placeholder form.
+
 Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
 
 After the public Form URL is configured and the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:

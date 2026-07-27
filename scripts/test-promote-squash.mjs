@@ -51,6 +51,37 @@ try {
   assert.equal(check.status, 0, check.stderr);
   assert.match(check.stdout, /Parity check passed/);
 
+  await rm(join(target, "analytics.js"));
+  for (const page of [
+    "index.html",
+    "privacy/index.html",
+    "support/index.html",
+    "waitlist-privacy/index.html",
+  ]) {
+    const pagePath = join(target, page);
+    const html = await readFile(pagePath, "utf8");
+    await writeFile(
+      pagePath,
+      html.replace(/^\s*<script src="(?:\.\/|\.\.\/)analytics\.js" defer><\/script>\n/m, ""),
+    );
+  }
+
+  const analyticsDryRun = run("--analytics-only", "--dry-run", "--allow-dirty-source");
+  assert.equal(analyticsDryRun.status, 0, analyticsDryRun.stderr);
+  assert.match(analyticsDryRun.stdout, /Analytics-only dry run/);
+
+  const analyticsApply = run("--analytics-only", "--apply", "--allow-dirty-source");
+  assert.equal(analyticsApply.status, 0, analyticsApply.stderr);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
+
+  await writeFile(join(target, "app.js"), "changed outside analytics scope\n");
+  const unsafeAnalyticsPromotion = run("--analytics-only", "--dry-run", "--allow-dirty-source");
+  assert.notEqual(unsafeAnalyticsPromotion.status, 0);
+  assert.match(unsafeAnalyticsPromotion.stderr, /outside analytics-only scope/i);
+
+  const restore = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
+  assert.equal(restore.status, 0, restore.stderr);
+
   await writeFile(join(target, "index.html"), "changed\n");
   const brokenCheck = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
   assert.notEqual(brokenCheck.status, 0);
