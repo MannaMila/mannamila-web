@@ -33,6 +33,7 @@ try {
   const apply = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Squash/);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "squash.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -43,11 +44,43 @@ try {
   assert.equal(typeof manifest.sourceCommit, "string");
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
+  assert.ok(manifest.files["analytics.js"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(check.status, 0, check.stderr);
   assert.match(check.stdout, /Parity check passed/);
+
+  await rm(join(target, "analytics.js"));
+  for (const page of [
+    "index.html",
+    "privacy/index.html",
+    "support/index.html",
+    "waitlist-privacy/index.html",
+  ]) {
+    const pagePath = join(target, page);
+    const html = await readFile(pagePath, "utf8");
+    await writeFile(
+      pagePath,
+      html.replace(/^\s*<script src="(?:\.\/|\.\.\/)analytics\.js" defer><\/script>\n/m, ""),
+    );
+  }
+
+  const analyticsDryRun = run("--analytics-only", "--dry-run", "--allow-dirty-source");
+  assert.equal(analyticsDryRun.status, 0, analyticsDryRun.stderr);
+  assert.match(analyticsDryRun.stdout, /Analytics-only dry run/);
+
+  const analyticsApply = run("--analytics-only", "--apply", "--allow-dirty-source");
+  assert.equal(analyticsApply.status, 0, analyticsApply.stderr);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
+
+  await writeFile(join(target, "app.js"), "changed outside analytics scope\n");
+  const unsafeAnalyticsPromotion = run("--analytics-only", "--dry-run", "--allow-dirty-source");
+  assert.notEqual(unsafeAnalyticsPromotion.status, 0);
+  assert.match(unsafeAnalyticsPromotion.stderr, /outside analytics-only scope/i);
+
+  const restore = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
+  assert.equal(restore.status, 0, restore.stderr);
 
   await writeFile(join(target, "index.html"), "changed\n");
   const brokenCheck = run("--check", "--allow-placeholder-form", "--allow-dirty-source");

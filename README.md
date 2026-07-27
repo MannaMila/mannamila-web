@@ -10,6 +10,22 @@ python3 -m http.server 5173
 
 Then open `http://127.0.0.1:5173/`.
 
+## Google Analytics
+
+All public MannaMila website surfaces use the `MannaMila Websites` GA4 property
+and measurement ID `G-E0E4FPDPTB`. The main Google Site is configured through
+Google Sites. The reviewed Skald, Mila Squash, and Mila Inspire sources load the
+same guarded analytics loader from their custom domains.
+
+Verify the complete static-site analytics contract with:
+
+```sh
+node scripts/test-analytics-contract.mjs
+```
+
+See [Google Analytics](docs/google-analytics.md) for coverage, privacy settings,
+promotion requirements, and live verification.
+
 ## Skald site
 
 The reviewed source for `skald.mannamila.com` lives under `skald/`. Verify it before promotion:
@@ -73,6 +89,19 @@ The site verifier intentionally fails while `squash/site-config.json` still cont
 SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
 ```
 
+For an analytics-only release while that exact placeholder is already deployed,
+use the scoped lane:
+
+```sh
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --dry-run
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --apply
+node scripts/promote-squash.mjs --target ../squash-web --analytics-only --check
+```
+
+This lane permits changes only to `analytics.js` and the four HTML files that
+load it. It fails if any other source/deployment byte differs, so it cannot be
+used to introduce or alter the placeholder form.
+
 Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
 
 After the public Form URL is configured and the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:
@@ -102,8 +131,9 @@ node scripts/promote-inspire.mjs --target ../inspire-web --apply
 node scripts/promote-inspire.mjs --target ../inspire-web --check
 ```
 
-Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no JavaScript, forms, analytics, cookies, or third-party assets.
+Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no forms or interactive product behavior; its only JavaScript is the shared guarded MannaMila analytics loader.
 
 ## Documentation
 
 - [GitHub Pages custom domains](docs/github-pages-custom-domains.md) — provision a new MannaMila product subdomain, recover stalled TLS certificate issuance, and verify the live deployment.
+- [Google Analytics](docs/google-analytics.md) — GA4 ownership, route coverage, privacy controls, promotion, and verification.

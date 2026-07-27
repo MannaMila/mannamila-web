@@ -11,6 +11,7 @@ const requiredFiles = [
   "index.html",
   "styles.css",
   "app.js",
+  "analytics.js",
   "availability.json",
   "site-config.json",
   "privacy/index.html",
@@ -273,5 +274,20 @@ if (renderedVerification.status !== 0) {
   );
 }
 process.stdout.write(renderedVerification.stdout);
+
+const analyticsVerification = spawnSync(
+  process.execPath,
+  [join(root, "../scripts/test-analytics-contract.mjs")],
+  {
+    cwd: root,
+    encoding: "utf8",
+  },
+);
+if (analyticsVerification.status !== 0) {
+  throw new Error(
+    `Analytics verification failed:\n${analyticsVerification.stderr || analyticsVerification.stdout}`,
+  );
+}
+process.stdout.write(analyticsVerification.stdout);
 
 console.log("Skald site verification passed.");

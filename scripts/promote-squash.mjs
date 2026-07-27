@@ -23,6 +23,7 @@ const publicRoots = [
   "index.html",
   "styles.css",
   "app.js",
+  "analytics.js",
   "availability.json",
   "site-config.json",
   "assets",
@@ -30,6 +31,13 @@ const publicRoots = [
   "waitlist-privacy",
   "support",
 ];
+const analyticsOnlyFiles = new Set([
+  "analytics.js",
+  "index.html",
+  "privacy/index.html",
+  "support/index.html",
+  "waitlist-privacy/index.html",
+]);
 const preservedTopLevel = new Set([
   ".git",
   ".gitignore",
@@ -46,7 +54,7 @@ const generatedManifest = ".squash-source.json";
 
 const usage = () => {
   console.error(
-    "Usage: node scripts/promote-squash.mjs --target /path/to/squash-web [--dry-run|--apply|--check] [--allow-placeholder-form] [--allow-dirty-source]",
+    "Usage: node scripts/promote-squash.mjs --target /path/to/squash-web [--dry-run|--apply|--check] [--analytics-only] [--allow-placeholder-form] [--allow-dirty-source]",
   );
 };
 
@@ -55,6 +63,7 @@ const parseArgs = () => {
   const result = {
     target: null,
     mode: "dry-run",
+    analyticsOnly: false,
     allowPlaceholderForm: false,
     allowDirtySource: false,
   };
@@ -66,6 +75,8 @@ const parseArgs = () => {
       index += 1;
     } else if (["--dry-run", "--apply", "--check"].includes(arg)) {
       result.mode = arg.slice(2);
+    } else if (arg === "--analytics-only") {
+      result.analyticsOnly = true;
     } else if (arg === "--allow-placeholder-form") {
       result.allowPlaceholderForm = true;
     } else if (arg === "--allow-dirty-source") {
@@ -94,13 +105,13 @@ const runGit = (...args) => {
   return result.stdout.trim();
 };
 
-const verifySource = ({ allowPlaceholderForm }) => {
+const verifySource = ({ allowPlaceholderForm, analyticsOnly }) => {
   const result = spawnSync(process.execPath, [join(sourceRoot, "verify-site.mjs")], {
     cwd: repoRoot,
     encoding: "utf8",
     env: {
       ...process.env,
-      ...(allowPlaceholderForm ? { SQUASH_ALLOW_PLACEHOLDER_FORM: "1" } : {}),
+      ...(allowPlaceholderForm || analyticsOnly ? { SQUASH_ALLOW_PLACEHOLDER_FORM: "1" } : {}),
     },
   });
 
@@ -217,6 +228,16 @@ const copyPublicTree = async (target, files) => {
   }
 };
 
+const copyFiles = async (target, files) => {
+  for (const file of files) {
+    const destination = join(target, file);
+    await mkdir(dirname(destination), { recursive: true });
+    await copyFile(join(sourceRoot, file), destination);
+    const mode = (await stat(join(sourceRoot, file))).mode;
+    await import("node:fs/promises").then(({ chmod }) => chmod(destination, mode));
+  }
+};
+
 const compare = (expected, actual) => {
   const expectedFiles = Object.keys(expected).sort();
   const actualFiles = Object.keys(actual).sort();
@@ -249,18 +270,37 @@ const main = async () => {
   const existingFiles = await targetFiles(target);
   const existingChecksums = await checksums(target, existingFiles);
   const changes = compare(expectedChecksums, existingChecksums);
+  const outOfScopeChanges = [
+    ...changes.added,
+    ...changes.removed,
+    ...changes.changed,
+  ].filter((file) => !analyticsOnlyFiles.has(file));
+
+  if (options.analyticsOnly && outOfScopeChanges.length > 0) {
+    throw new Error(
+      `Changes outside analytics-only scope: ${[...new Set(outOfScopeChanges)].sort().join(", ")}`,
+    );
+  }
 
   if (options.mode === "dry-run") {
-    console.log(`Dry run: ${files.length} approved public files from ${identity.sourceCommit}`);
+    console.log(
+      `${options.analyticsOnly ? "Analytics-only dry run" : "Dry run"}: ${files.length} approved public files from ${identity.sourceCommit}`,
+    );
     console.log(formatChanges(changes));
     console.log(`  record  ${generatedManifest}`);
     return;
   }
 
   if (options.mode === "apply") {
-    await copyPublicTree(target, files);
+    if (options.analyticsOnly) {
+      await copyFiles(target, [...analyticsOnlyFiles].sort());
+    } else {
+      await copyPublicTree(target, files);
+    }
     await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(`Promoted ${files.length} approved public files from ${identity.sourceCommit}.`);
+    console.log(
+      `${options.analyticsOnly ? "Promoted analytics files from" : `Promoted ${files.length} approved public files from`} ${identity.sourceCommit}.`,
+    );
     console.log(formatChanges(changes));
     return;
   }

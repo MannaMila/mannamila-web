@@ -32,6 +32,7 @@ try {
   const apply = run("--apply", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Inspire/);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "inspire.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
 
@@ -41,6 +42,7 @@ try {
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
   assert.ok(manifest.files["styles.css"]);
+  assert.ok(manifest.files["analytics.js"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-dirty-source");
