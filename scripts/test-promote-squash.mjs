@@ -33,6 +33,7 @@ try {
   const apply = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Squash/);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "squash.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -43,6 +44,7 @@ try {
   assert.equal(typeof manifest.sourceCommit, "string");
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
+  assert.ok(manifest.files["analytics.js"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");

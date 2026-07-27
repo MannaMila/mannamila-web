@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = join(repoRoot, "inspire");
-const publicRoots = ["index.html", "styles.css"];
+const publicRoots = ["index.html", "styles.css", "analytics.js"];
 const preservedTopLevel = new Set([
   ".git",
   ".gitignore",

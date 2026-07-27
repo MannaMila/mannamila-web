@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,7 @@ const requiredFiles = [
   "index.html",
   "styles.css",
   "app.js",
+  "analytics.js",
   "availability.json",
   "site-config.json",
   "privacy/index.html",
@@ -145,5 +147,20 @@ assert.match(waitlistPrivacy, /unsubscribe/i);
 assert.match(support, /https:\/\/squash\.mannamila\.com\/support\//g);
 assert.match(support, /href="\.\.\/"/);
 assert.match(support, /href="\.\.\/privacy\/"/);
+
+const analyticsVerification = spawnSync(
+  process.execPath,
+  [join(root, "../scripts/test-analytics-contract.mjs")],
+  {
+    cwd: root,
+    encoding: "utf8",
+  },
+);
+if (analyticsVerification.status !== 0) {
+  throw new Error(
+    `Analytics verification failed:\n${analyticsVerification.stderr || analyticsVerification.stdout}`,
+  );
+}
+process.stdout.write(analyticsVerification.stdout);
 
 console.log("Mila Squash site verification passed.");

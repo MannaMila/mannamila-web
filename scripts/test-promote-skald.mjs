@@ -49,6 +49,7 @@ try {
   const apply = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /One Odyssey\./);
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
   assert.match(await readFile(join(target, "feedback/index.html"), "utf8"), /Share feedback about Skald/);
   assert.match(
     await readFile(join(target, "feedback/privacy/index.html"), "utf8"),
@@ -69,6 +70,7 @@ try {
   assert.equal(typeof manifest.sourceCommit, "string");
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
+  assert.ok(manifest.files["analytics.js"]);
   assert.ok(manifest.files["feedback/index.html"]);
   assert.ok(manifest.files["feedback/privacy/index.html"]);
   assert.ok(manifest.files["feedback/styles.css"]);

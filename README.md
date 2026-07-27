@@ -10,6 +10,22 @@ python3 -m http.server 5173
 
 Then open `http://127.0.0.1:5173/`.
 
+## Google Analytics
+
+All public MannaMila website surfaces use the `MannaMila Websites` GA4 property
+and measurement ID `G-E0E4FPDPTB`. The main Google Site is configured through
+Google Sites. The reviewed Skald, Mila Squash, and Mila Inspire sources load the
+same guarded analytics loader from their custom domains.
+
+Verify the complete static-site analytics contract with:
+
+```sh
+node scripts/test-analytics-contract.mjs
+```
+
+See [Google Analytics](docs/google-analytics.md) for coverage, privacy settings,
+promotion requirements, and live verification.
+
 ## Skald site
 
 The reviewed source for `skald.mannamila.com` lives under `skald/`. Verify it before promotion:
@@ -102,8 +118,9 @@ node scripts/promote-inspire.mjs --target ../inspire-web --apply
 node scripts/promote-inspire.mjs --target ../inspire-web --check
 ```
 
-Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no JavaScript, forms, analytics, cookies, or third-party assets.
+Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no forms or interactive product behavior; its only JavaScript is the shared guarded MannaMila analytics loader.
 
 ## Documentation
 
 - [GitHub Pages custom domains](docs/github-pages-custom-domains.md) — provision a new MannaMila product subdomain, recover stalled TLS certificate issuance, and verify the live deployment.
+- [Google Analytics](docs/google-analytics.md) — GA4 ownership, route coverage, privacy controls, promotion, and verification.

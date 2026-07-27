@@ -23,6 +23,7 @@ const publicRoots = [
   "index.html",
   "styles.css",
   "app.js",
+  "analytics.js",
   "availability.json",
   "site-config.json",
   "assets",
