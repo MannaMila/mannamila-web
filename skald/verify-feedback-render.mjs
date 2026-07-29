@@ -350,7 +350,7 @@ const emulate = async (client, { width, height, mobile }) => {
     height,
     screenWidth: width,
     screenHeight: height,
-    deviceScaleFactor: 1,
+    deviceScaleFactor: mobile ? 3 : 1,
     mobile,
   });
   await client.send("Emulation.setTouchEmulationEnabled", { enabled: mobile, maxTouchPoints: mobile ? 5 : 1 });
@@ -749,27 +749,45 @@ const main = async () => {
       );
       const unlockedMosaic = await evaluate(
         client,
-        `(() => ({
-          gateHidden: document.querySelector("[data-access-gate]").hidden,
-          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-          atlasHidden: document.querySelector("[data-mosaic-atlas]").hidden,
-          atlasWidth: Number.parseFloat(document.querySelector("[data-mosaic-atlas]").style.width),
-          atlasHeight: Number.parseFloat(document.querySelector("[data-mosaic-atlas]").style.height),
-          overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
-          overviewHidden: document.querySelector("[data-mosaic-overview]").hidden,
-          overviewWidth: document.querySelector("[data-mosaic-overview]").naturalWidth,
-          overviewHeight: document.querySelector("[data-mosaic-overview]").naturalHeight,
-          tileCount: document.querySelectorAll("[data-tile-id]").length,
-          sourcedTileCount: [...document.querySelectorAll("[data-tile-id]")]
-            .filter((tile) => tile.hasAttribute("src")).length,
-          placeholderHidden: document.querySelector("[data-asset-placeholder]").hidden,
-          status: document.querySelector("[data-asset-status]").textContent,
-          downloadHidden: document.querySelector("[data-download]").hidden,
-          downloadDisabled: document.querySelector("[data-download]").disabled,
-          pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
-          pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
-          error: document.querySelector("[data-access-error]").textContent,
-        }))()`,
+        `(() => {
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const atlas = document.querySelector("[data-mosaic-atlas]");
+          const overview = document.querySelector("[data-mosaic-overview]");
+          const tiles = document.querySelector("[data-mosaic-tiles]");
+          const atlasStyle = getComputedStyle(atlas);
+          return {
+            gateHidden: document.querySelector("[data-access-gate]").hidden,
+            viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+            atlasHidden: atlas.hidden,
+            atlasFillsStage: (() => {
+              const atlasRect = atlas.getBoundingClientRect();
+              const stageRect = stage.getBoundingClientRect();
+              return Math.abs(atlasRect.width - stageRect.width) < 0.5 &&
+                Math.abs(atlasRect.height - stageRect.height) < 0.5;
+            })(),
+            atlasWillChange: atlasStyle.willChange,
+            atlasContain: atlasStyle.contain,
+            atlasBackfaceVisibility: atlasStyle.backfaceVisibility,
+            atlasTransform: atlasStyle.transform,
+            overviewSource: overview.getAttribute("src"),
+            overviewHidden: overview.hidden,
+            overviewWidth: overview.naturalWidth,
+            overviewHeight: overview.naturalHeight,
+            overviewLayoutWidth: overview.offsetWidth,
+            overviewParentIsStage: overview.parentElement === stage,
+            tilesParentIsStage: tiles.parentElement === stage,
+            tileCount: document.querySelectorAll("[data-tile-id]").length,
+            sourcedTileCount: [...document.querySelectorAll("[data-tile-id]")]
+              .filter((tile) => tile.hasAttribute("src")).length,
+            placeholderHidden: document.querySelector("[data-asset-placeholder]").hidden,
+            status: document.querySelector("[data-asset-status]").textContent,
+            downloadHidden: document.querySelector("[data-download]").hidden,
+            downloadDisabled: document.querySelector("[data-download]").disabled,
+            pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
+            pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
+            error: document.querySelector("[data-access-error]").textContent,
+          };
+        })()`,
       );
       assert.equal(unlockedMosaic.gateHidden, true, `correct access must hide the gate: ${unlockedMosaic.error}`);
       assert.equal(unlockedMosaic.viewerHidden, false, `correct access must open the viewer: ${unlockedMosaic.error}`);
@@ -777,20 +795,42 @@ const main = async () => {
       assert.match(unlockedMosaic.overviewSource, /^blob:/, "the overview must use a decrypted Blob URL");
       assert.equal(unlockedMosaic.overviewHidden, false, "the progressive overview must render after access");
       assert.equal(
-        unlockedMosaic.atlasWidth,
-        expectedMosaicConfig.plaintext.width,
-        "the atlas must preserve the approved logical width",
-      );
-      assert.equal(
-        unlockedMosaic.atlasHeight,
-        expectedMosaicConfig.plaintext.height,
-        "the atlas must preserve the approved logical height",
+        unlockedMosaic.atlasFillsStage,
+        true,
+        "the semantic atlas plane must stay viewport-sized",
       );
       const expectedOverview = expectedMosaicConfig.viewer.manifest.layers.find(
         (layer) => layer.role === "overview",
       );
       assert.equal(unlockedMosaic.overviewWidth, expectedOverview.naturalWidth);
       assert.equal(unlockedMosaic.overviewHeight, expectedOverview.naturalHeight);
+      assert.equal(
+        unlockedMosaic.overviewLayoutWidth,
+        expectedOverview.naturalWidth,
+        "the fallback overview must keep its intrinsic layout width",
+      );
+      assert.equal(
+        unlockedMosaic.overviewParentIsStage,
+        true,
+        "the fallback overview must be independent of the logical atlas",
+      );
+      assert.equal(
+        unlockedMosaic.tilesParentIsStage,
+        true,
+        "detail tiles must render in an independent viewport overlay",
+      );
+      assert.equal(
+        unlockedMosaic.atlasWillChange,
+        "auto",
+        "the semantic atlas plane must not be forced into a permanent compositor layer",
+      );
+      assert.equal(unlockedMosaic.atlasContain, "none");
+      assert.equal(unlockedMosaic.atlasBackfaceVisibility, "visible");
+      assert.equal(
+        unlockedMosaic.atlasTransform,
+        "none",
+        "the viewport-sized semantic plane must not be transformed",
+      );
       assert.equal(
         unlockedMosaic.tileCount,
         expectedMosaicMap.tiles.length,
@@ -835,7 +875,7 @@ const main = async () => {
             x: Math.round(rect.left + rect.width / 2),
             y: Math.round(rect.top + rect.height / 2),
             beforeZoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
-            beforeTransform: document.querySelector("[data-mosaic-atlas]").style.transform,
+            beforeTransform: document.querySelector("[data-mosaic-overview]").style.transform,
           };
         })()`,
       );
@@ -851,7 +891,7 @@ const main = async () => {
         client,
         `(() => ({
           zoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
-          transform: document.querySelector("[data-mosaic-atlas]").style.transform,
+          transform: document.querySelector("[data-mosaic-overview]").style.transform,
         }))()`,
       );
       assert.ok(desktopAfterWheel.zoom > desktopStage.beforeZoom, "mouse-wheel input must zoom in");
@@ -867,11 +907,11 @@ const main = async () => {
         client,
         `(() => {
           const stage = document.querySelector("[data-mosaic-stage]");
-          const atlas = document.querySelector("[data-mosaic-atlas]");
+          const overview = document.querySelector("[data-mosaic-overview]");
           const rect = stage.getBoundingClientRect();
           const originalGetBoundingClientRect = stage.getBoundingClientRect.bind(stage);
           const scale = Number.parseFloat(
-            atlas.style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0",
+            overview.style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0",
           );
           window.__mosaicStageRectReads = 0;
           window.__mosaicOriginalStageRect = originalGetBoundingClientRect;
@@ -886,7 +926,7 @@ const main = async () => {
               (record) => record.type === "attributes" && record.attributeName === "style",
             ).length;
           });
-          window.__mosaicZoomRenderObserver.observe(atlas, {
+          window.__mosaicZoomRenderObserver.observe(overview, {
             attributes: true,
             attributeFilter: ["style"],
           });
@@ -910,7 +950,7 @@ const main = async () => {
           window.__mosaicZoomRenderObserver?.disconnect();
           const stage = document.querySelector("[data-mosaic-stage]");
           stage.getBoundingClientRect = window.__mosaicOriginalStageRect;
-          const transform = document.querySelector("[data-mosaic-atlas]").style.transform;
+          const transform = document.querySelector("[data-mosaic-overview]").style.transform;
           return {
             scale: Number.parseFloat(transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"),
             mutations: window.__mosaicZoomRenderMutations,
@@ -935,7 +975,7 @@ const main = async () => {
       const lineWheelBefore = await evaluate(
         client,
         `Number.parseFloat(
-          document.querySelector("[data-mosaic-atlas]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
+          document.querySelector("[data-mosaic-overview]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
         )`,
       );
       await evaluate(
@@ -957,7 +997,7 @@ const main = async () => {
       const lineWheelAfter = await evaluate(
         client,
         `Number.parseFloat(
-          document.querySelector("[data-mosaic-atlas]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
+          document.querySelector("[data-mosaic-overview]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
         )`,
       );
       assert.ok(
@@ -999,7 +1039,7 @@ const main = async () => {
       const firstArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-overview]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
@@ -1063,7 +1103,7 @@ const main = async () => {
       const lastArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-overview]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(lastArtwork.x + lastArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(lastArtwork.y + lastArtwork.height / 2) / expectedMosaicMap.height}),
@@ -1122,10 +1162,10 @@ const main = async () => {
             })),
           )};
           const stage = document.querySelector("[data-mosaic-stage]");
-          const atlas = document.querySelector("[data-mosaic-atlas]");
+          const overview = document.querySelector("[data-mosaic-overview]");
           const failures = [];
           for (const artwork of artworks) {
-            const rect = atlas.getBoundingClientRect();
+            const rect = overview.getBoundingClientRect();
             stage.dispatchEvent(new MouseEvent("click", {
               bubbles: true,
               clientX: rect.left + rect.width * ((artwork.x + artwork.width / 2) / ${expectedMosaicMap.width}),
@@ -1170,14 +1210,21 @@ const main = async () => {
             visible: tiles.filter((tile) => !tile.hidden).length,
             maximumWidth: Math.max(...tiles.map((tile) => tile.naturalWidth)),
             maximumHeight: Math.max(...tiles.map((tile) => tile.naturalHeight)),
+            decodedPixels: tiles
+              .filter((tile) => tile.hasAttribute("src"))
+              .reduce((total, tile) => total + tile.naturalWidth * tile.naturalHeight, 0),
           };
         })()`,
       );
       assert.equal(loadedTiles.total, expectedMosaicMap.tiles.length);
-      assert.ok(loadedTiles.sourced >= 1 && loadedTiles.sourced <= 4);
-      assert.ok(loadedTiles.visible >= 1 && loadedTiles.visible <= 4);
+      assert.ok(loadedTiles.sourced >= 1 && loadedTiles.sourced <= 2);
+      assert.ok(loadedTiles.visible >= 1 && loadedTiles.visible <= 2);
       assert.ok(loadedTiles.maximumWidth <= 4000);
       assert.ok(loadedTiles.maximumHeight <= 4000);
+      assert.ok(
+        loadedTiles.decodedPixels <= 32_000_000,
+        `detail tile budget must stay at or below 32 million pixels, got ${loadedTiles.decodedPixels}`,
+      );
       assert.equal(
         requests.includes(`/${mosaicAsset}`),
         false,
@@ -1187,10 +1234,69 @@ const main = async () => {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
       }
 
+      const heldGesturePoint = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width * 0.45),
+            y: Math.round(rect.top + rect.height * 0.45),
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        ...heldGesturePoint,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        button: "left",
+        buttons: 1,
+        x: heldGesturePoint.x + 140,
+        y: heldGesturePoint.y + 90,
+      });
+      await delay(240);
+      const heldGestureState = await evaluate(
+        client,
+        `(() => ({
+          containerHidden: document.querySelector("[data-mosaic-tiles]").hidden,
+          visibleTiles: [...document.querySelectorAll("[data-tile-id]")]
+            .filter((tile) => !tile.hidden).length,
+          selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+        }))()`,
+      );
+      assert.equal(
+        heldGestureState.containerHidden,
+        true,
+        "detail tiles must stay suppressed while a pointer gesture is held",
+      );
+      assert.equal(heldGestureState.visibleTiles, 0);
+      assert.equal(
+        heldGestureState.selectionHidden,
+        false,
+        "artwork selection must remain present during gesture fallback rendering",
+      );
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        x: heldGesturePoint.x + 140,
+        y: heldGesturePoint.y + 90,
+      });
+      await waitUntil(
+        client,
+        `[...document.querySelectorAll("[data-tile-id]")]
+          .some((tile) => tile.hasAttribute("src") && tile.naturalWidth > 0 && !tile.hidden)`,
+        "settled tiles after releasing the held gesture",
+      );
+
       await evaluate(
         client,
         `(() => {
-          document.querySelector("[data-action='close-details']").click();
           document.querySelector("[data-action='fit']").click();
           const marker = document.createElement("div");
           marker.dataset.compositorMarker = "";
@@ -1236,6 +1342,52 @@ const main = async () => {
           .some((tile) => tile.hasAttribute("src") && tile.naturalWidth > 0 && !tile.hidden)`,
         "decoded tiles before compositor recovery stress",
       );
+      for (const [deltaX, deltaY] of [
+        [340, 200],
+        [-520, -240],
+        [420, -180],
+      ]) {
+        await client.send("Input.dispatchMouseEvent", {
+          type: "mousePressed",
+          button: "left",
+          buttons: 1,
+          clickCount: 1,
+          x: stressGeometry.centerX,
+          y: stressGeometry.centerY,
+        });
+        await client.send("Input.dispatchMouseEvent", {
+          type: "mouseMoved",
+          button: "left",
+          buttons: 1,
+          x: stressGeometry.centerX + deltaX,
+          y: stressGeometry.centerY + deltaY,
+        });
+        await client.send("Input.dispatchMouseEvent", {
+          type: "mouseReleased",
+          button: "left",
+          buttons: 0,
+          clickCount: 1,
+          x: stressGeometry.centerX + deltaX,
+          y: stressGeometry.centerY + deltaY,
+        });
+        await delay(18);
+      }
+      for (const [index, deltaY] of [-120, 160, -160, 120].entries()) {
+        await client.send("Input.dispatchMouseEvent", {
+          type: "mouseWheel",
+          x: stressGeometry.centerX + (index - 1.5) * 80,
+          y: stressGeometry.centerY + (index % 2 ? 70 : -70),
+          deltaX: 0,
+          deltaY,
+        });
+        await delay(18);
+      }
+      await waitUntil(
+        client,
+        `[...document.querySelectorAll("[data-tile-id]")]
+          .some((tile) => tile.hasAttribute("src") && tile.naturalWidth > 0 && !tile.hidden)`,
+        "settled tiles after pan and alternating-zoom stress",
+      );
       await delay(180);
       const compositorRecovery = await recordScreencast(
         client,
@@ -1252,6 +1404,10 @@ const main = async () => {
             requestAnimationFrame(() => resolve({
               visibleTiles: [...document.querySelectorAll("[data-tile-id]")]
                 .filter((tile) => tile.hasAttribute("src") && !tile.hidden).length,
+              sourcedTiles: [...document.querySelectorAll("[data-tile-id][src]")].length,
+              overviewComplete: document.querySelector("[data-mosaic-overview]").complete,
+              overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
+              selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
             }));
           })`,
           returnByValue: true,
@@ -1269,6 +1425,26 @@ const main = async () => {
         compositorRecovery.actionResult.result.value.visibleTiles,
         0,
         "Fit must suppress detail tiles before the first compositor frame",
+      );
+      assert.equal(
+        compositorRecovery.actionResult.result.value.sourcedTiles,
+        0,
+        "Fit must unload detail tiles before the first compositor frame",
+      );
+      assert.equal(
+        compositorRecovery.actionResult.result.value.overviewComplete,
+        true,
+        "the fallback overview must remain decoded during Fit recovery",
+      );
+      assert.match(
+        compositorRecovery.actionResult.result.value.overviewSource,
+        /^blob:/,
+        "Fit recovery must preserve the decrypted overview source",
+      );
+      assert.equal(
+        compositorRecovery.actionResult.result.value.selectionHidden,
+        false,
+        "the compositor recovery gate must keep an artwork selection painted",
       );
       const markedFitFrames = compositorRecovery.frames
         .map(decodePng)
@@ -1460,7 +1636,7 @@ const main = async () => {
       const mobileArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-overview]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
