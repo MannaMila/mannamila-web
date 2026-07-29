@@ -9,7 +9,9 @@ import { fileURLToPath } from "node:url";
 const root = dirname(fileURLToPath(import.meta.url));
 const read = (path) => readFile(join(root, path), "utf8");
 
-await Promise.all(["index.html", "styles.css", "analytics.js"].map((path) => access(join(root, path))));
+await Promise.all(
+  ["index.html", "styles.css", "retire-analytics.js"].map((path) => access(join(root, path))),
+);
 
 const [index, styles] = await Promise.all([read("index.html"), read("styles.css")]);
 
@@ -22,14 +24,18 @@ assert.match(index, /<main>/);
 assert.match(index, /<h1>Mila Inspire<\/h1>/);
 assert.match(index, /<p>Coming soon\.<\/p>/);
 assert.match(index, /<link rel="stylesheet" href="\.\/styles\.css">/);
-assert.match(index, /<script src="\.\/analytics\.js" defer><\/script>/);
+assert.match(index, /<script src="\.\/retire-analytics\.js" defer><\/script>/);
 
-const indexWithoutAnalytics = index.replace(
-  /<script src="\.\/analytics\.js" defer><\/script>/,
+const indexWithoutRetirementScript = index.replace(
+  /<script src="\.\/retire-analytics\.js" defer><\/script>/,
   "",
 );
 for (const forbidden of [/<script\b/i, /<form\b/i, /<iframe\b/i, /<img\b/i, /<a\b/i]) {
-  assert.doesNotMatch(indexWithoutAnalytics, forbidden, `stub contains forbidden markup: ${forbidden}`);
+  assert.doesNotMatch(
+    indexWithoutRetirementScript,
+    forbidden,
+    `stub contains forbidden markup: ${forbidden}`,
+  );
 }
 
 const body = index.match(/<body>([\s\S]*?)<\/body>/i)?.[1] ?? "";

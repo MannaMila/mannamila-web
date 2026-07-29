@@ -23,7 +23,7 @@ const publicRoots = [
   "index.html",
   "styles.css",
   "app.js",
-  "analytics.js",
+  "retire-analytics.js",
   "availability.json",
   "site-config.json",
   "assets",
@@ -31,13 +31,15 @@ const publicRoots = [
   "waitlist-privacy",
   "support",
 ];
+const retiredPublicRoots = ["analytics.js"];
 const analyticsOnlyFiles = new Set([
-  "analytics.js",
+  "retire-analytics.js",
   "index.html",
   "privacy/index.html",
   "support/index.html",
   "waitlist-privacy/index.html",
 ]);
+const analyticsOnlyManagedFiles = new Set(["analytics.js", ...analyticsOnlyFiles]);
 const preservedTopLevel = new Set([
   ".git",
   ".gitignore",
@@ -150,9 +152,9 @@ const sourceFiles = async () => {
   return [...new Set(files)].sort();
 };
 
-const targetFiles = async (target) => {
+const targetFiles = async (target, roots) => {
   const files = [];
-  for (const root of publicRoots) {
+  for (const root of roots) {
     const absolute = join(target, root);
     if (!(await pathExists(absolute))) continue;
     const info = await lstat(absolute);
@@ -190,7 +192,12 @@ const assertTarget = async (target) => {
     throw new Error("The target must contain .nojekyll.");
   }
 
-  const approvedTopLevel = new Set([...publicRoots, ...preservedTopLevel, generatedManifest]);
+  const approvedTopLevel = new Set([
+    ...publicRoots,
+    ...retiredPublicRoots,
+    ...preservedTopLevel,
+    generatedManifest,
+  ]);
   const unexpected = (await readdir(resolvedTarget))
     .filter((name) => !approvedTopLevel.has(name))
     .sort();
@@ -216,8 +223,8 @@ const manifestFor = (identity, fileChecksums) => ({
   files: fileChecksums,
 });
 
-const copyPublicTree = async (target, files) => {
-  for (const root of publicRoots) await rm(join(target, root), { recursive: true, force: true });
+const copyPublicTree = async (target, files, roots) => {
+  for (const root of roots) await rm(join(target, root), { recursive: true, force: true });
 
   for (const file of files) {
     const destination = join(target, file);
@@ -265,16 +272,17 @@ const main = async () => {
   }
 
   const files = await sourceFiles();
+  const managedTargetRoots = [...publicRoots, ...retiredPublicRoots];
   const expectedChecksums = await checksums(sourceRoot, files);
   const manifest = manifestFor(identity, expectedChecksums);
-  const existingFiles = await targetFiles(target);
+  const existingFiles = await targetFiles(target, managedTargetRoots);
   const existingChecksums = await checksums(target, existingFiles);
   const changes = compare(expectedChecksums, existingChecksums);
   const outOfScopeChanges = [
     ...changes.added,
     ...changes.removed,
     ...changes.changed,
-  ].filter((file) => !analyticsOnlyFiles.has(file));
+  ].filter((file) => !analyticsOnlyManagedFiles.has(file));
 
   if (options.analyticsOnly && outOfScopeChanges.length > 0) {
     throw new Error(
@@ -293,9 +301,12 @@ const main = async () => {
 
   if (options.mode === "apply") {
     if (options.analyticsOnly) {
+      for (const root of retiredPublicRoots) {
+        await rm(join(target, root), { recursive: true, force: true });
+      }
       await copyFiles(target, [...analyticsOnlyFiles].sort());
     } else {
-      await copyPublicTree(target, files);
+      await copyPublicTree(target, files, managedTargetRoots);
     }
     await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(

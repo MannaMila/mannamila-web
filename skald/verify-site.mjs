@@ -11,7 +11,6 @@ const requiredFiles = [
   "index.html",
   "styles.css",
   "app.js",
-  "analytics.js",
   "availability.json",
   "site-config.json",
   "privacy/index.html",
@@ -184,12 +183,20 @@ assert.match(styles, /main\s*\{[^}]*overflow-x:\s*clip;/s);
 
 assert.match(privacy, /https:\/\/skald\.mannamila\.com\/privacy\//g);
 assert.match(privacy, /\.\.\/updates-privacy\//);
-assert.match(privacy, /On Android, product analytics and crash diagnostics are required/);
-assert.match(privacy, /On iPhone and iPad, they are optional, off by default/);
-assert.match(privacy, /Share usage analytics and crash diagnostics/);
-assert.match(privacy, /Turning them off stops new collection; it does not delete data already sent/);
-assert.doesNotMatch(privacy, /acknowledge the first-run data notice/);
-assert.doesNotMatch(privacy, /there is no in-app opt-out/);
+assert.match(privacy, /Beginning with version 0\.4\.1, Skald does not send usage analytics or crash diagnostics/);
+assert.match(privacy, /The app does not transmit the ID or create a replacement/);
+assert.match(privacy, /No Analytics ID exists on this installation/);
+assert.match(privacy, /Request deletion of previously shared data/);
+assert.match(privacy, /The public Skald website is also separate from the app/);
+assert.match(privacy, /United Kingdom information — pending before UK distribution/);
+assert.doesNotMatch(privacy, /product analytics and crash diagnostics are required/);
+assert.doesNotMatch(privacy, /Share usage analytics and crash diagnostics/);
+assert.doesNotMatch(privacy, /Android grants only <strong>INTERNET<\/strong>/);
+assert.match(index, /Skald 0\.4\.1 does not send usage analytics or crash diagnostics/);
+assert.doesNotMatch(index, /Disclosed analytics and diagnostics send/);
+assert.doesNotMatch(index, /analytics, and diagnostics need a connection/);
+assert.match(support, /deletion of data shared by an earlier version/);
+assert.doesNotMatch(support, /telemetry data deletion request/);
 assert.match(updatesPrivacy, /https:\/\/skald\.mannamila\.com\/updates-privacy\//g);
 assert.match(updatesPrivacy, /Google Forms and Google Sheets/);
 assert.match(updatesPrivacy, /once per calendar month/i);

@@ -17,7 +17,8 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = join(repoRoot, "inspire");
-const publicRoots = ["index.html", "styles.css", "analytics.js"];
+const publicRoots = ["index.html", "styles.css", "retire-analytics.js"];
+const retiredPublicRoots = ["analytics.js"];
 const preservedTopLevel = new Set([
   ".git",
   ".gitignore",
@@ -99,9 +100,9 @@ const sourceFiles = async () => {
   return files.sort();
 };
 
-const targetFiles = async (target) => {
+const targetFiles = async (target, roots) => {
   const files = [];
-  for (const root of publicRoots) {
+  for (const root of roots) {
     const absolute = join(target, root);
     if (!(await pathExists(absolute))) continue;
     const info = await lstat(absolute);
@@ -136,7 +137,12 @@ const assertTarget = async (target) => {
     throw new Error("The target must contain .nojekyll.");
   }
 
-  const approvedTopLevel = new Set([...publicRoots, ...preservedTopLevel, generatedManifest]);
+  const approvedTopLevel = new Set([
+    ...publicRoots,
+    ...retiredPublicRoots,
+    ...preservedTopLevel,
+    generatedManifest,
+  ]);
   const unexpected = (await readdir(targetReal)).filter((name) => !approvedTopLevel.has(name)).sort();
   if (unexpected.length > 0) {
     throw new Error(`Unexpected target entries would escape promotion control: ${unexpected.join(", ")}`);
@@ -186,8 +192,9 @@ const main = async () => {
   }
 
   const files = await sourceFiles();
+  const managedTargetRoots = [...publicRoots, ...retiredPublicRoots];
   const expectedChecksums = await checksums(sourceRoot, files);
-  const existingFiles = await targetFiles(target);
+  const existingFiles = await targetFiles(target, managedTargetRoots);
   const existingChecksums = await checksums(target, existingFiles);
   const changes = compare(expectedChecksums, existingChecksums);
   const manifest = manifestFor(identity, expectedChecksums);
@@ -200,7 +207,9 @@ const main = async () => {
   }
 
   if (options.mode === "apply") {
-    for (const root of publicRoots) await rm(join(target, root), { recursive: true, force: true });
+    for (const root of managedTargetRoots) {
+      await rm(join(target, root), { recursive: true, force: true });
+    }
     for (const file of files) await copyFile(join(sourceRoot, file), join(target, file));
     await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(`Promoted ${files.length} approved public files from ${identity.sourceCommit}.`);

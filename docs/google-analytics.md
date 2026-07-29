@@ -1,95 +1,84 @@
-# Google Analytics
+# Google Analytics retirement
 
-## Ownership
+## Scope
 
-- Google account: `assaf@mannamila.com`
-- Analytics account: `MannaMila`
-- GA4 property: `MannaMila Websites`
-- Web stream: `MannaMila.com websites`
-- Stream URL: `https://www.mannamila.com`
-- Measurement ID: `G-E0E4FPDPTB`
-- Stream ID: `15334583978`
+Google Analytics is disabled in every reviewed static product source and
+deployment target:
 
-The measurement ID and stream ID are public identifiers, not secrets.
+- `skald.mannamila.com`: `/`, `/get/`, `/feedback/`,
+  `/feedback/privacy/`, `/privacy/`, `/support/`, `/updates/`,
+  `/updates-privacy/`, and `/waitlist-privacy/`;
+- `squash.mannamila.com`: `/`, `/privacy/`, `/support/`, and
+  `/waitlist-privacy/`;
+- `inspire.mannamila.com`: `/`.
 
-## Coverage
+The route list is discovered from the source trees by
+`scripts/test-analytics-contract.mjs`, so a new HTML route fails verification
+unless it also follows the retirement contract.
 
-The main Google Site uses its native **Settings → Analytics** integration. The
-reviewed static sources use one identical `analytics.js` loader:
+The main MannaMila Google Site is configured separately through Google Sites.
+Its native Analytics setting is not controlled by this repository. That setting
+was switched off in the signed-in Google Sites editor on 2026-07-28; recheck it
+as separate live configuration evidence. If it is enabled again, visiting the
+main site can create a new shared-domain Google Analytics cookie after a
+product route has removed an earlier one.
 
-- `skald.mannamila.com`
-  - `/`
-  - `/get/`
-  - `/feedback/`
-  - `/feedback/privacy/`
-  - `/privacy/`
-  - `/support/`
-  - `/updates/`
-  - `/updates-privacy/`
-  - `/waitlist-privacy/`
-- `squash.mannamila.com`
-  - `/`
-  - `/privacy/`
-  - `/support/`
-  - `/waitlist-privacy/`
-- `inspire.mannamila.com`
-  - `/`
+## Source and deployment contract
 
-The loader runs only on the three custom product hostnames. It intentionally
-does not run on localhost or `mannamila.github.io`, preventing preview traffic
-and Google Sites embeds from producing duplicate page views.
+The product sources contain no GA measurement ID, Google tag loader, `gtag`
+initialization, or analytics-cookie configuration. Each product's
+`analytics.js` is a retired managed deployment asset: promotion removes an old
+copy rather than leaving dormant executable code in place.
 
-## Data-minimization settings
+Every product route loads the identical `retire-analytics.js`. On a
+`mannamila.com` hostname, the script:
 
-The implementation uses these safeguards:
+1. reads the non-HttpOnly cookies visible to that route;
+2. selects only `_ga` and `_ga_*` names;
+3. expires each observed name at `Path=/` both as a host cookie and with
+   `Domain=mannamila.com`; and
+4. makes no network request and creates no identifier.
 
-- one first-party cookie domain, `mannamila.com`, for continuity between the
-  MannaMila product subdomains;
-- Google Signals disabled by the loader;
-- ad-personalization signals disabled by the loader;
-- Google tag user-provided-data capabilities disabled;
-- all optional Analytics account data-sharing settings disabled;
-- automatic email redaction enabled;
-- cross-domain measurement configured for domains containing
-  `mannamila.com`;
-- no Google Ads or other product links configured.
+It does nothing on localhost or the `mannamila.github.io` preview host.
 
-Enhanced measurement is enabled for ordinary website interactions such as page
-views, scrolls, and outbound clicks. Never place an email address, phone number,
-name, or other personal data in a URL or Analytics event.
-
-Google Sites supplies its own regional cookie-consent dialog when Analytics is
-enabled. Privacy notices and consent handling remain public-policy decisions;
-do not claim legal compliance based only on this technical configuration.
+This is intentionally best effort. Browser JavaScript cannot enumerate or
+delete HttpOnly cookies, cookies scoped to an inaccessible path, or cookies on
+another registrable domain. Standard GA browser cookies are visible first-party
+cookies at the root path, which is the case the retirement script addresses.
+The script also cannot prevent the separately configured main Google Site from
+creating a new cookie later.
 
 ## Verification
 
-Run the analytics contract and site/promotion tests:
+Run the source and promotion tests:
 
 ```sh
 node scripts/test-analytics-contract.mjs
-node skald/verify-site.mjs
-node squash/verify-site.mjs
+SKALD_ALLOW_PLACEHOLDER_FORM=1 node skald/verify-site.mjs
+SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
 node inspire/verify-site.mjs
 node scripts/test-promote-skald.mjs
 node scripts/test-promote-squash.mjs
 node scripts/test-promote-inspire.mjs
 ```
 
-The Squash site verifier intentionally remains non-publishable while
-`squash/site-config.json` contains its temporary Google Form placeholder. Use
-`SQUASH_ALLOW_PLACEHOLDER_FORM=1` only for a structural local check. An
-analytics-only deployment must use the tested `--analytics-only` promotion
-lane, which fails if any file outside the analytics loader and its four HTML
-entry points differs.
+The contract test proves that every discovered product HTML route loads only
+the retirement script, no product JavaScript initializes GA or writes cookies
+outside the tested expiration routine, the routine selects only observable
+`_ga` and `_ga_*` names, and preview hosts do not mutate cookies. Promotion
+tests seed a stale `analytics.js` in each deployment target and prove that
+applying the promotion removes it.
 
-After promotion and GitHub Pages deployment:
+After each production deployment, use a clean browser profile and verify:
 
-1. Confirm every documented route returns HTTP 200.
-2. Confirm each route references the correctly relative `analytics.js`.
-3. Confirm `analytics.js` returns HTTP 200 from each custom domain.
-4. In a clean browser session, confirm the Google tag request uses
-   `G-E0E4FPDPTB`.
-5. Confirm visits appear in Analytics Realtime before declaring collection
-   live. Initial processing can take time even when the network request is
-   correct.
+1. every documented route returns HTTP 200;
+2. `analytics.js` returns 404 and `retire-analytics.js` returns 200;
+3. the Network panel shows no request to `googletagmanager.com`,
+   `google-analytics.com`, or a GA collection endpoint;
+4. an observable legacy `_ga` and `_ga_*` cookie is absent after loading a
+   product route; and
+5. the rendered product route still passes its ordinary layout and link checks.
+
+Treat source tests, deployed-file parity, browser network evidence, and the
+separate Google Sites setting as distinct evidence. A green source test does
+not prove that an older deployment has already been replaced.

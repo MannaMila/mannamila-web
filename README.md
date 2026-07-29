@@ -10,21 +10,22 @@ python3 -m http.server 5173
 
 Then open `http://127.0.0.1:5173/`.
 
-## Google Analytics
+## Product-site analytics retirement
 
-All public MannaMila website surfaces use the `MannaMila Websites` GA4 property
-and measurement ID `G-E0E4FPDPTB`. The main Google Site is configured through
-Google Sites. The reviewed Skald, Mila Squash, and Mila Inspire sources load the
-same guarded analytics loader from their custom domains.
+The reviewed Skald, Mila Squash, and Mila Inspire sources do not load Google
+Analytics. Every product route loads a small first-party retirement script that
+expires observable legacy `_ga` and `_ga_*` cookies without making a network
+request. The main MannaMila Google Site has a separate native Analytics setting
+and is outside these static deployment trees.
 
-Verify the complete static-site analytics contract with:
+Verify the complete static-product-site contract with:
 
 ```sh
 node scripts/test-analytics-contract.mjs
 ```
 
-See [Google Analytics](docs/google-analytics.md) for coverage, privacy settings,
-promotion requirements, and live verification.
+See [Google Analytics](docs/google-analytics.md) for retirement coverage,
+limitations, promotion requirements, and live verification.
 
 ## Skald site
 
@@ -73,6 +74,8 @@ node scripts/promote-skald.mjs --target ../skald-web --feedback-only --check
 ```
 
 The feedback-only lane replaces only `feedback/**`. It does not update the landing page, availability, site configuration, assets, other routes, or `.skald-source.json`.
+It also refuses to run until the target already has the reviewed
+`retire-analytics.js`, because the feedback routes depend on that root asset.
 
 ## Mila Squash site
 
@@ -89,8 +92,8 @@ The site verifier intentionally fails while `squash/site-config.json` still cont
 SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
 ```
 
-For an analytics-only release while that exact placeholder is already deployed,
-use the scoped lane:
+For an analytics-retirement release while that exact placeholder is already
+deployed, use the scoped lane:
 
 ```sh
 node scripts/promote-squash.mjs --target ../squash-web --analytics-only --dry-run
@@ -98,9 +101,10 @@ node scripts/promote-squash.mjs --target ../squash-web --analytics-only --apply
 node scripts/promote-squash.mjs --target ../squash-web --analytics-only --check
 ```
 
-This lane permits changes only to `analytics.js` and the four HTML files that
-load it. It fails if any other source/deployment byte differs, so it cannot be
-used to introduce or alter the placeholder form.
+This backwards-compatible lane removes the retired `analytics.js`, deploys
+`retire-analytics.js`, and updates only the four HTML entry points that load it.
+It fails if any other source/deployment byte differs, so it cannot be used to
+introduce or alter the placeholder form.
 
 Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
 
@@ -131,7 +135,7 @@ node scripts/promote-inspire.mjs --target ../inspire-web --apply
 node scripts/promote-inspire.mjs --target ../inspire-web --check
 ```
 
-Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no forms or interactive product behavior; its only JavaScript is the shared guarded MannaMila analytics loader.
+Promotion preserves deployment-only files and records the reviewed source commit and SHA-256 checksums in `.inspire-source.json`. The placeholder intentionally has no forms or interactive product behavior; its only JavaScript expires observable legacy Google Analytics cookies.
 
 ## Documentation
 
