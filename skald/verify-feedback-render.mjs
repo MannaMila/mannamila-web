@@ -7,10 +7,49 @@ import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  encryptMosaicBytes,
+  inspectJpeg,
+} from "../scripts/encrypt-skald-mosaic.mjs";
 
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const skaldRoot = dirname(fileURLToPath(import.meta.url));
 const defaultTimeoutMs = 10_000;
+const mosaicRoute = "folio-24b3206ad4eceb1abe0c";
+const mosaicConfig = `${mosaicRoute}/mosaic-config.json`;
+const mosaicAsset = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
+const mosaicConfigInstalled = await access(join(skaldRoot, mosaicConfig))
+  .then(() => true)
+  .catch(() => false);
+const mosaicAssetInstalled = await access(join(skaldRoot, mosaicAsset))
+  .then(() => true)
+  .catch(() => false);
+assert.equal(
+  mosaicConfigInstalled,
+  mosaicAssetInstalled,
+  "the encrypted mosaic config and ciphertext must be installed together",
+);
+
+let mosaicPassword;
+let mosaicConfigContent;
+let mosaicAssetContent;
+if (mosaicAssetInstalled) {
+  mosaicPassword = process.env.SKALD_MOSAIC_PASSWORD;
+  assert.ok(mosaicPassword, "SKALD_MOSAIC_PASSWORD is required to verify the encrypted mosaic");
+  [mosaicConfigContent, mosaicAssetContent] = await Promise.all([
+    readFile(join(skaldRoot, mosaicConfig)),
+    readFile(join(skaldRoot, mosaicAsset)),
+  ]);
+} else {
+  mosaicPassword = "render-test-only-password";
+  const plaintext = await readFile(join(skaldRoot, "assets/skald-odyssey-og.jpg"));
+  const encrypted = encryptMosaicBytes(plaintext, mosaicPassword, {
+    approvedPlaintext: inspectJpeg(plaintext),
+  });
+  mosaicConfigContent = Buffer.from(`${JSON.stringify(encrypted.config, null, 2)}\n`);
+  mosaicAssetContent = encrypted.encrypted;
+}
+const expectedMosaicConfig = JSON.parse(mosaicConfigContent.toString("utf8"));
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -43,16 +82,25 @@ const closeServer = (server) =>
   });
 
 const staticFiles = new Map([
+  ["/retire-analytics.js", ["retire-analytics.js", "text/javascript; charset=utf-8"]],
   ["/feedback/", ["feedback/index.html", "text/html; charset=utf-8"]],
   ["/feedback/index.html", ["feedback/index.html", "text/html; charset=utf-8"]],
   ["/feedback/styles.css", ["feedback/styles.css", "text/css; charset=utf-8"]],
   ["/feedback/privacy/", ["feedback/privacy/index.html", "text/html; charset=utf-8"]],
   ["/feedback/privacy/index.html", ["feedback/privacy/index.html", "text/html; charset=utf-8"]],
+  [`/${mosaicRoute}/`, [`${mosaicRoute}/index.html`, "text/html; charset=utf-8"]],
+  [`/${mosaicRoute}/index.html`, [`${mosaicRoute}/index.html`, "text/html; charset=utf-8"]],
+  [`/${mosaicRoute}/styles.css`, [`${mosaicRoute}/styles.css`, "text/css; charset=utf-8"]],
+  [`/${mosaicRoute}/viewer.js`, [`${mosaicRoute}/viewer.js`, "text/javascript; charset=utf-8"]],
+  [`/${mosaicConfig}`, [mosaicConfigContent, "application/json; charset=utf-8"]],
+  [`/${mosaicAsset}`, [mosaicAssetContent, "application/octet-stream"]],
 ]);
 
 const startStaticServer = async () => {
+  const requests = [];
   const server = createServer(async (request, response) => {
     const pathname = new URL(request.url, "http://127.0.0.1").pathname;
+    requests.push(pathname);
     const entry = staticFiles.get(pathname);
     if (!entry) {
       response.writeHead(404).end("Not found\n");
@@ -60,13 +108,16 @@ const startStaticServer = async () => {
     }
 
     try {
+      const content = typeof entry[0] === "string"
+        ? await readFile(join(skaldRoot, entry[0]))
+        : entry[0];
       response.writeHead(200, { "content-type": entry[1], "cache-control": "no-store" });
-      response.end(await readFile(join(skaldRoot, entry[0])));
+      response.end(content);
     } catch (error) {
-      response.writeHead(500).end(`${error.message}\n`);
+      response.writeHead(error.code === "ENOENT" ? 404 : 500).end(`${error.message}\n`);
     }
   });
-  return { server, port: await listen(server) };
+  return { server, port: await listen(server), requests };
 };
 
 const getAvailablePort = async () => {
@@ -181,6 +232,23 @@ const navigate = async (client, url) => {
   });
 };
 
+const evaluate = async (client, expression) => {
+  const result = await client.send("Runtime.evaluate", { expression, returnByValue: true });
+  if (result.exceptionDetails) {
+    throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
+  }
+  return result.result.value;
+};
+
+const waitUntil = async (client, expression, label) => {
+  const deadline = Date.now() + defaultTimeoutMs;
+  while (Date.now() < deadline) {
+    if (await evaluate(client, expression)) return;
+    await delay(50);
+  }
+  throw new Error(`Timed out waiting for ${label}`);
+};
+
 const layoutSnapshot = async (client, selectors) => {
   const expression = `(() => {
     const selectors = ${JSON.stringify(selectors)};
@@ -260,7 +328,7 @@ const main = async () => {
   if (options.screenshotsDir) await access(options.screenshotsDir);
 
   const profile = await mkdtemp(join(tmpdir(), "skald-feedback-chrome-"));
-  const { server, port: sitePort } = await startStaticServer();
+  const { server, port: sitePort, requests } = await startStaticServer();
   const debugPort = await getAvailablePort();
   const chrome = spawn(
     chromePath,
@@ -288,6 +356,131 @@ const main = async () => {
         await capture(client, join(options.screenshotsDir, "skald-feedback-desktop-1440x1000.png"));
       }
 
+      await navigate(client, `http://127.0.0.1:${sitePort}/${mosaicRoute}/`);
+      const lockedMosaic = await evaluate(
+        client,
+        `(() => ({
+          gateHidden: document.querySelector("[data-access-gate]").hidden,
+          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+          imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+          robots: document.querySelector('meta[name="robots"]').content,
+        }))()`,
+      );
+      assert.equal(lockedMosaic.gateHidden, false, "mosaic gate must render before access");
+      assert.equal(lockedMosaic.viewerHidden, true, "mosaic viewer must remain hidden before access");
+      assert.equal(lockedMosaic.imageHasSource, false, "mosaic asset must not be requested before access");
+      assert.equal(
+        requests.includes(`/${mosaicConfig}`),
+        false,
+        "encrypted metadata must not be requested before access is attempted",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicAsset}`),
+        false,
+        "encrypted mosaic bytes must not be requested before access is accepted",
+      );
+      for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
+        assert.match(lockedMosaic.robots, new RegExp(`(?:^|, )${directive}(?:,|$)`));
+      }
+
+      await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-access-input]").value = "wrong";
+          document.querySelector("[data-access-form]").requestSubmit();
+        })()`,
+      );
+      await waitUntil(
+        client,
+        `!document.querySelector("[data-access-submit]").disabled`,
+        "wrong-password rejection",
+      );
+      const rejectedMosaic = await evaluate(
+        client,
+        `(() => ({
+          errorHidden: document.querySelector("[data-access-error]").hidden,
+          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+          imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+        }))()`,
+      );
+      assert.equal(rejectedMosaic.errorHidden, false, "wrong mosaic access word must show an error");
+      assert.equal(rejectedMosaic.viewerHidden, true, "wrong mosaic access word must keep the viewer locked");
+      assert.equal(rejectedMosaic.imageHasSource, false, "wrong mosaic access word must not request the asset");
+      assert.equal(requests.includes(`/${mosaicConfig}`), true, "an access attempt must load only encryption metadata");
+      assert.equal(
+        requests.includes(`/${mosaicAsset}`),
+        false,
+        "a wrong access word must be rejected before the encrypted mosaic is downloaded",
+      );
+
+      await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-access-input]").value = ${JSON.stringify(mosaicPassword)};
+          document.querySelector("[data-access-form]").requestSubmit();
+        })()`,
+      );
+      await waitUntil(
+        client,
+        `!document.querySelector("[data-access-submit]").disabled`,
+        "encrypted mosaic decryption",
+      );
+      const unlockedMosaic = await evaluate(
+        client,
+        `(() => ({
+          gateHidden: document.querySelector("[data-access-gate]").hidden,
+          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+          imageSource: document.querySelector("[data-mosaic-image]").getAttribute("src"),
+          imageHidden: document.querySelector("[data-mosaic-image]").hidden,
+          imageWidth: document.querySelector("[data-mosaic-image]").naturalWidth,
+          imageHeight: document.querySelector("[data-mosaic-image]").naturalHeight,
+          placeholderHidden: document.querySelector("[data-asset-placeholder]").hidden,
+          status: document.querySelector("[data-asset-status]").textContent,
+          downloadHref: document.querySelector("[data-download]").getAttribute("href"),
+          downloadName: document.querySelector("[data-download]").download,
+          error: document.querySelector("[data-access-error]").textContent,
+        }))()`,
+      );
+      assert.equal(unlockedMosaic.gateHidden, true, `correct access must hide the gate: ${unlockedMosaic.error}`);
+      assert.equal(unlockedMosaic.viewerHidden, false, `correct access must open the viewer: ${unlockedMosaic.error}`);
+      assert.match(unlockedMosaic.imageSource, /^blob:/, "the image must render only from a decrypted Blob URL");
+      assert.equal(unlockedMosaic.imageHidden, false, "the decrypted mosaic must render after access");
+      assert.equal(
+        unlockedMosaic.imageWidth,
+        expectedMosaicConfig.plaintext.width,
+        "the decrypted mosaic must render at its approved width",
+      );
+      assert.equal(
+        unlockedMosaic.imageHeight,
+        expectedMosaicConfig.plaintext.height,
+        "the decrypted mosaic must render at its approved height",
+      );
+      assert.equal(unlockedMosaic.placeholderHidden, true, "the decrypted mosaic must replace its placeholder");
+      assert.match(unlockedMosaic.status, /\d[\d,]* × \d[\d,]* pixels · decrypted in this tab/);
+      assert.match(unlockedMosaic.downloadHref, /^blob:/, "download must use only the decrypted in-memory Blob");
+      assert.equal(unlockedMosaic.downloadName, "skald-museum-art-mosaic.jpg");
+      assert.equal(requests.includes(`/${mosaicAsset}`), true, "correct access must fetch encrypted mosaic bytes");
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-desktop-1440x1000.png"));
+      }
+
+      const relockedMosaic = await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-action='lock']").click();
+          return {
+            gateHidden: document.querySelector("[data-access-gate]").hidden,
+            viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+            imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+            downloadHasHref: document.querySelector("[data-download]").hasAttribute("href"),
+          };
+        })()`,
+      );
+      assert.equal(relockedMosaic.gateHidden, false, "locking must restore the encrypted access gate");
+      assert.equal(relockedMosaic.viewerHidden, true, "locking must hide the decrypted viewer");
+      assert.equal(relockedMosaic.imageHasSource, false, "locking must discard the decrypted image URL");
+      assert.equal(relockedMosaic.downloadHasHref, false, "locking must discard the decrypted download URL");
+
       const feedbackSelectors = [
         ".site-header",
         ".header-inner",
@@ -306,6 +499,55 @@ const main = async () => {
       assertMobileLayout("feedback page", feedbackSnapshot, feedbackSelectors);
       if (options.screenshotsDir) {
         await capture(client, join(options.screenshotsDir, "skald-feedback-mobile-390x844.png"));
+      }
+
+      const mosaicSelectors = [
+        ".viewer-header",
+        ".viewer-title",
+        ".viewer-controls",
+        ".viewer-controls > *",
+        ".mosaic-stage",
+        ".mosaic-image",
+        ".viewer-footer",
+        ".viewer-footer > *",
+      ];
+      await navigate(client, `http://127.0.0.1:${sitePort}/${mosaicRoute}/`);
+      const reloadedMosaicState = await evaluate(
+        client,
+        `(() => ({
+          gateHidden: document.querySelector("[data-access-gate]").hidden,
+          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+        }))()`,
+      );
+      assert.equal(reloadedMosaicState.gateHidden, false, "reloading must restore the encrypted access gate");
+      assert.equal(reloadedMosaicState.viewerHidden, true, "reloading must discard the decrypted viewer");
+      await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-access-input]").value = ${JSON.stringify(mosaicPassword)};
+          document.querySelector("[data-access-form]").requestSubmit();
+        })()`,
+      );
+      await waitUntil(
+        client,
+        `!document.querySelector("[data-access-submit]").disabled`,
+        "mobile encrypted mosaic decryption",
+      );
+      const mobileMosaicState = await evaluate(
+        client,
+        `(() => ({
+          gateHidden: document.querySelector("[data-access-gate]").hidden,
+          viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+          imageSource: document.querySelector("[data-mosaic-image]").getAttribute("src"),
+        }))()`,
+      );
+      assert.equal(mobileMosaicState.gateHidden, true, "correct mobile access must hide the gate");
+      assert.equal(mobileMosaicState.viewerHidden, false, "correct mobile access must open the viewer");
+      assert.match(mobileMosaicState.imageSource, /^blob:/, "mobile viewer must use a decrypted Blob URL");
+      const mosaicSnapshot = await layoutSnapshot(client, mosaicSelectors);
+      assertMobileLayout("mosaic viewer", mosaicSnapshot, mosaicSelectors);
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-mobile-390x844.png"));
       }
 
       const privacySelectors = [
@@ -335,7 +577,7 @@ const main = async () => {
     await rm(profile, { recursive: true, force: true });
   }
 
-  console.log("Skald feedback rendered layout verification passed in Chrome.");
+  console.log("Skald feedback and mosaic rendered layout verification passed in Chrome.");
 };
 
 main().catch((error) => {

@@ -34,6 +34,7 @@ const publicRoots = [
   "waitlist-privacy",
   "support",
   "feedback",
+  "folio-24b3206ad4eceb1abe0c",
 ];
 const retiredPublicRoots = ["analytics.js"];
 const feedbackRoots = ["feedback"];

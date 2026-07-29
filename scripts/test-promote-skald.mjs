@@ -13,6 +13,10 @@ const run = (...args) =>
   spawnSync(process.execPath, [script, "--target", target, ...args], {
     cwd: repoRoot,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      SKALD_ALLOW_MISSING_MOSAIC: "1",
+    },
   });
 
 const snapshotNonFeedbackFiles = async (current = target, prefix = "") => {
@@ -72,6 +76,22 @@ try {
     await readFile(join(target, "updates-privacy/index.html"), "utf8"),
     /Product Updates Privacy Notice/,
   );
+  assert.match(
+    await readFile(join(target, "folio-24b3206ad4eceb1abe0c/index.html"), "utf8"),
+    /noindex, nofollow, noarchive, nosnippet, noimageindex/,
+  );
+  assert.match(
+    await readFile(join(target, "folio-24b3206ad4eceb1abe0c/attribution.html"), "utf8"),
+    /Photo: Sailko \/ CC BY 3\.0/,
+  );
+  assert.match(
+    await readFile(join(target, "folio-24b3206ad4eceb1abe0c/viewer.js"), "utf8"),
+    /PBKDF2/,
+  );
+  assert.doesNotMatch(
+    await readFile(join(target, "folio-24b3206ad4eceb1abe0c/viewer.js"), "utf8"),
+    /ACCESS_WORD|["']\.\/[^"']+\.jpg["']/,
+  );
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "skald.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -88,6 +108,10 @@ try {
   assert.ok(manifest.files["feedback/privacy/index.html"]);
   assert.ok(manifest.files["feedback/styles.css"]);
   assert.ok(manifest.files["updates-privacy/index.html"]);
+  assert.ok(manifest.files["folio-24b3206ad4eceb1abe0c/index.html"]);
+  assert.ok(manifest.files["folio-24b3206ad4eceb1abe0c/attribution.html"]);
+  assert.ok(manifest.files["folio-24b3206ad4eceb1abe0c/styles.css"]);
+  assert.ok(manifest.files["folio-24b3206ad4eceb1abe0c/viewer.js"]);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
