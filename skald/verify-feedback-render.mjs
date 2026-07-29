@@ -585,6 +585,62 @@ const main = async () => {
         "mouse-wheel input must transform the mosaic",
       );
       await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+      await delay(50);
+
+      const wheelBurstBefore = await evaluate(
+        client,
+        `(() => {
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const image = document.querySelector("[data-mosaic-image]");
+          const rect = stage.getBoundingClientRect();
+          const scale = Number.parseFloat(
+            image.style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0",
+          );
+          window.__mosaicZoomRenderMutations = 0;
+          window.__mosaicZoomRenderObserver?.disconnect();
+          window.__mosaicZoomRenderObserver = new MutationObserver((records) => {
+            window.__mosaicZoomRenderMutations += records.filter(
+              (record) => record.type === "attributes" && record.attributeName === "style",
+            ).length;
+          });
+          window.__mosaicZoomRenderObserver.observe(image, {
+            attributes: true,
+            attributeFilter: ["style"],
+          });
+          for (let index = 0; index < 120; index += 1) {
+            stage.dispatchEvent(new WheelEvent("wheel", {
+              bubbles: true,
+              cancelable: true,
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+              deltaY: -1,
+              deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+            }));
+          }
+          return scale;
+        })()`,
+      );
+      await delay(50);
+      const wheelBurstAfter = await evaluate(
+        client,
+        `(() => {
+          window.__mosaicZoomRenderObserver?.disconnect();
+          const transform = document.querySelector("[data-mosaic-image]").style.transform;
+          return {
+            scale: Number.parseFloat(transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"),
+            mutations: window.__mosaicZoomRenderMutations,
+          };
+        })()`,
+      );
+      assert.ok(
+        wheelBurstAfter.scale >= wheelBurstBefore * 1.3,
+        `fine-grained wheel input must zoom responsively (${wheelBurstAfter.scale} after ${wheelBurstBefore})`,
+      );
+      assert.ok(
+        wheelBurstAfter.mutations <= 2,
+        `wheel bursts must coalesce into display-frame renders, got ${wheelBurstAfter.mutations} image transforms`,
+      );
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
 
       await client.send("Input.dispatchMouseEvent", {
         type: "mousePressed",
