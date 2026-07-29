@@ -8,6 +8,7 @@ import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { inflateSync } from "node:zlib";
 import {
   decryptAndVerifyMosaicCatalogBytes,
   encryptMosaicCatalogBytes,
@@ -262,6 +263,7 @@ class CdpClient {
     this.nextId = 1;
     this.pending = new Map();
     this.listeners = new Map();
+    this.subscriptions = new Map();
     this.socket.addEventListener("message", (event) => this.onMessage(JSON.parse(event.data)));
   }
 
@@ -283,6 +285,9 @@ class CdpClient {
       return;
     }
 
+    for (const listener of this.subscriptions.get(message.method) ?? []) {
+      listener(message.params);
+    }
     const listeners = this.listeners.get(message.method) ?? [];
     this.listeners.delete(message.method);
     for (const listener of listeners) listener.resolve(message.params);
@@ -308,6 +313,19 @@ class CdpClient {
       };
       this.listeners.set(method, [...(this.listeners.get(method) ?? []), listener]);
     });
+  }
+
+  subscribe(method, listener) {
+    this.subscriptions.set(method, [
+      ...(this.subscriptions.get(method) ?? []),
+      listener,
+    ]);
+    return () => {
+      const remaining = (this.subscriptions.get(method) ?? [])
+        .filter((candidate) => candidate !== listener);
+      if (remaining.length) this.subscriptions.set(method, remaining);
+      else this.subscriptions.delete(method);
+    };
   }
 
   close() {
@@ -440,6 +458,157 @@ const capture = async (client, path) => {
     captureBeyondViewport: false,
   });
   await writeFile(path, Buffer.from(result.data, "base64"));
+};
+
+const capturePngBytes = async (client) => {
+  const result = await client.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  return Buffer.from(result.data, "base64");
+};
+
+const decodePng = (source) => {
+  assert.deepEqual(
+    source.subarray(0, 8),
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    "Chrome screencast frames must be PNG images",
+  );
+  let offset = 8;
+  let width;
+  let height;
+  let channels;
+  const imageDataChunks = [];
+  while (offset < source.length) {
+    const length = source.readUInt32BE(offset);
+    const type = source.subarray(offset + 4, offset + 8).toString("ascii");
+    const data = source.subarray(offset + 8, offset + 8 + length);
+    if (type === "IHDR") {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      assert.equal(data[8], 8, "Chrome PNG frames must use 8-bit channels");
+      assert.ok([2, 6].includes(data[9]), "Chrome PNG frames must use RGB or RGBA");
+      assert.deepEqual(
+        [...data.subarray(10, 13)],
+        [0, 0, 0],
+        "Chrome PNG frames must use standard non-interlaced encoding",
+      );
+      channels = data[9] === 2 ? 3 : 4;
+    } else if (type === "IDAT") {
+      imageDataChunks.push(data);
+    }
+    offset += length + 12;
+  }
+
+  assert.ok(width && height && channels && imageDataChunks.length);
+  const stride = width * channels;
+  const raw = inflateSync(Buffer.concat(imageDataChunks));
+  const pixels = Buffer.alloc(stride * height);
+  const paeth = (left, up, upLeft) => {
+    const prediction = left + up - upLeft;
+    const leftDistance = Math.abs(prediction - left);
+    const upDistance = Math.abs(prediction - up);
+    const upLeftDistance = Math.abs(prediction - upLeft);
+    if (leftDistance <= upDistance && leftDistance <= upLeftDistance) return left;
+    return upDistance <= upLeftDistance ? up : upLeft;
+  };
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[y * (stride + 1)];
+    const sourceRow = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    const row = pixels.subarray(y * stride, (y + 1) * stride);
+    const prior = y ? pixels.subarray((y - 1) * stride, y * stride) : null;
+    for (let x = 0; x < stride; x += 1) {
+      const left = x >= channels ? row[x - channels] : 0;
+      const up = prior?.[x] ?? 0;
+      const upLeft = x >= channels ? prior?.[x - channels] ?? 0 : 0;
+      if (filter === 0) row[x] = sourceRow[x];
+      else if (filter === 1) row[x] = sourceRow[x] + left;
+      else if (filter === 2) row[x] = sourceRow[x] + up;
+      else if (filter === 3) row[x] = sourceRow[x] + Math.floor((left + up) / 2);
+      else if (filter === 4) row[x] = sourceRow[x] + paeth(left, up, upLeft);
+      else assert.fail(`Unsupported Chrome PNG row filter ${filter}`);
+    }
+  }
+  return { width, height, channels, pixels };
+};
+
+const hasMagentaMarker = (image) => {
+  for (let y = 2; y < 10; y += 1) {
+    for (let x = 2; x < 10; x += 1) {
+      const offset = (y * image.width + x) * image.channels;
+      if (
+        image.pixels[offset] < 240 ||
+        image.pixels[offset + 1] > 20 ||
+        image.pixels[offset + 2] < 240
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+const unexpectedlyDarkBlocks = (baseline, actual, rect) => {
+  assert.equal(actual.width, baseline.width);
+  assert.equal(actual.height, baseline.height);
+  const left = Math.max(0, Math.floor(rect.left));
+  const top = Math.max(0, Math.floor(rect.top));
+  const right = Math.min(actual.width, Math.ceil(rect.right));
+  const bottom = Math.min(actual.height, Math.ceil(rect.bottom));
+  const blocks = new Map();
+  for (let y = top; y < bottom; y += 1) {
+    for (let x = left; x < right; x += 1) {
+      const baselineOffset = (y * baseline.width + x) * baseline.channels;
+      const actualOffset = (y * actual.width + x) * actual.channels;
+      const baselineSum =
+        baseline.pixels[baselineOffset] +
+        baseline.pixels[baselineOffset + 1] +
+        baseline.pixels[baselineOffset + 2];
+      const actualSum =
+        actual.pixels[actualOffset] +
+        actual.pixels[actualOffset + 1] +
+        actual.pixels[actualOffset + 2];
+      if (actualSum < 100 && actualSum + 90 < baselineSum) {
+        const block = `${Math.floor((x - left) / 32)}:${Math.floor((y - top) / 32)}`;
+        blocks.set(block, (blocks.get(block) ?? 0) + 1);
+      }
+    }
+  }
+  return [...blocks.values()].filter((count) => count >= 512).length;
+};
+
+const recordScreencast = async (client, action, durationMs = 500) => {
+  const frames = [];
+  const acknowledgements = [];
+  const unsubscribe = client.subscribe("Page.screencastFrame", (frame) => {
+    frames.push(Buffer.from(frame.data, "base64"));
+    acknowledgements.push(
+      client.send("Page.screencastFrameAck", { sessionId: frame.sessionId }),
+    );
+  });
+  await client.send("Page.startScreencast", {
+    format: "png",
+    quality: 100,
+    maxWidth: 1440,
+    maxHeight: 1000,
+    everyNthFrame: 1,
+  });
+  await waitUntil(
+    client,
+    "document.readyState === 'complete'",
+    "initial compositor frame",
+  );
+  const initialDeadline = Date.now() + defaultTimeoutMs;
+  while (!frames.length && Date.now() < initialDeadline) await delay(10);
+  assert.ok(frames.length, "Chrome must emit an initial compositor frame");
+  frames.length = 0;
+  const actionResult = await action();
+  await delay(durationMs);
+  await client.send("Page.stopScreencast");
+  unsubscribe();
+  await Promise.all(acknowledgements);
+  return { frames, actionResult };
 };
 
 const terminate = async (child) => {
@@ -1017,6 +1186,110 @@ const main = async () => {
       if (options.screenshotsDir) {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
       }
+
+      await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-action='close-details']").click();
+          document.querySelector("[data-action='fit']").click();
+          const marker = document.createElement("div");
+          marker.dataset.compositorMarker = "";
+          marker.hidden = true;
+          marker.style.cssText =
+            "position:fixed;inset:0 auto auto 0;width:12px;height:12px;" +
+            "z-index:2147483647;background:#ff00ff;pointer-events:none";
+          document.body.append(marker);
+        })()`,
+      );
+      await delay(150);
+      const fitBaseline = decodePng(await capturePngBytes(client));
+      const stressGeometry = await evaluate(
+        client,
+        `(() => {
+          const stage = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          const overview = document.querySelector("[data-mosaic-overview]").getBoundingClientRect();
+          return {
+            centerX: stage.left + stage.width / 2,
+            centerY: stage.top + stage.height / 2,
+            overview: {
+              left: overview.left,
+              top: overview.top,
+              right: overview.right,
+              bottom: overview.bottom,
+            },
+          };
+        })()`,
+      );
+      for (let index = 0; index < 7; index += 1) {
+        await client.send("Input.dispatchMouseEvent", {
+          type: "mouseWheel",
+          x: stressGeometry.centerX,
+          y: stressGeometry.centerY,
+          deltaX: 0,
+          deltaY: -240,
+        });
+        await delay(18);
+      }
+      await waitUntil(
+        client,
+        `[...document.querySelectorAll("[data-tile-id]")]
+          .some((tile) => tile.hasAttribute("src") && tile.naturalWidth > 0 && !tile.hidden)`,
+        "decoded tiles before compositor recovery stress",
+      );
+      await delay(180);
+      const compositorRecovery = await recordScreencast(
+        client,
+        async () => client.send("Runtime.evaluate", {
+          expression: `new Promise((resolve) => {
+            document.querySelector("[data-action='fit']").click();
+            const marker = document.querySelector("[data-compositor-marker]");
+            marker.hidden = false;
+            let alternate = false;
+            window.__mosaicCompositorMarkerTimer = setInterval(() => {
+              alternate = !alternate;
+              marker.style.boxShadow = alternate ? "0 0 0 1px #ff00ff" : "none";
+            }, 32);
+            requestAnimationFrame(() => resolve({
+              visibleTiles: [...document.querySelectorAll("[data-tile-id]")]
+                .filter((tile) => tile.hasAttribute("src") && !tile.hidden).length,
+            }));
+          })`,
+          returnByValue: true,
+          awaitPromise: true,
+        }),
+      );
+      await evaluate(
+        client,
+        `(() => {
+          clearInterval(window.__mosaicCompositorMarkerTimer);
+          document.querySelector("[data-compositor-marker]").hidden = true;
+        })()`,
+      );
+      assert.equal(
+        compositorRecovery.actionResult.result.value.visibleTiles,
+        0,
+        "Fit must suppress detail tiles before the first compositor frame",
+      );
+      const markedFitFrames = compositorRecovery.frames
+        .map(decodePng)
+        .filter(hasMagentaMarker);
+      assert.ok(
+        markedFitFrames.length >= 2,
+        `the stress gate needs at least two committed Fit frames, got ${markedFitFrames.length}`,
+      );
+      const checkerboardedFrames = markedFitFrames
+        .map((frame) => unexpectedlyDarkBlocks(
+          fitBaseline,
+          frame,
+          stressGeometry.overview,
+        ))
+        .filter((darkBlocks) => darkBlocks > 0);
+      assert.deepEqual(
+        checkerboardedFrames,
+        [],
+        `rapid zoom/Fit must not expose checkerboard blocks: ${checkerboardedFrames.join(", ")}`,
+      );
+
       await evaluate(client, `document.querySelector("[data-download]").click()`);
       await waitUntil(
         client,
