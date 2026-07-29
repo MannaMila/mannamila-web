@@ -24,16 +24,19 @@ try {
   await writeFile(join(target, ".github/workflows/pages.yml"), "name: Pages\n");
   await writeFile(join(target, "docs/deploy.md"), "deployment notes\n");
   await writeFile(join(target, "README.md"), "Mila Squash web deployment\n");
+  await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
 
   const dryRun = run("--dry-run", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(dryRun.status, 0, dryRun.stderr);
   assert.match(dryRun.stdout, /Dry run/);
+  assert.match(dryRun.stdout, /remove\s+analytics\.js/);
   await assert.rejects(readFile(join(target, "index.html")));
 
   const apply = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Squash/);
-  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
+  await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
+  assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "squash.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -44,14 +47,16 @@ try {
   assert.equal(typeof manifest.sourceCommit, "string");
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
-  assert.ok(manifest.files["analytics.js"]);
+  assert.ok(manifest.files["retire-analytics.js"]);
+  assert.equal(manifest.files["analytics.js"], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(check.status, 0, check.stderr);
   assert.match(check.stdout, /Parity check passed/);
 
-  await rm(join(target, "analytics.js"));
+  await rm(join(target, "retire-analytics.js"));
+  await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
   for (const page of [
     "index.html",
     "privacy/index.html",
@@ -62,7 +67,10 @@ try {
     const html = await readFile(pagePath, "utf8");
     await writeFile(
       pagePath,
-      html.replace(/^\s*<script src="(?:\.\/|\.\.\/)analytics\.js" defer><\/script>\n/m, ""),
+      html.replace(
+        /^\s*<script src="(?:\.\/|\.\.\/)retire-analytics\.js" defer><\/script>\n/m,
+        "",
+      ),
     );
   }
 
@@ -72,7 +80,8 @@ try {
 
   const analyticsApply = run("--analytics-only", "--apply", "--allow-dirty-source");
   assert.equal(analyticsApply.status, 0, analyticsApply.stderr);
-  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
+  await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
+  assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
 
   await writeFile(join(target, "app.js"), "changed outside analytics scope\n");
   const unsafeAnalyticsPromotion = run("--analytics-only", "--dry-run", "--allow-dirty-source");

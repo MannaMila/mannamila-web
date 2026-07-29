@@ -1,139 +1,138 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const sites = [
-  {
-    sourcePath: "skald",
-    hostname: "skald.mannamila.com",
-    pages: [
-      "index.html",
-      "get/index.html",
-      "feedback/index.html",
-      "feedback/privacy/index.html",
-      "privacy/index.html",
-      "support/index.html",
-      "updates/index.html",
-      "updates-privacy/index.html",
-      "waitlist-privacy/index.html",
-    ],
-  },
-  {
-    sourcePath: "squash",
-    hostname: "squash.mannamila.com",
-    pages: [
-      "index.html",
-      "privacy/index.html",
-      "support/index.html",
-      "waitlist-privacy/index.html",
-    ],
-  },
-  {
-    sourcePath: "inspire",
-    hostname: "inspire.mannamila.com",
-    pages: ["index.html"],
-  },
+  { sourcePath: "skald", hostname: "skald.mannamila.com" },
+  { sourcePath: "squash", hostname: "squash.mannamila.com" },
+  { sourcePath: "inspire", hostname: "inspire.mannamila.com" },
 ];
-
+const forbiddenAnalyticsSource =
+  /\bG-[A-Z0-9]{8,}\b|googletagmanager|google-analytics|\bgtag\b|cookie_domain/i;
 const toPosix = (path) => path.split(sep).join("/");
-const measurementIds = new Set();
-const loaders = [];
+
+const walkFiles = async (root, current = root) => {
+  const files = [];
+  for (const entry of await readdir(current, { withFileTypes: true })) {
+    const absolute = join(current, entry.name);
+    if (entry.isDirectory()) files.push(...(await walkFiles(root, absolute)));
+    else if (entry.isFile()) files.push(toPosix(relative(root, absolute)));
+  }
+  return files.sort();
+};
 
 for (const site of sites) {
   const root = join(repoRoot, site.sourcePath);
-  const loaderPath = join(root, "analytics.js");
-  const loader = await readFile(loaderPath, "utf8");
-  loaders.push(loader);
+  const files = await walkFiles(root);
+  const htmlPages = files.filter((file) => file.endsWith(".html"));
+  const javascriptFiles = files.filter((file) => file.endsWith(".js"));
+  const retirementLoaderPath = join(root, "retire-analytics.js");
+  const retirementLoader = await readFile(retirementLoaderPath, "utf8");
 
-  const measurementId = loader.match(/\bG-[A-Z0-9]{8,}\b/)?.[0];
-  assert.ok(measurementId, `${site.sourcePath}/analytics.js needs a GA4 measurement ID`);
-  measurementIds.add(measurementId);
-
-  assert.match(loader, /mannamila\.com/, "analytics must use the shared MannaMila cookie domain");
-  assert.match(loader, /allow_google_signals:\s*false/, "Google Signals must stay disabled");
-  assert.match(
-    loader,
-    /allow_ad_personalization_signals:\s*false/,
-    "ad-personalization signals must stay disabled",
+  assert.ok(htmlPages.length > 0, `${site.sourcePath} must expose at least one HTML route`);
+  await assert.rejects(
+    access(join(root, "analytics.js")),
+    `${site.sourcePath} must not ship a dormant analytics loader`,
   );
-  assert.match(loader, /https:\/\/www\.googletagmanager\.com\/gtag\/js/);
 
-  for (const page of site.pages) {
+  for (const page of htmlPages) {
     const pagePath = join(root, page);
     const html = await readFile(pagePath, "utf8");
-    const loaderReference = toPosix(relative(dirname(pagePath), loaderPath));
+    const loaderReference = toPosix(relative(dirname(pagePath), retirementLoaderPath));
     const htmlLoaderReference = loaderReference.includes("/")
       ? loaderReference
       : `./${loaderReference}`;
+
+    assert.doesNotMatch(
+      html,
+      forbiddenAnalyticsSource,
+      `${site.sourcePath}/${page} must not initialize analytics`,
+    );
+    assert.doesNotMatch(
+      html,
+      /document\.cookie\s*=/,
+      `${site.sourcePath}/${page} must not contain inline cookie-writing code`,
+    );
     assert.match(
       html,
       new RegExp(
         `<script\\s+src=["']${htmlLoaderReference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']\\s+defer></script>`,
       ),
-      `${site.sourcePath}/${page} must load ${htmlLoaderReference}`,
+      `${site.sourcePath}/${page} must retire legacy GA cookies with ${htmlLoaderReference}`,
     );
   }
 
-  const appendedScripts = [];
-  const document = {
-    createElement: () => ({}),
-    head: {
-      append: (node) => appendedScripts.push(node),
-    },
-  };
-  const window = {
-    dataLayer: [],
-    location: {
-      hostname: site.hostname,
-      href: `https://${site.hostname}/`,
-    },
-  };
-  vm.runInNewContext(loader, { document, window });
+  for (const file of javascriptFiles) {
+    const source = await readFile(join(root, file), "utf8");
+    assert.doesNotMatch(
+      source,
+      forbiddenAnalyticsSource,
+      `${site.sourcePath}/${file} must not contain Google Analytics code`,
+    );
+    if (file !== "retire-analytics.js") {
+      assert.doesNotMatch(
+        source,
+        /document\.cookie\s*=/,
+        `${site.sourcePath}/${file} must not write browser cookies`,
+      );
+    }
+  }
 
-  assert.equal(appendedScripts.length, 1, `${site.hostname} must load the Google tag`);
+  assert.match(retirementLoader, /document\.cookie/);
+  assert.match(retirementLoader, /Max-Age=0/);
+  assert.match(retirementLoader, /Expires=Thu, 01 Jan 1970 00:00:00 GMT/);
+  assert.doesNotMatch(retirementLoader, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|createElement/);
   assert.equal(
-    appendedScripts[0].src,
-    `https://www.googletagmanager.com/gtag/js?id=${measurementId}`,
+    [...retirementLoader.matchAll(/document\.cookie\s*=/g)].length,
+    2,
+    `${site.sourcePath}/retire-analytics.js may only write the host and shared-domain expirations`,
   );
-  assert.equal(appendedScripts[0].async, true);
-  const config = window.dataLayer
-    .map((entry) => Array.from(entry))
-    .find(([command]) => command === "config");
-  assert.ok(config, `${site.hostname} must configure GA4`);
-  assert.equal(config[1], measurementId);
-  assert.equal(config[2].cookie_domain, "mannamila.com");
-  assert.equal(config[2].allow_google_signals, false);
-  assert.equal(config[2].allow_ad_personalization_signals, false);
+
+  const cookieWrites = [];
+  const document = {};
+  Object.defineProperty(document, "cookie", {
+    get: () => "_ga=legacy; session=keep; _ga_TEST=legacy-stream; _gid=keep",
+    set: (value) => cookieWrites.push(value),
+  });
+  vm.runInNewContext(retirementLoader, {
+    document,
+    window: { location: { hostname: site.hostname } },
+  });
+
+  assert.deepEqual(
+    cookieWrites.map((value) => value.split("=")[0]),
+    ["_ga", "_ga", "_ga_TEST", "_ga_TEST"],
+    `${site.hostname} must expire only the legacy GA4 cookie names it can observe`,
+  );
+  for (const write of cookieWrites) {
+    assert.match(write, /^_ga(?:_[A-Za-z0-9]+)?=;/);
+    assert.match(write, /Max-Age=0/);
+    assert.match(write, /Expires=Thu, 01 Jan 1970 00:00:00 GMT/);
+    assert.match(write, /Path=\//);
+    assert.match(write, /Secure/);
+  }
+  assert.equal(
+    cookieWrites.filter((value) => /Domain=mannamila\.com/.test(value)).length,
+    2,
+    `${site.hostname} must expire the shared-domain copy of each observable GA cookie`,
+  );
+
+  const previewCookieWrites = [];
+  const previewDocument = {};
+  Object.defineProperty(previewDocument, "cookie", {
+    get: () => "_ga=preview",
+    set: (value) => previewCookieWrites.push(value),
+  });
+  vm.runInNewContext(retirementLoader, {
+    document: previewDocument,
+    window: { location: { hostname: "mannamila.github.io" } },
+  });
+  assert.deepEqual(previewCookieWrites, [], "preview hosts must not mutate cookies");
 }
 
-assert.equal(measurementIds.size, 1, "all MannaMila sites must share one GA4 measurement ID");
-assert.equal(new Set(loaders).size, 1, "all product sites must use the same analytics loader");
-
-const embeddedScripts = [];
-vm.runInNewContext(loaders[0], {
-  document: {
-    createElement: () => ({}),
-    head: {
-      append: (node) => embeddedScripts.push(node),
-    },
-  },
-  window: {
-    dataLayer: [],
-    location: {
-      hostname: "mannamila.github.io",
-      href: "https://mannamila.github.io/mannamila-web/skald/",
-    },
-  },
-});
-assert.equal(
-  embeddedScripts.length,
-  0,
-  "GitHub Pages embeds must not duplicate Google Sites page views",
-);
-
-console.log("MannaMila analytics contract tests passed.");
+console.log("MannaMila analytics-retirement contract tests passed.");

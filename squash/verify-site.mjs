@@ -11,7 +11,7 @@ const requiredFiles = [
   "index.html",
   "styles.css",
   "app.js",
-  "analytics.js",
+  "retire-analytics.js",
   "availability.json",
   "site-config.json",
   "privacy/index.html",

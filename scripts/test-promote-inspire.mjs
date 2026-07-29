@@ -23,16 +23,19 @@ try {
   await writeFile(join(target, "CNAME"), "inspire.mannamila.com\n");
   await writeFile(join(target, ".nojekyll"), "");
   await writeFile(join(target, ".github/workflows/pages.yml"), "name: Pages\n");
+  await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
 
   const dryRun = run("--dry-run", "--allow-dirty-source");
   assert.equal(dryRun.status, 0, dryRun.stderr);
   assert.match(dryRun.stdout, /Dry run/);
+  assert.match(dryRun.stdout, /remove\s+analytics\.js/);
   await assert.rejects(readFile(join(target, "index.html")));
 
   const apply = run("--apply", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Inspire/);
-  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /\bG-[A-Z0-9]{8,}\b/);
+  await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
+  assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "inspire.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
 
@@ -42,7 +45,8 @@ try {
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
   assert.ok(manifest.files["styles.css"]);
-  assert.ok(manifest.files["analytics.js"]);
+  assert.ok(manifest.files["retire-analytics.js"]);
+  assert.equal(manifest.files["analytics.js"], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-dirty-source");

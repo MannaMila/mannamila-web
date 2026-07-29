@@ -23,7 +23,7 @@ const publicRoots = [
   "index.html",
   "styles.css",
   "app.js",
-  "analytics.js",
+  "retire-analytics.js",
   "availability.json",
   "site-config.json",
   "assets",
@@ -35,6 +35,7 @@ const publicRoots = [
   "support",
   "feedback",
 ];
+const retiredPublicRoots = ["analytics.js"];
 const feedbackRoots = ["feedback"];
 const preservedTopLevel = new Set([
   ".git",
@@ -173,6 +174,17 @@ const checksums = async (root, files) => {
   return result;
 };
 
+const assertFeedbackDependencies = async (target) => {
+  const dependency = "retire-analytics.js";
+  const deployed = join(target, dependency);
+  if (!(await pathExists(deployed))) {
+    throw new Error(`Feedback-only promotion requires deployed ${dependency} parity.`);
+  }
+  if ((await sha256(deployed)) !== (await sha256(join(sourceRoot, dependency)))) {
+    throw new Error(`Feedback-only promotion requires deployed ${dependency} parity.`);
+  }
+};
+
 const assertTarget = async (target) => {
   const resolvedTarget = resolve(target);
   const [sourceReal, targetReal] = await Promise.all([realpath(sourceRoot), realpath(resolvedTarget)]);
@@ -189,7 +201,12 @@ const assertTarget = async (target) => {
     throw new Error("The target must contain .nojekyll.");
   }
 
-  const approvedTopLevel = new Set([...publicRoots, ...preservedTopLevel, generatedManifest]);
+  const approvedTopLevel = new Set([
+    ...publicRoots,
+    ...retiredPublicRoots,
+    ...preservedTopLevel,
+    generatedManifest,
+  ]);
   const unexpected = (await readdir(resolvedTarget))
     .filter((name) => !approvedTopLevel.has(name))
     .sort();
@@ -248,15 +265,19 @@ const main = async () => {
   const options = parseArgs();
   verifySource(options);
   const target = await assertTarget(options.target);
-  const roots = options.feedbackOnly ? feedbackRoots : publicRoots;
+  if (options.feedbackOnly) await assertFeedbackDependencies(target);
+  const sourceRoots = options.feedbackOnly ? feedbackRoots : publicRoots;
+  const managedTargetRoots = options.feedbackOnly
+    ? feedbackRoots
+    : [...publicRoots, ...retiredPublicRoots];
   const identity = sourceIdentity();
   if (identity.sourceTreeDirty && !options.allowDirtySource) {
     throw new Error("The skald source tree is dirty. Promote a reviewed source commit, or use --allow-dirty-source only for an isolated test.");
   }
 
-  const files = await sourceFiles(roots);
+  const files = await sourceFiles(sourceRoots);
   const expectedChecksums = await checksums(sourceRoot, files);
-  const existingFiles = await targetFiles(target, roots);
+  const existingFiles = await targetFiles(target, managedTargetRoots);
   const existingChecksums = await checksums(target, existingFiles);
   const changes = compare(expectedChecksums, existingChecksums);
 
@@ -269,7 +290,7 @@ const main = async () => {
   }
 
   if (options.mode === "apply") {
-    await copyPublicTree(target, files, roots);
+    await copyPublicTree(target, files, managedTargetRoots);
     if (!options.feedbackOnly) {
       const manifest = manifestFor(identity, expectedChecksums);
       await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
