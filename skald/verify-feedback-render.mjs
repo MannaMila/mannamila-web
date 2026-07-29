@@ -2,12 +2,15 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  decryptAndVerifyMosaicCatalogBytes,
+  encryptMosaicCatalogBytes,
   encryptMosaicBytes,
   inspectJpeg,
 } from "../scripts/encrypt-skald-mosaic.mjs";
@@ -18,38 +21,87 @@ const defaultTimeoutMs = 10_000;
 const mosaicRoute = "mosaic";
 const mosaicConfig = `${mosaicRoute}/mosaic-config.json`;
 const mosaicAsset = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
+const mosaicCatalog = `${mosaicRoute}/assets/skald-museum-art-map.enc`;
 const mosaicConfigInstalled = await access(join(skaldRoot, mosaicConfig))
   .then(() => true)
   .catch(() => false);
 const mosaicAssetInstalled = await access(join(skaldRoot, mosaicAsset))
   .then(() => true)
   .catch(() => false);
+const mosaicCatalogInstalled = await access(join(skaldRoot, mosaicCatalog))
+  .then(() => true)
+  .catch(() => false);
 assert.equal(
-  mosaicConfigInstalled,
-  mosaicAssetInstalled,
-  "the encrypted mosaic config and ciphertext must be installed together",
+  mosaicConfigInstalled && mosaicAssetInstalled && mosaicCatalogInstalled,
+  mosaicConfigInstalled || mosaicAssetInstalled || mosaicCatalogInstalled,
+  "the encrypted mosaic config, image ciphertext, and artwork-map ciphertext must be installed together",
 );
 
 let mosaicPassword;
 let mosaicConfigContent;
 let mosaicAssetContent;
+let mosaicCatalogContent;
 if (mosaicAssetInstalled) {
   mosaicPassword = process.env.SKALD_MOSAIC_PASSWORD;
   assert.ok(mosaicPassword, "SKALD_MOSAIC_PASSWORD is required to verify the encrypted mosaic");
-  [mosaicConfigContent, mosaicAssetContent] = await Promise.all([
+  [mosaicConfigContent, mosaicAssetContent, mosaicCatalogContent] = await Promise.all([
     readFile(join(skaldRoot, mosaicConfig)),
     readFile(join(skaldRoot, mosaicAsset)),
+    readFile(join(skaldRoot, mosaicCatalog)),
   ]);
 } else {
   mosaicPassword = "render-test-only-password";
   const plaintext = await readFile(join(skaldRoot, "assets/skald-odyssey-og.jpg"));
+  const catalogPlaintext = Buffer.from(`${JSON.stringify({
+    width: 1200,
+    height: 630,
+    tiles: [],
+    artworks: [{
+      index: 1,
+      id: "render-test-artwork",
+      x: 0,
+      y: 0,
+      width: 1200,
+      height: 630,
+      title: "Render test artwork",
+      creator: "Test fixture",
+      date: "2026",
+      museum: "Test museum",
+      source_provider: "Test source",
+      on_view: false,
+      gallery: "",
+      as_of: "2026-07",
+      license: "Test fixture only",
+      museum_url: "https://example.com/artwork",
+      file_page_url: "https://example.com/artwork",
+    }],
+  })}\n`);
   const encrypted = encryptMosaicBytes(plaintext, mosaicPassword, {
     approvedPlaintext: inspectJpeg(plaintext),
   });
-  mosaicConfigContent = Buffer.from(`${JSON.stringify(encrypted.config, null, 2)}\n`);
+  const encryptedCatalog = encryptMosaicCatalogBytes(
+    catalogPlaintext,
+    mosaicPassword,
+    encrypted.config,
+    {
+      approvedCatalogSha256: createHash("sha256").update(catalogPlaintext).digest("hex"),
+    },
+  );
+  const config = { ...encrypted.config, catalog: encryptedCatalog.config };
+  mosaicConfigContent = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
   mosaicAssetContent = encrypted.encrypted;
+  mosaicCatalogContent = encryptedCatalog.encrypted;
 }
 const expectedMosaicConfig = JSON.parse(mosaicConfigContent.toString("utf8"));
+const expectedMosaicMap = JSON.parse(
+  decryptAndVerifyMosaicCatalogBytes(
+    mosaicCatalogContent,
+    mosaicPassword,
+    expectedMosaicConfig,
+  ).toString("utf8"),
+);
+const firstArtwork = expectedMosaicMap.artworks[0];
+const lastArtwork = expectedMosaicMap.artworks.at(-1);
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -94,6 +146,7 @@ const staticFiles = new Map([
   [`/${mosaicRoute}/viewer.js`, [`${mosaicRoute}/viewer.js`, "text/javascript; charset=utf-8"]],
   [`/${mosaicConfig}`, [mosaicConfigContent, "application/json; charset=utf-8"]],
   [`/${mosaicAsset}`, [mosaicAssetContent, "application/octet-stream"]],
+  [`/${mosaicCatalog}`, [mosaicCatalogContent, "application/octet-stream"]],
 ]);
 
 const startStaticServer = async () => {
@@ -280,9 +333,22 @@ const layoutSnapshot = async (client, selectors) => {
   return result.result.value;
 };
 
-const assertMobileLayout = (label, snapshot, expectedSelectors) => {
-  assert.equal(snapshot.innerWidth, 390, `${label}: device emulation must produce a 390 CSS-pixel viewport`);
-  assert.equal(snapshot.innerHeight, 844, `${label}: device emulation must produce an 844 CSS-pixel viewport`);
+const assertMobileLayout = (
+  label,
+  snapshot,
+  expectedSelectors,
+  { width = 390, height = 844 } = {},
+) => {
+  assert.equal(
+    snapshot.innerWidth,
+    width,
+    `${label}: device emulation must produce a ${width} CSS-pixel viewport`,
+  );
+  assert.equal(
+    snapshot.innerHeight,
+    height,
+    `${label}: device emulation must produce a ${height} CSS-pixel viewport`,
+  );
   assert.ok(
     snapshot.documentScrollWidth <= snapshot.innerWidth,
     `${label}: document scroll width ${snapshot.documentScrollWidth} exceeds inner width ${snapshot.innerWidth}`,
@@ -363,12 +429,14 @@ const main = async () => {
           gateHidden: document.querySelector("[data-access-gate]").hidden,
           viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
           imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+          artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
           robots: document.querySelector('meta[name="robots"]').content,
         }))()`,
       );
       assert.equal(lockedMosaic.gateHidden, false, "mosaic gate must render before access");
       assert.equal(lockedMosaic.viewerHidden, true, "mosaic viewer must remain hidden before access");
       assert.equal(lockedMosaic.imageHasSource, false, "mosaic asset must not be requested before access");
+      assert.equal(lockedMosaic.artworkInfoHidden, true, "artwork details must stay hidden before access");
       assert.equal(
         requests.includes(`/${mosaicConfig}`),
         false,
@@ -378,6 +446,11 @@ const main = async () => {
         requests.includes(`/${mosaicAsset}`),
         false,
         "encrypted mosaic bytes must not be requested before access is accepted",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicCatalog}`),
+        false,
+        "artwork metadata must not be requested before access is accepted",
       );
       for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
         assert.match(lockedMosaic.robots, new RegExp(`(?:^|, )${directive}(?:,|$)`));
@@ -412,6 +485,11 @@ const main = async () => {
         false,
         "a wrong access word must be rejected before the encrypted mosaic is downloaded",
       );
+      assert.equal(
+        requests.includes(`/${mosaicCatalog}`),
+        false,
+        "a wrong access word must be rejected before artwork metadata is downloaded",
+      );
 
       await evaluate(
         client,
@@ -438,6 +516,8 @@ const main = async () => {
           status: document.querySelector("[data-asset-status]").textContent,
           downloadHref: document.querySelector("[data-download]").getAttribute("href"),
           downloadName: document.querySelector("[data-download]").download,
+          pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
+          pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           error: document.querySelector("[data-access-error]").textContent,
         }))()`,
       );
@@ -459,9 +539,235 @@ const main = async () => {
       assert.match(unlockedMosaic.status, /\d[\d,]* × \d[\d,]* pixels · decrypted in this tab/);
       assert.match(unlockedMosaic.downloadHref, /^blob:/, "download must use only the decrypted in-memory Blob");
       assert.equal(unlockedMosaic.downloadName, "skald-museum-art-mosaic.jpg");
+      assert.equal(unlockedMosaic.pickerDisabled, false, "the keyboard artwork picker must unlock");
+      assert.equal(
+        unlockedMosaic.pickerOptionCount,
+        expectedMosaicMap.artworks.length + 1,
+        "the keyboard artwork picker must expose every decrypted artwork",
+      );
       assert.equal(requests.includes(`/${mosaicAsset}`), true, "correct access must fetch encrypted mosaic bytes");
+      assert.equal(
+        requests.includes(`/${mosaicCatalog}`),
+        true,
+        "correct access must fetch encrypted artwork metadata",
+      );
+
+      const desktopStage = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width / 2),
+            y: Math.round(rect.top + rect.height / 2),
+            beforeZoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
+            beforeTransform: document.querySelector("[data-mosaic-image]").style.transform,
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseWheel",
+        x: desktopStage.x,
+        y: desktopStage.y,
+        deltaX: 0,
+        deltaY: -240,
+      });
+      const desktopAfterWheel = await evaluate(
+        client,
+        `(() => ({
+          zoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
+          transform: document.querySelector("[data-mosaic-image]").style.transform,
+        }))()`,
+      );
+      assert.ok(desktopAfterWheel.zoom > desktopStage.beforeZoom, "mouse-wheel input must zoom in");
+      assert.notEqual(
+        desktopAfterWheel.transform,
+        desktopStage.beforeTransform,
+        "mouse-wheel input must transform the mosaic",
+      );
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        x: desktopStage.x,
+        y: desktopStage.y,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        button: "left",
+        buttons: 1,
+        x: desktopStage.x + 24,
+        y: desktopStage.y + 12,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        x: desktopStage.x + 24,
+        y: desktopStage.y + 12,
+      });
+      assert.equal(
+        await evaluate(client, `document.querySelector("[data-artwork-info]").hidden`),
+        true,
+        "dragging the mosaic must not open artwork details",
+      );
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+
+      const firstArtworkPoint = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
+            y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        ...firstArtworkPoint,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        ...firstArtworkPoint,
+      });
+      await waitUntil(
+        client,
+        `!document.querySelector("[data-artwork-info]").hidden`,
+        "desktop artwork details",
+      );
+      const desktopArtworkDetails = await evaluate(
+        client,
+        `(() => ({
+          selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+          index: document.querySelector("[data-artwork-index]").textContent,
+          title: document.querySelector("[data-artwork-title]").textContent,
+          creator: document.querySelector("[data-artwork-creator]").textContent,
+          museum: document.querySelector("[data-artwork-museum]").textContent,
+          status: document.querySelector("[data-artwork-status]").textContent,
+          license: document.querySelector("[data-artwork-license]").textContent,
+          sourceHref: document.querySelector("[data-artwork-source-links] a")?.href ?? "",
+        }))()`,
+      );
+      assert.equal(desktopArtworkDetails.selectionHidden, false);
+      assert.equal(desktopArtworkDetails.index, "001");
+      assert.equal(desktopArtworkDetails.title, firstArtwork.title);
+      assert.match(desktopArtworkDetails.creator, /Pieter Lastman/);
+      assert.match(desktopArtworkDetails.creator, /1625/);
+      assert.equal(desktopArtworkDetails.museum, firstArtwork.museum);
+      assert.match(desktopArtworkDetails.status, /Collection record/);
+      assert.match(desktopArtworkDetails.license, /Public Domain/);
+      assert.equal(desktopArtworkDetails.sourceHref, firstArtwork.museum_url);
+      const closedArtworkDetails = await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-action='close-details']").click();
+          return {
+            infoHidden: document.querySelector("[data-artwork-info]").hidden,
+            selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+          };
+        })()`,
+      );
+      assert.equal(closedArtworkDetails.infoHidden, true, "the close control must hide artwork details");
+      assert.equal(closedArtworkDetails.selectionHidden, true, "the close control must clear the highlight");
+
+      const lastArtworkPoint = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width * ${(lastArtwork.x + lastArtwork.width / 2) / expectedMosaicMap.width}),
+            y: Math.round(rect.top + rect.height * ${(lastArtwork.y + lastArtwork.height / 2) / expectedMosaicMap.height}),
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        button: "left",
+        buttons: 1,
+        clickCount: 1,
+        ...lastArtworkPoint,
+      });
+      await client.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        button: "left",
+        buttons: 0,
+        clickCount: 1,
+        ...lastArtworkPoint,
+      });
+      await waitUntil(
+        client,
+        `document.querySelector("[data-artwork-title]").textContent === ${JSON.stringify(lastArtwork.title)}`,
+        "on-view artwork details",
+      );
+      const onViewArtworkDetails = await evaluate(
+        client,
+        `(() => ({
+          title: document.querySelector("[data-artwork-title]").textContent,
+          status: document.querySelector("[data-artwork-status]").textContent,
+          sourceHref: document.querySelector("[data-artwork-source-links] a")?.href ?? "",
+          target: document.querySelector("[data-artwork-source-links] a")?.target ?? "",
+          rel: document.querySelector("[data-artwork-source-links] a")?.rel ?? "",
+        }))()`,
+      );
+      assert.equal(onViewArtworkDetails.title, lastArtwork.title);
+      assert.match(onViewArtworkDetails.status, /On view/);
+      assert.match(onViewArtworkDetails.status, /Gallery 159/);
+      assert.match(onViewArtworkDetails.status, /July 2026/);
+      assert.match(onViewArtworkDetails.status, /check the museum before visiting/i);
+      assert.equal(onViewArtworkDetails.sourceHref, lastArtwork.museum_url);
+      assert.equal(onViewArtworkDetails.target, "_blank");
+      assert.match(onViewArtworkDetails.rel, /noopener/);
+      assert.match(onViewArtworkDetails.rel, /noreferrer/);
+      const artworkHitTestFailures = await evaluate(
+        client,
+        `(() => {
+          const artworks = ${JSON.stringify(
+            expectedMosaicMap.artworks.map(({ index, title, x, y, width, height }) => ({
+              index,
+              title,
+              x,
+              y,
+              width,
+              height,
+            })),
+          )};
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const image = document.querySelector("[data-mosaic-image]");
+          const failures = [];
+          for (const artwork of artworks) {
+            const rect = image.getBoundingClientRect();
+            stage.dispatchEvent(new MouseEvent("click", {
+              bubbles: true,
+              clientX: rect.left + rect.width * ((artwork.x + artwork.width / 2) / ${expectedMosaicMap.width}),
+              clientY: rect.top + rect.height * ((artwork.y + artwork.height / 2) / ${expectedMosaicMap.height}),
+            }));
+            if (
+              document.querySelector("[data-artwork-index]").textContent !== String(artwork.index).padStart(3, "0") ||
+              document.querySelector("[data-artwork-title]").textContent !== artwork.title
+            ) {
+              failures.push(artwork.index);
+            }
+          }
+          return failures;
+        })()`,
+      );
+      assert.deepEqual(
+        artworkHitTestFailures,
+        [],
+        "every reviewed mosaic cell must open its matching artwork record",
+      );
       if (options.screenshotsDir) {
-        await capture(client, join(options.screenshotsDir, "skald-mosaic-desktop-1440x1000.png"));
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
       }
 
       const relockedMosaic = await evaluate(
@@ -473,6 +779,11 @@ const main = async () => {
             viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
             imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
             downloadHasHref: document.querySelector("[data-download]").hasAttribute("href"),
+            artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
+            selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+            sourceLinkCount: document.querySelector("[data-artwork-source-links]").childElementCount,
+            pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
+            pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           };
         })()`,
       );
@@ -480,6 +791,11 @@ const main = async () => {
       assert.equal(relockedMosaic.viewerHidden, true, "locking must hide the decrypted viewer");
       assert.equal(relockedMosaic.imageHasSource, false, "locking must discard the decrypted image URL");
       assert.equal(relockedMosaic.downloadHasHref, false, "locking must discard the decrypted download URL");
+      assert.equal(relockedMosaic.artworkInfoHidden, true, "locking must close artwork details");
+      assert.equal(relockedMosaic.selectionHidden, true, "locking must clear the artwork highlight");
+      assert.equal(relockedMosaic.sourceLinkCount, 0, "locking must clear artwork source links");
+      assert.equal(relockedMosaic.pickerDisabled, true, "locking must disable the artwork picker");
+      assert.equal(relockedMosaic.pickerOptionCount, 1, "locking must remove decrypted picker metadata");
 
       const feedbackSelectors = [
         ".site-header",
@@ -544,10 +860,125 @@ const main = async () => {
       assert.equal(mobileMosaicState.gateHidden, true, "correct mobile access must hide the gate");
       assert.equal(mobileMosaicState.viewerHidden, false, "correct mobile access must open the viewer");
       assert.match(mobileMosaicState.imageSource, /^blob:/, "mobile viewer must use a decrypted Blob URL");
-      const mosaicSnapshot = await layoutSnapshot(client, mosaicSelectors);
-      assertMobileLayout("mosaic viewer", mosaicSnapshot, mosaicSelectors);
+
+      const mobileStage = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width / 2),
+            y: Math.round(rect.top + rect.height / 2),
+            beforeZoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [
+          { id: 1, x: mobileStage.x - 36, y: mobileStage.y },
+          { id: 2, x: mobileStage.x + 36, y: mobileStage.y },
+        ],
+      });
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [
+          { id: 1, x: mobileStage.x - 82, y: mobileStage.y },
+          { id: 2, x: mobileStage.x + 82, y: mobileStage.y },
+        ],
+      });
+      const mobileAfterPinchOut = await evaluate(
+        client,
+        `Number.parseFloat(document.querySelector("[data-zoom-output]").value)`,
+      );
+      assert.ok(mobileAfterPinchOut > mobileStage.beforeZoom, "two-finger pinch-out must zoom in");
+      await delay(100);
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [
+          { id: 1, x: mobileStage.x - 28, y: mobileStage.y },
+          { id: 2, x: mobileStage.x + 28, y: mobileStage.y },
+        ],
+      });
+      await delay(100);
+      const mobileAfterPinchIn = await evaluate(
+        client,
+        `Number.parseFloat(document.querySelector("[data-zoom-output]").value)`,
+      );
+      assert.ok(
+        mobileAfterPinchIn < mobileAfterPinchOut,
+        `two-finger pinch-in must zoom out (${mobileAfterPinchIn}% after ${mobileAfterPinchOut}%)`,
+      );
+      await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      assert.equal(
+        await evaluate(client, `document.querySelector("[data-artwork-info]").hidden`),
+        true,
+        "pinching must not open artwork details",
+      );
+
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+      const mobileArtworkPoint = await evaluate(
+        client,
+        `(() => {
+          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          return {
+            x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
+            y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
+          };
+        })()`,
+      );
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ id: 1, x: mobileArtworkPoint.x, y: mobileArtworkPoint.y }],
+      });
+      await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await waitUntil(
+        client,
+        `!document.querySelector("[data-artwork-info]").hidden`,
+        "mobile artwork details",
+      );
+      const mobileArtworkDetails = await evaluate(
+        client,
+        `(() => {
+          const panel = document.querySelector("[data-artwork-info]");
+          const rect = panel.getBoundingClientRect();
+          return {
+            title: document.querySelector("[data-artwork-title]").textContent,
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            bottom: rect.bottom,
+            innerWidth,
+            innerHeight,
+          };
+        })()`,
+      );
+      assert.equal(mobileArtworkDetails.title, firstArtwork.title);
+      assert.ok(mobileArtworkDetails.left >= -0.5);
+      assert.ok(mobileArtworkDetails.right <= mobileArtworkDetails.innerWidth + 0.5);
+      assert.ok(mobileArtworkDetails.top >= -0.5);
+      assert.ok(mobileArtworkDetails.bottom <= mobileArtworkDetails.innerHeight + 0.5);
+      const mosaicDetailsSelectors = [
+        ...mosaicSelectors,
+        ".artwork-info",
+        ".artwork-info h2",
+        ".artwork-info a",
+      ];
+      const mosaicSnapshot = await layoutSnapshot(client, mosaicDetailsSelectors);
+      assertMobileLayout("mosaic viewer", mosaicSnapshot, mosaicDetailsSelectors);
       if (options.screenshotsDir) {
-        await capture(client, join(options.screenshotsDir, "skald-mosaic-mobile-390x844.png"));
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-mobile-390x844.png"));
+      }
+
+      await emulate(client, { width: 844, height: 390, mobile: true });
+      const mosaicLandscapeSnapshot = await layoutSnapshot(client, mosaicDetailsSelectors);
+      assertMobileLayout(
+        "mosaic viewer landscape",
+        mosaicLandscapeSnapshot,
+        mosaicDetailsSelectors,
+        { width: 844, height: 390 },
+      );
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-landscape-844x390.png"));
       }
 
       const privacySelectors = [
@@ -562,6 +993,7 @@ const main = async () => {
         ".legal-header h1",
         ".legal-copy",
       ];
+      await emulate(client, { width: 390, height: 844, mobile: true });
       await navigate(client, `http://127.0.0.1:${sitePort}/feedback/privacy/`);
       const privacySnapshot = await layoutSnapshot(client, privacySelectors);
       assertMobileLayout("feedback privacy page", privacySnapshot, privacySelectors);

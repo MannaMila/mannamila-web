@@ -14,13 +14,17 @@ import { spawnSync } from "node:child_process";
 import {
   assertPlaintextMatchesContract,
   decryptAndVerifyMosaicBytes,
+  decryptAndVerifyMosaicCatalogBytes,
   inspectJpeg,
+  inspectMosaicCatalog,
 } from "./encrypt-skald-mosaic.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(repoRoot, "scripts/encrypt-skald-mosaic.mjs");
 const input = join(repoRoot, "skald/assets/skald-odyssey-og.jpg");
 const output = await mkdtemp(join(tmpdir(), "skald-mosaic-encryption-"));
+const catalogInputRoot = await mkdtemp(join(tmpdir(), "skald-mosaic-catalog-input-"));
+const catalogInput = join(catalogInputRoot, "mosaic-map.json");
 const testPassword = "test-only-mosaic-password";
 const plaintext = await readFile(input);
 const approvedPlaintext = {
@@ -28,6 +32,32 @@ const approvedPlaintext = {
   width: 1200,
   height: 630,
 };
+const catalogPlaintext = Buffer.from(`${JSON.stringify({
+  width: approvedPlaintext.width,
+  height: approvedPlaintext.height,
+  tiles: [],
+  artworks: [{
+    index: 1,
+    id: "test-artwork",
+    x: 0,
+    y: 0,
+    width: approvedPlaintext.width,
+    height: approvedPlaintext.height,
+    title: "Test artwork",
+    creator: "Test creator",
+    date: "2026",
+    museum: "Test museum",
+    source_provider: "Test source",
+    on_view: true,
+    gallery: "Gallery 1",
+    as_of: "2026-07",
+    license: "Test fixture only",
+    museum_url: "https://example.com/artwork",
+    file_page_url: "https://example.com/artwork",
+  }],
+})}\n`);
+const approvedCatalogSha256 = createHash("sha256").update(catalogPlaintext).digest("hex");
+await writeFile(catalogInput, catalogPlaintext);
 
 const environmentFor = (password) => {
   const environment = { ...process.env };
@@ -51,6 +81,10 @@ const run = (password, approval = approvedPlaintext) =>
       String(approval.width),
       "--approved-height",
       String(approval.height),
+      "--catalog-input",
+      catalogInput,
+      "--approved-catalog-sha256",
+      approvedCatalogSha256,
     ],
     {
       cwd: repoRoot,
@@ -72,6 +106,30 @@ try {
   assert.notEqual(missingApproval.status, 0);
   assert.match(missingApproval.stderr, /approved-sha256/i);
 
+  const missingCatalog = spawnSync(
+    process.execPath,
+    [
+      script,
+      "--input",
+      input,
+      "--output-dir",
+      output,
+      "--approved-sha256",
+      approvedPlaintext.sha256,
+      "--approved-width",
+      String(approvedPlaintext.width),
+      "--approved-height",
+      String(approvedPlaintext.height),
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: environmentFor(testPassword),
+    },
+  );
+  assert.notEqual(missingCatalog.status, 0);
+  assert.match(missingCatalog.stderr, /catalog-input/i);
+
   const missingPassword = run(null);
   assert.notEqual(missingPassword.status, 0);
   assert.match(missingPassword.stderr, /SKALD_MOSAIC_PASSWORD/);
@@ -83,6 +141,7 @@ try {
   const configRaw = await readFile(join(output, "mosaic-config.json"), "utf8");
   const config = JSON.parse(configRaw);
   const ciphertext = await readFile(join(output, "assets/skald-museum-art-mosaic.enc"));
+  const catalogCiphertext = await readFile(join(output, "assets/skald-museum-art-map.enc"));
 
   assert.equal(config.schemaVersion, 2);
   assert.deepEqual(config.plaintext, {
@@ -102,9 +161,23 @@ try {
   assert.equal(config.cipher.name, "AES-GCM");
   assert.equal(Buffer.from(config.cipher.iv, "base64").length, 12);
   assert.equal(config.cipher.url, "./assets/skald-museum-art-mosaic.enc");
+  assert.deepEqual(config.catalog.plaintext, {
+    mediaType: "application/json",
+    bytes: catalogPlaintext.length,
+    sha256: approvedCatalogSha256,
+    width: approvedPlaintext.width,
+    height: approvedPlaintext.height,
+    artworkCount: 1,
+  });
+  assert.equal(config.catalog.cipher.name, "AES-GCM");
+  assert.equal(Buffer.from(config.catalog.cipher.iv, "base64").length, 12);
+  assert.notEqual(config.catalog.cipher.iv, config.cipher.iv);
+  assert.equal(config.catalog.cipher.url, "./assets/skald-museum-art-map.enc");
   assert.doesNotMatch(configRaw, new RegExp(testPassword));
   assert.doesNotMatch(configRaw, /\.jpg/i);
   assert.notDeepEqual(ciphertext.subarray(0, 3), Buffer.from([0xff, 0xd8, 0xff]));
+  assert.notEqual(catalogCiphertext[0], "{".charCodeAt(0));
+  assert.deepEqual(inspectMosaicCatalog(catalogPlaintext), config.catalog.plaintext);
 
   const derived = pbkdf2Sync(
     testPassword.normalize("NFKC"),
@@ -144,9 +217,24 @@ try {
     decryptAndVerifyMosaicBytes(ciphertext, testPassword, config),
     plaintext,
   );
+  assert.deepEqual(
+    decryptAndVerifyMosaicCatalogBytes(catalogCiphertext, testPassword, config),
+    catalogPlaintext,
+  );
   assert.throws(
     () => decryptAndVerifyMosaicBytes(ciphertext, "wrong-password", config),
     /access word/i,
+  );
+  assert.throws(
+    () => decryptAndVerifyMosaicCatalogBytes(catalogCiphertext, "wrong-password", config),
+    /access word/i,
+  );
+
+  const tamperedCatalogConfig = structuredClone(config);
+  tamperedCatalogConfig.catalog.plaintext.sha256 = "0".repeat(64);
+  assert.throws(
+    () => decryptAndVerifyMosaicCatalogBytes(catalogCiphertext, testPassword, tamperedCatalogConfig),
+    /authentication failed/i,
   );
 
   for (const mutateContract of [
@@ -224,7 +312,10 @@ try {
     await rm(rasterPath);
   }
 } finally {
-  await rm(output, { recursive: true, force: true });
+  await Promise.all([
+    rm(output, { recursive: true, force: true }),
+    rm(catalogInputRoot, { recursive: true, force: true }),
+  ]);
 }
 
 console.log("Skald mosaic encryption tests passed.");

@@ -92,6 +92,16 @@ try {
     await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
     /PBKDF2/,
   );
+  const promotedMosaicConfig = JSON.parse(
+    await readFile(join(target, mosaicRoute, "mosaic-config.json"), "utf8"),
+  );
+  assert.equal(promotedMosaicConfig.catalog.plaintext.width, 16_000);
+  assert.equal(promotedMosaicConfig.catalog.plaintext.height, 8_000);
+  assert.equal(promotedMosaicConfig.catalog.plaintext.artworkCount, 200);
+  assert.equal(
+    promotedMosaicConfig.catalog.plaintext.sha256,
+    "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895",
+  );
   assert.doesNotMatch(
     await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
     /ACCESS_WORD|["']\.\/[^"']+\.jpg["']/,
@@ -119,6 +129,8 @@ try {
   assert.ok(manifest.files[`${mosaicRoute}/viewer.js`]);
   assert.ok(manifest.files[`${mosaicRoute}/mosaic-config.json`]);
   assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-mosaic.enc`]);
+  assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-map.enc`]);
+  assert.equal(manifest.files[`${mosaicRoute}/mosaic-map.json`], undefined);
   assert.equal(manifest.files[`${retiredMosaicRoute}/index.html`], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
