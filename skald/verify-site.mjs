@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   assertNoPlaintextRasterImages,
   decryptAndVerifyMosaicBytes,
+  decryptAndVerifyMosaicCatalogBytes,
   MOSAIC_SCHEMA_VERSION,
   validateMosaicConfig,
 } from "../scripts/encrypt-skald-mosaic.mjs";
@@ -15,6 +17,9 @@ const read = (path) => readFile(join(root, path), "utf8");
 const mosaicRoute = "mosaic";
 const mosaicConfigPath = `${mosaicRoute}/mosaic-config.json`;
 const mosaicCipherPath = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
+const mosaicCatalogCipherPath = `${mosaicRoute}/assets/skald-museum-art-map.enc`;
+const mosaicPlaintextMapPath = `${mosaicRoute}/mosaic-map.json`;
+const expectedMosaicMapSha256 = "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895";
 const allowMissingMosaic = process.env.SKALD_ALLOW_MISSING_MOSAIC === "1";
 
 const pathExists = (path) =>
@@ -32,6 +37,7 @@ const requiredFiles = [
   `${mosaicRoute}/attribution.html`,
   `${mosaicRoute}/styles.css`,
   `${mosaicRoute}/viewer.js`,
+  mosaicCatalogCipherPath,
   "privacy/index.html",
   "updates-privacy/index.html",
   "waitlist-privacy/index.html",
@@ -50,14 +56,20 @@ const requiredFiles = [
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
 await assertNoPlaintextRasterImages(join(root, mosaicRoute));
-const [mosaicConfigExists, mosaicCipherExists] = await Promise.all([
+assert.equal(
+  await pathExists(mosaicPlaintextMapPath),
+  false,
+  "the reviewed artwork map must not be published as bot-readable plaintext",
+);
+const [mosaicConfigExists, mosaicCipherExists, mosaicCatalogCipherExists] = await Promise.all([
   pathExists(mosaicConfigPath),
   pathExists(mosaicCipherPath),
+  pathExists(mosaicCatalogCipherPath),
 ]);
 assert.equal(
-  mosaicConfigExists,
-  mosaicCipherExists,
-  "the encrypted mosaic config and ciphertext must be installed together",
+  mosaicConfigExists && mosaicCipherExists && mosaicCatalogCipherExists,
+  mosaicConfigExists || mosaicCipherExists || mosaicCatalogCipherExists,
+  "the encrypted mosaic config, image ciphertext, and artwork-map ciphertext must be installed together",
 );
 if (!mosaicConfigExists && !allowMissingMosaic) {
   throw new Error(
@@ -222,6 +234,10 @@ for (const requiredAttribution of [
 }
 assert.match(mosaicIndex, /<input\b[^>]*type="password"[^>]*>/);
 assert.match(mosaicIndex, /<section\b[^>]*data-mosaic-viewer[^>]*hidden/);
+assert.match(mosaicIndex, /<aside\b[^>]*data-artwork-info[^>]*hidden/);
+assert.match(mosaicIndex, /data-artwork-title/);
+assert.match(mosaicIndex, /data-artwork-source-links/);
+assert.match(mosaicIndex, /Scroll or pinch/);
 assert.doesNotMatch(
   mosaicIndex,
   /<img\b[^>]*\bsrc=/,
@@ -239,19 +255,68 @@ assert.match(mosaicViewer, /PBKDF2/);
 assert.match(mosaicViewer, /AES-GCM/);
 assert.match(mosaicViewer, /crypto\.subtle/);
 assert.match(mosaicViewer, /\.\/mosaic-config\.json/);
+assert.match(mosaicViewer, /config\.catalog\.cipher\.url/);
+assert.doesNotMatch(mosaicViewer, /\.\/mosaic-map\.json/);
+assert.match(mosaicViewer, new RegExp(expectedMosaicMapSha256));
 assert.match(mosaicViewer, /skald-mosaic-v2/);
 assert.match(mosaicViewer, /config\.plaintext\.sha256/);
 assert.match(mosaicViewer, /image\.naturalWidth !== config\.plaintext\.width/);
 assert.match(mosaicViewer, /image\.naturalHeight !== config\.plaintext\.height/);
 assert.match(mosaicViewer, /URL\.createObjectURL/);
 assert.match(mosaicViewer, /URL\.revokeObjectURL/);
+assert.match(mosaicViewer, /new Map\(\)/);
+assert.match(mosaicViewer, /type:\s*"pinch"/);
+assert.match(mosaicViewer, /data-artwork-title/);
 assert.match(mosaicStyles, /:focus-visible/);
 assert.match(mosaicStyles, /prefers-reduced-motion/);
+assert.match(mosaicStyles, /\.artwork-info/);
+
+const validateArtworkMap = (mosaicMap) => {
+  assert.equal(mosaicMap.width, 16_000);
+  assert.equal(mosaicMap.height, 8_000);
+  assert.equal(mosaicMap.artworks?.length, 200);
+  assert.equal(mosaicMap.tiles?.length, 8);
+  const artworkIds = new Set();
+  const artworkCells = new Set();
+  for (const [offset, artwork] of mosaicMap.artworks.entries()) {
+    assert.equal(artwork.index, offset + 1, "artwork indices must remain sequential");
+    assert.match(artwork.id, /^[a-z0-9][a-z0-9-]*$/);
+    assert.equal(artworkIds.has(artwork.id), false, `duplicate artwork id: ${artwork.id}`);
+    artworkIds.add(artwork.id);
+    for (const field of ["x", "y", "width", "height"]) {
+      assert.ok(Number.isSafeInteger(artwork[field]), `${artwork.id}.${field} must be an integer`);
+    }
+    assert.ok(artwork.x >= 0 && artwork.y >= 0);
+    assert.equal(artwork.width, 800);
+    assert.equal(artwork.height, 800);
+    assert.ok(artwork.x + artwork.width <= mosaicMap.width);
+    assert.ok(artwork.y + artwork.height <= mosaicMap.height);
+    const cell = `${artwork.x}:${artwork.y}:${artwork.width}:${artwork.height}`;
+    assert.equal(artworkCells.has(cell), false, `duplicate artwork cell: ${cell}`);
+    artworkCells.add(cell);
+    for (const field of ["title", "creator", "date", "source_provider", "license"]) {
+      assert.equal(typeof artwork[field], "string", `${artwork.id}.${field} must be text`);
+      assert.ok(artwork[field].trim(), `${artwork.id}.${field} must not be empty`);
+    }
+    assert.equal(typeof artwork.on_view, "boolean");
+    assert.match(artwork.museum_url || artwork.file_page_url, /^https:\/\//);
+    for (const field of ["museum_url", "file_page_url"]) {
+      if (artwork[field]) assert.match(artwork[field], /^https:\/\//);
+    }
+    if (artwork.on_view) {
+      for (const field of ["museum", "gallery", "as_of"]) {
+        assert.ok(artwork[field]?.trim(), `${artwork.id}.${field} is required for on-view claims`);
+      }
+    }
+  }
+  assert.equal(artworkCells.size, 200);
+};
 
 if (mosaicConfigExists) {
   const mosaicConfigRaw = await read(mosaicConfigPath);
   const mosaicConfig = JSON.parse(mosaicConfigRaw);
   const mosaicCipher = await readFile(join(root, mosaicCipherPath));
+  const mosaicCatalogCipher = await readFile(join(root, mosaicCatalogCipherPath));
   assert.equal(mosaicConfig.schemaVersion, MOSAIC_SCHEMA_VERSION);
   assert.equal(mosaicConfig.plaintext?.mediaType, "image/jpeg");
   assert.ok(Number.isSafeInteger(mosaicConfig.plaintext?.bytes));
@@ -267,9 +332,27 @@ if (mosaicConfigExists) {
   assert.equal(mosaicConfig.cipher?.name, "AES-GCM");
   assert.equal(Buffer.from(mosaicConfig.cipher?.iv ?? "", "base64").length, 12);
   assert.equal(mosaicConfig.cipher?.url, "./assets/skald-museum-art-mosaic.enc");
+  assert.equal(mosaicConfig.catalog?.plaintext?.mediaType, "application/json");
+  assert.equal(mosaicConfig.catalog?.plaintext?.sha256, expectedMosaicMapSha256);
+  assert.equal(mosaicConfig.catalog?.plaintext?.width, mosaicConfig.plaintext.width);
+  assert.equal(mosaicConfig.catalog?.plaintext?.height, mosaicConfig.plaintext.height);
+  assert.equal(mosaicConfig.catalog?.plaintext?.artworkCount, 200);
+  assert.equal(mosaicConfig.catalog?.cipher?.name, "AES-GCM");
+  assert.equal(Buffer.from(mosaicConfig.catalog?.cipher?.iv ?? "", "base64").length, 12);
+  assert.equal(mosaicConfig.catalog?.cipher?.url, "./assets/skald-museum-art-map.enc");
+  assert.notEqual(mosaicConfig.catalog.cipher.iv, mosaicConfig.cipher.iv);
   assert.doesNotMatch(mosaicConfigRaw, /"password"\s*:/i);
   assert.doesNotMatch(mosaicConfigRaw, /\.jpg/i);
   assert.ok(mosaicCipher.length > 16, "encrypted mosaic must include ciphertext and a GCM tag");
+  assert.ok(
+    mosaicCatalogCipher.length > 16,
+    "encrypted artwork map must include ciphertext and a GCM tag",
+  );
+  assert.notEqual(
+    mosaicCatalogCipher[0],
+    "{".charCodeAt(0),
+    "the deployed artwork map must not be readable JSON",
+  );
   assert.notDeepEqual(
     mosaicCipher.subarray(0, 3),
     Buffer.from([0xff, 0xd8, 0xff]),
@@ -286,6 +369,20 @@ if (mosaicConfigExists) {
     mosaicConfig.plaintext.bytes,
     "the decrypted mosaic must match the approved plaintext byte count",
   );
+  const decryptedCatalog = decryptAndVerifyMosaicCatalogBytes(
+    mosaicCatalogCipher,
+    process.env.SKALD_MOSAIC_PASSWORD,
+    mosaicConfig,
+  );
+  assert.equal(
+    createHash("sha256").update(decryptedCatalog).digest("hex"),
+    expectedMosaicMapSha256,
+    "the decrypted artwork map must remain byte-identical to the reviewed package map",
+  );
+  const mosaicMap = JSON.parse(decryptedCatalog.toString("utf8"));
+  validateArtworkMap(mosaicMap);
+  assert.equal(mosaicMap.width, mosaicConfig.plaintext.width);
+  assert.equal(mosaicMap.height, mosaicConfig.plaintext.height);
 }
 
 const forbiddenIndexText = [
