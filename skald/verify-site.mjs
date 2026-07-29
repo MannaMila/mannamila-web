@@ -277,7 +277,7 @@ assert.match(mosaicViewer, /requestAnimationFrame/);
 assert.match(mosaicViewer, /WHEEL_ZOOM_SPEED/);
 assert.match(mosaicViewer, /const TILE_ENTER_SCALE = 0\.25;/);
 assert.match(mosaicViewer, /const TILE_EXIT_SCALE = 0\.2;/);
-assert.match(mosaicViewer, /const MAX_RENDERED_TILES = 4;/);
+assert.match(mosaicViewer, /const MAX_RENDERED_TILES = 2;/);
 assert.match(mosaicViewer, /loadLayerImage\(overview,\s*config\.viewer\.overviewLayer/);
 assert.match(mosaicViewer, /element\.naturalWidth !== layer\.naturalWidth/);
 assert.match(mosaicViewer, /URL\.createObjectURL/);
