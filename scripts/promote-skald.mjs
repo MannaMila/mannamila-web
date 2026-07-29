@@ -34,8 +34,9 @@ const publicRoots = [
   "waitlist-privacy",
   "support",
   "feedback",
+  "mosaic",
 ];
-const retiredPublicRoots = ["analytics.js"];
+const retiredPublicRoots = ["analytics.js", "folio-24b3206ad4eceb1abe0c"];
 const feedbackRoots = ["feedback"];
 const preservedTopLevel = new Set([
   ".git",

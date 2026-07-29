@@ -3,9 +3,24 @@ import { spawnSync } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  assertNoPlaintextRasterImages,
+  decryptAndVerifyMosaicBytes,
+  MOSAIC_SCHEMA_VERSION,
+  validateMosaicConfig,
+} from "../scripts/encrypt-skald-mosaic.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const read = (path) => readFile(join(root, path), "utf8");
+const mosaicRoute = "mosaic";
+const mosaicConfigPath = `${mosaicRoute}/mosaic-config.json`;
+const mosaicCipherPath = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
+const allowMissingMosaic = process.env.SKALD_ALLOW_MISSING_MOSAIC === "1";
+
+const pathExists = (path) =>
+  access(join(root, path))
+    .then(() => true)
+    .catch(() => false);
 
 const requiredFiles = [
   "index.html",
@@ -13,6 +28,10 @@ const requiredFiles = [
   "app.js",
   "availability.json",
   "site-config.json",
+  `${mosaicRoute}/index.html`,
+  `${mosaicRoute}/attribution.html`,
+  `${mosaicRoute}/styles.css`,
+  `${mosaicRoute}/viewer.js`,
   "privacy/index.html",
   "updates-privacy/index.html",
   "waitlist-privacy/index.html",
@@ -30,6 +49,24 @@ const requiredFiles = [
 ];
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
+await assertNoPlaintextRasterImages(join(root, mosaicRoute));
+const [mosaicConfigExists, mosaicCipherExists] = await Promise.all([
+  pathExists(mosaicConfigPath),
+  pathExists(mosaicCipherPath),
+]);
+assert.equal(
+  mosaicConfigExists,
+  mosaicCipherExists,
+  "the encrypted mosaic config and ciphertext must be installed together",
+);
+if (!mosaicConfigExists && !allowMissingMosaic) {
+  throw new Error(
+    "Encrypted mosaic bundle is missing. Run scripts/encrypt-skald-mosaic.mjs, or set SKALD_ALLOW_MISSING_MOSAIC=1 only while preparing the route.",
+  );
+}
+if (mosaicConfigExists && !process.env.SKALD_MOSAIC_PASSWORD) {
+  throw new Error("Set SKALD_MOSAIC_PASSWORD so Chrome can verify the encrypted mosaic before promotion.");
+}
 
 const [
   index,
@@ -44,6 +81,10 @@ const [
   feedbackStyles,
   availabilityRaw,
   configRaw,
+  mosaicIndex,
+  mosaicAttribution,
+  mosaicStyles,
+  mosaicViewer,
 ] =
   await Promise.all([
     read("index.html"),
@@ -58,6 +99,10 @@ const [
     read("feedback/styles.css"),
     read("availability.json"),
     read("site-config.json"),
+    read(`${mosaicRoute}/index.html`),
+    read(`${mosaicRoute}/attribution.html`),
+    read(`${mosaicRoute}/styles.css`),
+    read(`${mosaicRoute}/viewer.js`),
   ]);
 
 const availability = JSON.parse(availabilityRaw);
@@ -136,6 +181,112 @@ assert.doesNotMatch(
   /<meta\b[^>]+(?:property="og:description"|name="twitter:description")[^>]+content="[^"]*Coming to/i,
   "social metadata must stay release-neutral",
 );
+assert.doesNotMatch(
+  index,
+  /href=["'](?:https:\/\/skald\.mannamila\.com\/|\/|\.\/)?mosaic\/(?:[^"']*)["']/i,
+  "the private /mosaic/ route must remain unlinked",
+);
+
+for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
+  assert.match(
+    mosaicIndex,
+    new RegExp(`<meta name="robots" content="[^"]*${directive}[^"]*">`),
+    `mosaic route must include the ${directive} robots directive`,
+  );
+}
+assert.match(mosaicIndex, /href="\.\/attribution\.html"/);
+assert.match(
+  mosaicIndex,
+  /public-domain and openly licensed museum art/,
+  "mosaic alt text must acknowledge openly licensed works",
+);
+for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
+  assert.match(
+    mosaicAttribution,
+    new RegExp(`<meta name="robots" content="[^"]*${directive}[^"]*">`),
+    `mosaic attribution page must include the ${directive} robots directive`,
+  );
+}
+for (const requiredAttribution of [
+  "Photo: Sailko / CC BY 3.0",
+  "Photo: Dguendel / CC BY 4.0",
+  "Photo: Marie-Lan Nguyen (Jastrow) / CC BY 2.5",
+  "https://creativecommons.org/licenses/by/3.0/",
+  "https://creativecommons.org/licenses/by/4.0/",
+  "https://creativecommons.org/licenses/by/2.5/",
+]) {
+  assert.ok(
+    mosaicAttribution.includes(requiredAttribution),
+    `mosaic attribution page must include: ${requiredAttribution}`,
+  );
+}
+assert.match(mosaicIndex, /<input\b[^>]*type="password"[^>]*>/);
+assert.match(mosaicIndex, /<section\b[^>]*data-mosaic-viewer[^>]*hidden/);
+assert.doesNotMatch(
+  mosaicIndex,
+  /<img\b[^>]*\bsrc=/,
+  "the mosaic asset must not load before client-side access is granted",
+);
+assert.match(
+  mosaicIndex,
+  /<img\b(?=[^>]*data-mosaic-image)(?=[^>]*hidden)[^>]*>/,
+  "the mosaic image must stay hidden until its asset loads successfully",
+);
+assert.doesNotMatch(mosaicViewer, /ACCESS_WORD/);
+assert.doesNotMatch(mosaicViewer, /sessionStorage/);
+assert.doesNotMatch(mosaicViewer, /["']\.\/[^"']+\.jpg["']/i);
+assert.match(mosaicViewer, /PBKDF2/);
+assert.match(mosaicViewer, /AES-GCM/);
+assert.match(mosaicViewer, /crypto\.subtle/);
+assert.match(mosaicViewer, /\.\/mosaic-config\.json/);
+assert.match(mosaicViewer, /skald-mosaic-v2/);
+assert.match(mosaicViewer, /config\.plaintext\.sha256/);
+assert.match(mosaicViewer, /image\.naturalWidth !== config\.plaintext\.width/);
+assert.match(mosaicViewer, /image\.naturalHeight !== config\.plaintext\.height/);
+assert.match(mosaicViewer, /URL\.createObjectURL/);
+assert.match(mosaicViewer, /URL\.revokeObjectURL/);
+assert.match(mosaicStyles, /:focus-visible/);
+assert.match(mosaicStyles, /prefers-reduced-motion/);
+
+if (mosaicConfigExists) {
+  const mosaicConfigRaw = await read(mosaicConfigPath);
+  const mosaicConfig = JSON.parse(mosaicConfigRaw);
+  const mosaicCipher = await readFile(join(root, mosaicCipherPath));
+  assert.equal(mosaicConfig.schemaVersion, MOSAIC_SCHEMA_VERSION);
+  assert.equal(mosaicConfig.plaintext?.mediaType, "image/jpeg");
+  assert.ok(Number.isSafeInteger(mosaicConfig.plaintext?.bytes));
+  assert.match(mosaicConfig.plaintext?.sha256 ?? "", /^[a-f0-9]{64}$/);
+  assert.ok(Number.isSafeInteger(mosaicConfig.plaintext?.width));
+  assert.ok(Number.isSafeInteger(mosaicConfig.plaintext?.height));
+  assert.equal(mosaicConfig.kdf?.name, "PBKDF2");
+  assert.equal(mosaicConfig.kdf?.hash, "SHA-256");
+  assert.ok(mosaicConfig.kdf?.iterations >= 600_000);
+  assert.equal(Buffer.from(mosaicConfig.kdf?.salt ?? "", "base64").length, 16);
+  assert.equal(mosaicConfig.verifier?.hash, "SHA-256");
+  assert.equal(Buffer.from(mosaicConfig.verifier?.value ?? "", "base64").length, 32);
+  assert.equal(mosaicConfig.cipher?.name, "AES-GCM");
+  assert.equal(Buffer.from(mosaicConfig.cipher?.iv ?? "", "base64").length, 12);
+  assert.equal(mosaicConfig.cipher?.url, "./assets/skald-museum-art-mosaic.enc");
+  assert.doesNotMatch(mosaicConfigRaw, /"password"\s*:/i);
+  assert.doesNotMatch(mosaicConfigRaw, /\.jpg/i);
+  assert.ok(mosaicCipher.length > 16, "encrypted mosaic must include ciphertext and a GCM tag");
+  assert.notDeepEqual(
+    mosaicCipher.subarray(0, 3),
+    Buffer.from([0xff, 0xd8, 0xff]),
+    "the deployed mosaic asset must not be a readable JPEG",
+  );
+  validateMosaicConfig(mosaicConfig);
+  const decryptedMosaic = decryptAndVerifyMosaicBytes(
+    mosaicCipher,
+    process.env.SKALD_MOSAIC_PASSWORD,
+    mosaicConfig,
+  );
+  assert.equal(
+    decryptedMosaic.length,
+    mosaicConfig.plaintext.bytes,
+    "the decrypted mosaic must match the approved plaintext byte count",
+  );
+}
 
 const forbiddenIndexText = [
   /coming soon/i,
@@ -281,6 +432,21 @@ if (renderedVerification.status !== 0) {
   );
 }
 process.stdout.write(renderedVerification.stdout);
+
+const encryptionVerification = spawnSync(
+  process.execPath,
+  [join(root, "../scripts/test-encrypt-skald-mosaic.mjs")],
+  {
+    cwd: root,
+    encoding: "utf8",
+  },
+);
+if (encryptionVerification.status !== 0) {
+  throw new Error(
+    `Mosaic encryption verification failed:\n${encryptionVerification.stderr || encryptionVerification.stdout}`,
+  );
+}
+process.stdout.write(encryptionVerification.stdout);
 
 const analyticsVerification = spawnSync(
   process.execPath,

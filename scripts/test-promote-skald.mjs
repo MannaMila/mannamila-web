@@ -8,11 +8,17 @@ import { spawnSync } from "node:child_process";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(repoRoot, "scripts/promote-skald.mjs");
 const target = await mkdtemp(join(tmpdir(), "skald-web-promotion-"));
+const mosaicRoute = "mosaic";
+const retiredMosaicRoute = "folio-24b3206ad4eceb1abe0c";
 
 const run = (...args) =>
   spawnSync(process.execPath, [script, "--target", target, ...args], {
     cwd: repoRoot,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      SKALD_ALLOW_MISSING_MOSAIC: "1",
+    },
   });
 
 const snapshotNonFeedbackFiles = async (current = target, prefix = "") => {
@@ -34,11 +40,13 @@ try {
   await mkdir(join(target, ".github/workflows"), { recursive: true });
   await mkdir(join(target, "docs"));
   await mkdir(join(target, "feedback"));
+  await mkdir(join(target, retiredMosaicRoute));
   await writeFile(join(target, "CNAME"), "skald.mannamila.com\n");
   await writeFile(join(target, ".nojekyll"), "");
   await writeFile(join(target, ".github/workflows/pages.yml"), "name: Pages\n");
   await writeFile(join(target, "docs/deploy.md"), "deployment notes\n");
   await writeFile(join(target, "feedback/index.html"), "Feedback form\n");
+  await writeFile(join(target, retiredMosaicRoute, "obsolete.html"), "retired mosaic route\n");
   await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
   await writeFile(join(target, "README.md"), "Skald web deployment\n");
 
@@ -72,6 +80,23 @@ try {
     await readFile(join(target, "updates-privacy/index.html"), "utf8"),
     /Product Updates Privacy Notice/,
   );
+  assert.match(
+    await readFile(join(target, mosaicRoute, "index.html"), "utf8"),
+    /noindex, nofollow, noarchive, nosnippet, noimageindex/,
+  );
+  assert.match(
+    await readFile(join(target, mosaicRoute, "attribution.html"), "utf8"),
+    /Photo: Sailko \/ CC BY 3\.0/,
+  );
+  assert.match(
+    await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
+    /PBKDF2/,
+  );
+  assert.doesNotMatch(
+    await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
+    /ACCESS_WORD|["']\.\/[^"']+\.jpg["']/,
+  );
+  await assert.rejects(readFile(join(target, retiredMosaicRoute, "obsolete.html")));
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "skald.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -88,6 +113,13 @@ try {
   assert.ok(manifest.files["feedback/privacy/index.html"]);
   assert.ok(manifest.files["feedback/styles.css"]);
   assert.ok(manifest.files["updates-privacy/index.html"]);
+  assert.ok(manifest.files[`${mosaicRoute}/index.html`]);
+  assert.ok(manifest.files[`${mosaicRoute}/attribution.html`]);
+  assert.ok(manifest.files[`${mosaicRoute}/styles.css`]);
+  assert.ok(manifest.files[`${mosaicRoute}/viewer.js`]);
+  assert.ok(manifest.files[`${mosaicRoute}/mosaic-config.json`]);
+  assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-mosaic.enc`]);
+  assert.equal(manifest.files[`${retiredMosaicRoute}/index.html`], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
