@@ -10,6 +10,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   decryptAndVerifyMosaicCatalogBytes,
+  encryptMosaicCatalogBytes,
   encryptMosaicBytes,
   inspectJpeg,
 } from "../scripts/encrypt-skald-mosaic.mjs";
@@ -77,12 +78,19 @@ if (mosaicAssetInstalled) {
   })}\n`);
   const encrypted = encryptMosaicBytes(plaintext, mosaicPassword, {
     approvedPlaintext: inspectJpeg(plaintext),
-    catalogPlaintext,
-    approvedCatalogSha256: createHash("sha256").update(catalogPlaintext).digest("hex"),
   });
-  mosaicConfigContent = Buffer.from(`${JSON.stringify(encrypted.config, null, 2)}\n`);
+  const encryptedCatalog = encryptMosaicCatalogBytes(
+    catalogPlaintext,
+    mosaicPassword,
+    encrypted.config,
+    {
+      approvedCatalogSha256: createHash("sha256").update(catalogPlaintext).digest("hex"),
+    },
+  );
+  const config = { ...encrypted.config, catalog: encryptedCatalog.config };
+  mosaicConfigContent = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
   mosaicAssetContent = encrypted.encrypted;
-  mosaicCatalogContent = encrypted.encryptedCatalog;
+  mosaicCatalogContent = encryptedCatalog.encrypted;
 }
 const expectedMosaicConfig = JSON.parse(mosaicConfigContent.toString("utf8"));
 const expectedMosaicMap = JSON.parse(
@@ -325,9 +333,22 @@ const layoutSnapshot = async (client, selectors) => {
   return result.result.value;
 };
 
-const assertMobileLayout = (label, snapshot, expectedSelectors) => {
-  assert.equal(snapshot.innerWidth, 390, `${label}: device emulation must produce a 390 CSS-pixel viewport`);
-  assert.equal(snapshot.innerHeight, 844, `${label}: device emulation must produce an 844 CSS-pixel viewport`);
+const assertMobileLayout = (
+  label,
+  snapshot,
+  expectedSelectors,
+  { width = 390, height = 844 } = {},
+) => {
+  assert.equal(
+    snapshot.innerWidth,
+    width,
+    `${label}: device emulation must produce a ${width} CSS-pixel viewport`,
+  );
+  assert.equal(
+    snapshot.innerHeight,
+    height,
+    `${label}: device emulation must produce a ${height} CSS-pixel viewport`,
+  );
   assert.ok(
     snapshot.documentScrollWidth <= snapshot.innerWidth,
     `${label}: document scroll width ${snapshot.documentScrollWidth} exceeds inner width ${snapshot.innerWidth}`,
@@ -495,6 +516,8 @@ const main = async () => {
           status: document.querySelector("[data-asset-status]").textContent,
           downloadHref: document.querySelector("[data-download]").getAttribute("href"),
           downloadName: document.querySelector("[data-download]").download,
+          pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
+          pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           error: document.querySelector("[data-access-error]").textContent,
         }))()`,
       );
@@ -516,6 +539,12 @@ const main = async () => {
       assert.match(unlockedMosaic.status, /\d[\d,]* × \d[\d,]* pixels · decrypted in this tab/);
       assert.match(unlockedMosaic.downloadHref, /^blob:/, "download must use only the decrypted in-memory Blob");
       assert.equal(unlockedMosaic.downloadName, "skald-museum-art-mosaic.jpg");
+      assert.equal(unlockedMosaic.pickerDisabled, false, "the keyboard artwork picker must unlock");
+      assert.equal(
+        unlockedMosaic.pickerOptionCount,
+        expectedMosaicMap.artworks.length + 1,
+        "the keyboard artwork picker must expose every decrypted artwork",
+      );
       assert.equal(requests.includes(`/${mosaicAsset}`), true, "correct access must fetch encrypted mosaic bytes");
       assert.equal(
         requests.includes(`/${mosaicCatalog}`),
@@ -638,6 +667,18 @@ const main = async () => {
       assert.match(desktopArtworkDetails.status, /Collection record/);
       assert.match(desktopArtworkDetails.license, /Public Domain/);
       assert.equal(desktopArtworkDetails.sourceHref, firstArtwork.museum_url);
+      const closedArtworkDetails = await evaluate(
+        client,
+        `(() => {
+          document.querySelector("[data-action='close-details']").click();
+          return {
+            infoHidden: document.querySelector("[data-artwork-info]").hidden,
+            selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+          };
+        })()`,
+      );
+      assert.equal(closedArtworkDetails.infoHidden, true, "the close control must hide artwork details");
+      assert.equal(closedArtworkDetails.selectionHidden, true, "the close control must clear the highlight");
 
       const lastArtworkPoint = await evaluate(
         client,
@@ -687,6 +728,44 @@ const main = async () => {
       assert.equal(onViewArtworkDetails.target, "_blank");
       assert.match(onViewArtworkDetails.rel, /noopener/);
       assert.match(onViewArtworkDetails.rel, /noreferrer/);
+      const artworkHitTestFailures = await evaluate(
+        client,
+        `(() => {
+          const artworks = ${JSON.stringify(
+            expectedMosaicMap.artworks.map(({ index, title, x, y, width, height }) => ({
+              index,
+              title,
+              x,
+              y,
+              width,
+              height,
+            })),
+          )};
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const image = document.querySelector("[data-mosaic-image]");
+          const failures = [];
+          for (const artwork of artworks) {
+            const rect = image.getBoundingClientRect();
+            stage.dispatchEvent(new MouseEvent("click", {
+              bubbles: true,
+              clientX: rect.left + rect.width * ((artwork.x + artwork.width / 2) / ${expectedMosaicMap.width}),
+              clientY: rect.top + rect.height * ((artwork.y + artwork.height / 2) / ${expectedMosaicMap.height}),
+            }));
+            if (
+              document.querySelector("[data-artwork-index]").textContent !== String(artwork.index).padStart(3, "0") ||
+              document.querySelector("[data-artwork-title]").textContent !== artwork.title
+            ) {
+              failures.push(artwork.index);
+            }
+          }
+          return failures;
+        })()`,
+      );
+      assert.deepEqual(
+        artworkHitTestFailures,
+        [],
+        "every reviewed mosaic cell must open its matching artwork record",
+      );
       if (options.screenshotsDir) {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
       }
@@ -703,6 +782,8 @@ const main = async () => {
             artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
             selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
             sourceLinkCount: document.querySelector("[data-artwork-source-links]").childElementCount,
+            pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
+            pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           };
         })()`,
       );
@@ -713,6 +794,8 @@ const main = async () => {
       assert.equal(relockedMosaic.artworkInfoHidden, true, "locking must close artwork details");
       assert.equal(relockedMosaic.selectionHidden, true, "locking must clear the artwork highlight");
       assert.equal(relockedMosaic.sourceLinkCount, 0, "locking must clear artwork source links");
+      assert.equal(relockedMosaic.pickerDisabled, true, "locking must disable the artwork picker");
+      assert.equal(relockedMosaic.pickerOptionCount, 1, "locking must remove decrypted picker metadata");
 
       const feedbackSelectors = [
         ".site-header",
@@ -808,6 +891,7 @@ const main = async () => {
         `Number.parseFloat(document.querySelector("[data-zoom-output]").value)`,
       );
       assert.ok(mobileAfterPinchOut > mobileStage.beforeZoom, "two-finger pinch-out must zoom in");
+      await delay(100);
       await client.send("Input.dispatchTouchEvent", {
         type: "touchMove",
         touchPoints: [
@@ -815,11 +899,15 @@ const main = async () => {
           { id: 2, x: mobileStage.x + 28, y: mobileStage.y },
         ],
       });
+      await delay(100);
       const mobileAfterPinchIn = await evaluate(
         client,
         `Number.parseFloat(document.querySelector("[data-zoom-output]").value)`,
       );
-      assert.ok(mobileAfterPinchIn < mobileAfterPinchOut, "two-finger pinch-in must zoom out");
+      assert.ok(
+        mobileAfterPinchIn < mobileAfterPinchOut,
+        `two-finger pinch-in must zoom out (${mobileAfterPinchIn}% after ${mobileAfterPinchOut}%)`,
+      );
       await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       assert.equal(
         await evaluate(client, `document.querySelector("[data-artwork-info]").hidden`),
@@ -881,6 +969,18 @@ const main = async () => {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-mobile-390x844.png"));
       }
 
+      await emulate(client, { width: 844, height: 390, mobile: true });
+      const mosaicLandscapeSnapshot = await layoutSnapshot(client, mosaicDetailsSelectors);
+      assertMobileLayout(
+        "mosaic viewer landscape",
+        mosaicLandscapeSnapshot,
+        mosaicDetailsSelectors,
+        { width: 844, height: 390 },
+      );
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-landscape-844x390.png"));
+      }
+
       const privacySelectors = [
         ".site-header",
         ".header-inner",
@@ -893,6 +993,7 @@ const main = async () => {
         ".legal-header h1",
         ".legal-copy",
       ];
+      await emulate(client, { width: 390, height: 844, mobile: true });
       await navigate(client, `http://127.0.0.1:${sitePort}/feedback/privacy/`);
       const privacySnapshot = await layoutSnapshot(client, privacySelectors);
       assertMobileLayout("feedback privacy page", privacySnapshot, privacySelectors);

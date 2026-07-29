@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultOutputDir = join(repoRoot, "skald/mosaic");
 const encryptedAssetName = "skald-museum-art-mosaic.enc";
+const encryptedCatalogAssetName = "skald-museum-art-map.enc";
 const configName = "mosaic-config.json";
 
 export const MOSAIC_PBKDF2_ITERATIONS = 600_000;
@@ -57,8 +58,11 @@ const parseArgs = () => {
   const args = process.argv.slice(2);
   const options = {
     input: null,
+    catalogInput: null,
+    catalogOnly: false,
     outputDir: defaultOutputDir,
     approvedSha256: null,
+    approvedCatalogSha256: null,
     approvedWidth: null,
     approvedHeight: null,
   };
@@ -68,11 +72,19 @@ const parseArgs = () => {
     if (argument === "--input") {
       options.input = args[index + 1] ?? null;
       index += 1;
+    } else if (argument === "--catalog-input") {
+      options.catalogInput = args[index + 1] ?? null;
+      index += 1;
+    } else if (argument === "--catalog-only") {
+      options.catalogOnly = true;
     } else if (argument === "--output-dir") {
       options.outputDir = args[index + 1] ?? null;
       index += 1;
     } else if (argument === "--approved-sha256") {
       options.approvedSha256 = args[index + 1] ?? null;
+      index += 1;
+    } else if (argument === "--approved-catalog-sha256") {
+      options.approvedCatalogSha256 = args[index + 1] ?? null;
       index += 1;
     } else if (argument === "--approved-width") {
       options.approvedWidth = Number(args[index + 1]);
@@ -85,27 +97,50 @@ const parseArgs = () => {
     }
   }
 
-  if (!options.input) throw new Error("--input is required");
   if (!options.outputDir) throw new Error("--output-dir requires a path");
-  if (!/^[a-f0-9]{64}$/i.test(options.approvedSha256 ?? "")) {
-    throw new Error("--approved-sha256 requires a 64-character SHA-256 digest.");
+  if (options.catalogOnly) {
+    if (options.input || options.approvedSha256 || options.approvedWidth || options.approvedHeight) {
+      throw new Error("--catalog-only cannot be combined with mosaic image input or approvals.");
+    }
+  } else {
+    if (!options.input) throw new Error("--input is required");
+    if (!/^[a-f0-9]{64}$/i.test(options.approvedSha256 ?? "")) {
+      throw new Error("--approved-sha256 requires a 64-character SHA-256 digest.");
+    }
+    if (!Number.isSafeInteger(options.approvedWidth) || options.approvedWidth <= 0) {
+      throw new Error("--approved-width requires a positive integer.");
+    }
+    if (!Number.isSafeInteger(options.approvedHeight) || options.approvedHeight <= 0) {
+      throw new Error("--approved-height requires a positive integer.");
+    }
   }
-  if (!Number.isSafeInteger(options.approvedWidth) || options.approvedWidth <= 0) {
-    throw new Error("--approved-width requires a positive integer.");
+  if (!options.catalogInput) {
+    throw new Error("--catalog-input is required for every encrypted mosaic bundle.");
   }
-  if (!Number.isSafeInteger(options.approvedHeight) || options.approvedHeight <= 0) {
-    throw new Error("--approved-height requires a positive integer.");
+  if (options.catalogInput && !/^[a-f0-9]{64}$/i.test(options.approvedCatalogSha256 ?? "")) {
+    throw new Error("--approved-catalog-sha256 requires a 64-character SHA-256 digest.");
   }
+  if (!options.catalogInput && options.approvedCatalogSha256) {
+    throw new Error("--approved-catalog-sha256 requires --catalog-input.");
+  }
+
+  const resolveFromCwd = (path) =>
+    path && (isAbsolute(path) ? path : resolve(process.cwd(), path));
   return {
-    input: isAbsolute(options.input) ? options.input : resolve(process.cwd(), options.input),
+    input: resolveFromCwd(options.input),
+    catalogInput: resolveFromCwd(options.catalogInput),
+    catalogOnly: options.catalogOnly,
     outputDir: isAbsolute(options.outputDir)
       ? options.outputDir
       : resolve(process.cwd(), options.outputDir),
-    approvedPlaintext: {
-      sha256: options.approvedSha256.toLowerCase(),
-      width: options.approvedWidth,
-      height: options.approvedHeight,
-    },
+    approvedPlaintext: options.catalogOnly
+      ? null
+      : {
+          sha256: options.approvedSha256.toLowerCase(),
+          width: options.approvedWidth,
+          height: options.approvedHeight,
+        },
+    approvedCatalogSha256: options.approvedCatalogSha256?.toLowerCase() ?? null,
   };
 };
 
@@ -195,6 +230,81 @@ export const mosaicAdditionalData = (plaintextContract) =>
     ].join("\n"),
   );
 
+export const inspectMosaicCatalog = (plaintext) => {
+  const bytes = Buffer.from(plaintext);
+  let catalog;
+  try {
+    catalog = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    throw new Error("The mosaic catalog input must be valid UTF-8 JSON.");
+  }
+
+  if (
+    !catalog ||
+    Array.isArray(catalog) ||
+    !Number.isSafeInteger(catalog.width) ||
+    catalog.width <= 0 ||
+    !Number.isSafeInteger(catalog.height) ||
+    catalog.height <= 0 ||
+    !Array.isArray(catalog.tiles) ||
+    !Array.isArray(catalog.artworks) ||
+    catalog.artworks.length <= 0
+  ) {
+    throw new Error("The mosaic catalog must declare dimensions, tiles, and artworks.");
+  }
+
+  const indexes = new Set();
+  const ids = new Set();
+  for (const artwork of catalog.artworks) {
+    if (
+      !Number.isSafeInteger(artwork?.index) ||
+      artwork.index <= 0 ||
+      typeof artwork?.id !== "string" ||
+      artwork.id.length === 0 ||
+      !Number.isSafeInteger(artwork?.x) ||
+      artwork.x < 0 ||
+      !Number.isSafeInteger(artwork?.y) ||
+      artwork.y < 0 ||
+      !Number.isSafeInteger(artwork?.width) ||
+      artwork.width <= 0 ||
+      !Number.isSafeInteger(artwork?.height) ||
+      artwork.height <= 0 ||
+      artwork.x + artwork.width > catalog.width ||
+      artwork.y + artwork.height > catalog.height ||
+      typeof artwork?.title !== "string"
+    ) {
+      throw new Error("The mosaic catalog contains an invalid artwork record.");
+    }
+    if (indexes.has(artwork.index) || ids.has(artwork.id)) {
+      throw new Error("The mosaic catalog contains duplicate artwork identities.");
+    }
+    indexes.add(artwork.index);
+    ids.add(artwork.id);
+  }
+
+  return {
+    mediaType: "application/json",
+    bytes: bytes.length,
+    sha256: sha256(bytes),
+    width: catalog.width,
+    height: catalog.height,
+    artworkCount: catalog.artworks.length,
+  };
+};
+
+export const mosaicCatalogAdditionalData = (plaintextContract) =>
+  Buffer.from(
+    [
+      "skald-mosaic-catalog-v2",
+      `mediaType=${plaintextContract.mediaType}`,
+      `bytes=${plaintextContract.bytes}`,
+      `sha256=${plaintextContract.sha256}`,
+      `width=${plaintextContract.width}`,
+      `height=${plaintextContract.height}`,
+      `artworkCount=${plaintextContract.artworkCount}`,
+    ].join("\n"),
+  );
+
 const decodeBase64 = (value, expectedLength, label) => {
   if (typeof value !== "string") throw new Error(`Invalid ${label}.`);
   const decoded = Buffer.from(value, "base64");
@@ -239,6 +349,43 @@ export const validateMosaicConfig = (config) => {
   };
 };
 
+export const validateMosaicCatalogConfig = (config) => {
+  const base = validateMosaicConfig(config);
+  const plaintextContract = config?.catalog?.plaintext;
+  if (
+    plaintextContract?.mediaType !== "application/json" ||
+    !Number.isSafeInteger(plaintextContract?.bytes) ||
+    plaintextContract.bytes <= 0 ||
+    !/^[a-f0-9]{64}$/.test(plaintextContract?.sha256 ?? "") ||
+    !Number.isSafeInteger(plaintextContract?.width) ||
+    plaintextContract.width <= 0 ||
+    !Number.isSafeInteger(plaintextContract?.height) ||
+    plaintextContract.height <= 0 ||
+    !Number.isSafeInteger(plaintextContract?.artworkCount) ||
+    plaintextContract.artworkCount <= 0
+  ) {
+    throw new Error("Invalid encrypted mosaic catalog plaintext contract.");
+  }
+  if (
+    plaintextContract.width !== config.plaintext.width ||
+    plaintextContract.height !== config.plaintext.height ||
+    config?.catalog?.cipher?.name !== "AES-GCM" ||
+    config?.catalog?.cipher?.url !== `./assets/${encryptedCatalogAssetName}`
+  ) {
+    throw new Error("Invalid encrypted mosaic catalog cryptographic contract.");
+  }
+
+  const iv = decodeBase64(config.catalog.cipher.iv, 12, "catalog AES-GCM IV");
+  if (timingSafeEqual(iv, base.iv)) {
+    throw new Error("The mosaic and catalog must use distinct AES-GCM IVs.");
+  }
+  return {
+    ...base,
+    plaintextContract,
+    iv,
+  };
+};
+
 export const assertPlaintextMatchesContract = (plaintext, plaintextContract) => {
   const actualContract = inspectJpeg(plaintext);
   if (
@@ -253,28 +400,29 @@ export const assertPlaintextMatchesContract = (plaintext, plaintextContract) => 
   return actualContract;
 };
 
-export const decryptAndVerifyMosaicBytes = (ciphertext, password, config) => {
+const deriveAndVerifyMosaicKey = (password, config, validatedConfig) => {
   if (!password) throw new Error("SKALD_MOSAIC_PASSWORD must not be empty.");
-  if (ciphertext.length <= 16) {
-    throw new Error("Encrypted mosaic ciphertext is incomplete.");
-  }
-  const {
-    plaintextContract,
-    salt,
-    verifier,
-    iv,
-  } = validateMosaicConfig(config);
   const derived = pbkdf2Sync(
     password.normalize("NFKC"),
-    salt,
+    validatedConfig.salt,
     config.kdf.iterations,
     64,
     "sha256",
   );
   const actualVerifier = createHash("sha256").update(derived.subarray(32)).digest();
-  if (!timingSafeEqual(actualVerifier, verifier)) {
+  if (!timingSafeEqual(actualVerifier, validatedConfig.verifier)) {
     throw new Error("The mosaic access word does not match the encrypted bundle.");
   }
+  return derived;
+};
+
+export const decryptAndVerifyMosaicBytes = (ciphertext, password, config) => {
+  if (ciphertext.length <= 16) {
+    throw new Error("Encrypted mosaic ciphertext is incomplete.");
+  }
+  const validatedConfig = validateMosaicConfig(config);
+  const { plaintextContract, iv } = validatedConfig;
+  const derived = deriveAndVerifyMosaicKey(password, config, validatedConfig);
 
   const authTag = ciphertext.subarray(ciphertext.length - 16);
   const decipher = createDecipheriv("aes-256-gcm", derived.subarray(0, 32), iv);
@@ -292,6 +440,42 @@ export const decryptAndVerifyMosaicBytes = (ciphertext, password, config) => {
   }
 
   assertPlaintextMatchesContract(plaintext, plaintextContract);
+  return plaintext;
+};
+
+export const decryptAndVerifyMosaicCatalogBytes = (ciphertext, password, config) => {
+  if (ciphertext.length <= 16) {
+    throw new Error("Encrypted mosaic catalog ciphertext is incomplete.");
+  }
+  const validatedConfig = validateMosaicCatalogConfig(config);
+  const { plaintextContract, iv } = validatedConfig;
+  const derived = deriveAndVerifyMosaicKey(password, config, validatedConfig);
+  const authTag = ciphertext.subarray(ciphertext.length - 16);
+  const decipher = createDecipheriv("aes-256-gcm", derived.subarray(0, 32), iv);
+  decipher.setAAD(mosaicCatalogAdditionalData(plaintextContract));
+  decipher.setAuthTag(authTag);
+
+  let plaintext;
+  try {
+    plaintext = Buffer.concat([
+      decipher.update(ciphertext.subarray(0, -16)),
+      decipher.final(),
+    ]);
+  } catch {
+    throw new Error("Encrypted mosaic catalog authentication failed.");
+  }
+
+  const actualContract = inspectMosaicCatalog(plaintext);
+  if (
+    actualContract.mediaType !== plaintextContract.mediaType ||
+    actualContract.bytes !== plaintextContract.bytes ||
+    actualContract.sha256 !== plaintextContract.sha256 ||
+    actualContract.width !== plaintextContract.width ||
+    actualContract.height !== plaintextContract.height ||
+    actualContract.artworkCount !== plaintextContract.artworkCount
+  ) {
+    throw new Error("Decrypted mosaic catalog does not match its approved plaintext contract.");
+  }
   return plaintext;
 };
 
@@ -365,48 +549,163 @@ export const encryptMosaicBytes = (
   };
 };
 
+export const encryptMosaicCatalogBytes = (
+  plaintext,
+  password,
+  config,
+  {
+    approvedCatalogSha256,
+    iv = randomBytes(12),
+  } = {},
+) => {
+  const validatedConfig = validateMosaicConfig(config);
+  const derived = deriveAndVerifyMosaicKey(password, config, validatedConfig);
+  if (iv.length !== 12) throw new Error("Catalog AES-GCM IV must be 12 bytes.");
+  if (timingSafeEqual(iv, validatedConfig.iv)) {
+    throw new Error("The mosaic and catalog must use distinct AES-GCM IVs.");
+  }
+
+  const plaintextContract = inspectMosaicCatalog(plaintext);
+  if (
+    !approvedCatalogSha256 ||
+    plaintextContract.sha256 !== approvedCatalogSha256.toLowerCase()
+  ) {
+    throw new Error("The mosaic catalog input does not match the approved SHA-256.");
+  }
+  if (
+    plaintextContract.width !== config.plaintext.width ||
+    plaintextContract.height !== config.plaintext.height
+  ) {
+    throw new Error("The mosaic catalog dimensions do not match the approved mosaic.");
+  }
+
+  const cipher = createCipheriv("aes-256-gcm", derived.subarray(0, 32), iv);
+  cipher.setAAD(mosaicCatalogAdditionalData(plaintextContract));
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext),
+    cipher.final(),
+    cipher.getAuthTag(),
+  ]);
+  return {
+    encrypted,
+    config: {
+      plaintext: plaintextContract,
+      cipher: {
+        name: "AES-GCM",
+        iv: iv.toString("base64"),
+        url: `./assets/${encryptedCatalogAssetName}`,
+      },
+    },
+  };
+};
+
 const main = async () => {
-  const { input, outputDir, approvedPlaintext } = parseArgs();
+  const {
+    input,
+    catalogInput,
+    catalogOnly,
+    outputDir,
+    approvedPlaintext,
+    approvedCatalogSha256,
+  } = parseArgs();
   const password = process.env.SKALD_MOSAIC_PASSWORD;
   if (!password) {
     throw new Error("Set SKALD_MOSAIC_PASSWORD to the out-of-band access word.");
   }
 
-  const inputWithinOutput = relative(outputDir, input);
-  if (!inputWithinOutput.startsWith("..") && !isAbsolute(inputWithinOutput)) {
-    throw new Error("The plaintext input must remain outside the deployable mosaic route.");
-  }
+  const assertInputOutsideOutput = (path, label) => {
+    if (!path) return;
+    const inputWithinOutput = relative(outputDir, path);
+    if (!inputWithinOutput.startsWith("..") && !isAbsolute(inputWithinOutput)) {
+      throw new Error(`The plaintext ${label} input must remain outside the deployable mosaic route.`);
+    }
+  };
+  assertInputOutsideOutput(input, "mosaic");
+  assertInputOutsideOutput(catalogInput, "catalog");
   await assertNoPlaintextRasterImages(outputDir);
 
-  const plaintext = await readFile(input);
-  const { encrypted, config } = encryptMosaicBytes(plaintext, password, {
-    approvedPlaintext,
-  });
-  const configBytes = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
   const assetsDir = join(outputDir, "assets");
-  const encryptedPath = join(assetsDir, encryptedAssetName);
   const configPath = join(outputDir, configName);
-  const encryptedTemp = `${encryptedPath}.tmp-${process.pid}`;
+  const catalogPath = join(assetsDir, encryptedCatalogAssetName);
   const configTemp = `${configPath}.tmp-${process.pid}`;
+  const catalogTemp = `${catalogPath}.tmp-${process.pid}`;
 
   await mkdir(assetsDir, { recursive: true });
+  if (catalogOnly) {
+    const existingConfig = JSON.parse(await readFile(configPath, "utf8"));
+    const catalogPlaintext = await readFile(catalogInput);
+    const catalog = encryptMosaicCatalogBytes(catalogPlaintext, password, existingConfig, {
+      approvedCatalogSha256,
+    });
+    const config = { ...existingConfig, catalog: catalog.config };
+    const configBytes = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
+    try {
+      await Promise.all([
+        writeFile(catalogTemp, catalog.encrypted),
+        writeFile(configTemp, configBytes),
+      ]);
+      await rename(catalogTemp, catalogPath);
+      await rename(configTemp, configPath);
+    } finally {
+      await Promise.all([
+        rm(catalogTemp, { force: true }),
+        rm(configTemp, { force: true }),
+      ]);
+    }
+    console.log(
+      `Encrypted Skald mosaic catalog: ${catalogPlaintext.length} plaintext bytes -> ${catalog.encrypted.length} encrypted bytes.`,
+    );
+    console.log(`Catalog plaintext SHA-256: ${sha256(catalogPlaintext)}`);
+    console.log(`Catalog ciphertext SHA-256: ${sha256(catalog.encrypted)}`);
+    console.log(`Preserved ${join(assetsDir, encryptedAssetName)}`);
+    console.log(`Wrote ${configPath}`);
+    console.log(`Wrote ${catalogPath}`);
+    return;
+  }
+
+  const plaintext = await readFile(input);
+  const mosaic = encryptMosaicBytes(plaintext, password, {
+    approvedPlaintext,
+  });
+  let config = mosaic.config;
+  let catalog = null;
+  if (catalogInput) {
+    const catalogPlaintext = await readFile(catalogInput);
+    catalog = encryptMosaicCatalogBytes(catalogPlaintext, password, config, {
+      approvedCatalogSha256,
+    });
+    config = { ...config, catalog: catalog.config };
+  }
+
+  const configBytes = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
+  const encryptedPath = join(assetsDir, encryptedAssetName);
+  const encryptedTemp = `${encryptedPath}.tmp-${process.pid}`;
   try {
     await Promise.all([
-      writeFile(encryptedTemp, encrypted),
+      writeFile(encryptedTemp, mosaic.encrypted),
+      catalog ? writeFile(catalogTemp, catalog.encrypted) : Promise.resolve(),
       writeFile(configTemp, configBytes),
     ]);
     await rename(encryptedTemp, encryptedPath);
+    if (catalog) await rename(catalogTemp, catalogPath);
     await rename(configTemp, configPath);
   } finally {
     await Promise.all([
       rm(encryptedTemp, { force: true }),
+      rm(catalogTemp, { force: true }),
       rm(configTemp, { force: true }),
     ]);
   }
 
-  console.log(`Encrypted Skald mosaic: ${plaintext.length} plaintext bytes -> ${encrypted.length} encrypted bytes.`);
+  console.log(
+    `Encrypted Skald mosaic: ${plaintext.length} plaintext bytes -> ${mosaic.encrypted.length} encrypted bytes.`,
+  );
   console.log(`Plaintext SHA-256: ${sha256(plaintext)}`);
-  console.log(`Ciphertext SHA-256: ${sha256(encrypted)}`);
+  console.log(`Ciphertext SHA-256: ${sha256(mosaic.encrypted)}`);
+  if (catalog) {
+    console.log(`Catalog ciphertext SHA-256: ${sha256(catalog.encrypted)}`);
+    console.log(`Wrote ${catalogPath}`);
+  }
   console.log(`Wrote ${configPath}`);
   console.log(`Wrote ${encryptedPath}`);
 };

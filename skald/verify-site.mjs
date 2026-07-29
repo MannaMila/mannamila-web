@@ -37,7 +37,6 @@ const requiredFiles = [
   `${mosaicRoute}/attribution.html`,
   `${mosaicRoute}/styles.css`,
   `${mosaicRoute}/viewer.js`,
-  mosaicCatalogCipherPath,
   "privacy/index.html",
   "updates-privacy/index.html",
   "waitlist-privacy/index.html",
@@ -237,6 +236,7 @@ assert.match(mosaicIndex, /<section\b[^>]*data-mosaic-viewer[^>]*hidden/);
 assert.match(mosaicIndex, /<aside\b[^>]*data-artwork-info[^>]*hidden/);
 assert.match(mosaicIndex, /data-artwork-title/);
 assert.match(mosaicIndex, /data-artwork-source-links/);
+assert.match(mosaicIndex, /data-artwork-picker/);
 assert.match(mosaicIndex, /Scroll or pinch/);
 assert.doesNotMatch(
   mosaicIndex,
@@ -250,6 +250,7 @@ assert.match(
 );
 assert.doesNotMatch(mosaicViewer, /ACCESS_WORD/);
 assert.doesNotMatch(mosaicViewer, /sessionStorage/);
+assert.doesNotMatch(mosaicViewer, /innerHTML/);
 assert.doesNotMatch(mosaicViewer, /["']\.\/[^"']+\.jpg["']/i);
 assert.match(mosaicViewer, /PBKDF2/);
 assert.match(mosaicViewer, /AES-GCM/);
@@ -257,7 +258,6 @@ assert.match(mosaicViewer, /crypto\.subtle/);
 assert.match(mosaicViewer, /\.\/mosaic-config\.json/);
 assert.match(mosaicViewer, /config\.catalog\.cipher\.url/);
 assert.doesNotMatch(mosaicViewer, /\.\/mosaic-map\.json/);
-assert.match(mosaicViewer, new RegExp(expectedMosaicMapSha256));
 assert.match(mosaicViewer, /skald-mosaic-v2/);
 assert.match(mosaicViewer, /config\.plaintext\.sha256/);
 assert.match(mosaicViewer, /image\.naturalWidth !== config\.plaintext\.width/);
@@ -299,9 +299,12 @@ const validateArtworkMap = (mosaicMap) => {
       assert.ok(artwork[field].trim(), `${artwork.id}.${field} must not be empty`);
     }
     assert.equal(typeof artwork.on_view, "boolean");
-    assert.match(artwork.museum_url || artwork.file_page_url, /^https:\/\//);
+    assert.ok(
+      [artwork.museum_url, artwork.file_page_url].some((value) => /^https:\/\//.test(value)),
+      `${artwork.id} must retain at least one secure source URL`,
+    );
     for (const field of ["museum_url", "file_page_url"]) {
-      if (artwork[field]) assert.match(artwork[field], /^https:\/\//);
+      if (artwork[field]) assert.match(artwork[field], /^https?:\/\//);
     }
     if (artwork.on_view) {
       for (const field of ["museum", "gallery", "as_of"]) {

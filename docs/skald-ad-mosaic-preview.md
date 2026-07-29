@@ -11,10 +11,11 @@ word or a readable image URL.
 
 Keep the approved JPEG outside this repository and the deployable route. From a
 clean `mannamila-web` source checkout, copy the approved SHA-256 and exact pixel
-dimensions from the reviewed package manifest. Do not derive the approval
-values as part of the encryption command: they are the independent contract
-that prevents a different readable JPEG from being accepted. Then enter the
-access word without echoing it and encrypt the JPEG:
+dimensions from the reviewed package manifest. Also copy the reviewed
+`mosaic-map.json` path and its independent SHA-256. Do not derive approval
+values as part of the encryption command: they are the independent contracts
+that prevent different readable assets from being accepted. Then enter the
+access word without echoing it and encrypt the JPEG and artwork catalog:
 
 Export the final JPEG with its orientation normalized into the pixels. The
 dimension contract uses the JPEG frame dimensions rather than EXIF rotation.
@@ -26,23 +27,44 @@ node scripts/encrypt-skald-mosaic.mjs \
   --input /absolute/path/to/approved-skald-mosaic.jpg \
   --approved-sha256 <reviewed-lowercase-sha256> \
   --approved-width <reviewed-pixel-width> \
-  --approved-height <reviewed-pixel-height>
+  --approved-height <reviewed-pixel-height> \
+  --catalog-input /absolute/path/to/reviewed-mosaic-map.json \
+  --approved-catalog-sha256 <reviewed-lowercase-catalog-sha256>
 ```
 
-The command validates the JPEG and writes only:
+The command validates both inputs and writes only:
 
 - `skald/mosaic/mosaic-config.json`
 - `skald/mosaic/assets/skald-museum-art-mosaic.enc`
+- `skald/mosaic/assets/skald-museum-art-map.enc`
+
+Image and catalog inputs are an all-or-nothing bundle. The command refuses a
+full encryption run without the reviewed catalog and its approved hash.
 
 The config contains the approved plaintext SHA-256, byte count, exact
 dimensions and media type, plus the random salt, PBKDF2 iteration count,
-derived verifier hash, AES-GCM IV, and encrypted-asset URL. The plaintext
-contract is authenticated as AES-GCM additional data, so changing its hash,
-dimensions, byte count, or media type invalidates the ciphertext. The JPEG and
-access word are not written into the public tree. The viewer derives the key
-with PBKDF2-SHA-256, rejects a wrong word before downloading the ciphertext,
-then decrypts with AES-256-GCM, verifies the approved SHA-256 and dimensions,
-and creates an in-memory Blob URL. Locking or reloading revokes that URL.
+derived verifier hash, separate AES-GCM IVs, and encrypted-asset URLs. The
+catalog contract additionally authenticates its artwork count. Each plaintext
+contract is authenticated as AES-GCM additional data, so changing a hash,
+dimensions, byte count, media type, or artwork count invalidates its
+ciphertext. The JPEG, JSON catalog, and access word are not written into the
+public tree. The viewer derives the key with PBKDF2-SHA-256, rejects a wrong
+word before downloading either ciphertext, then decrypts both with AES-256-GCM,
+verifies the approved contracts, and creates an in-memory image Blob URL.
+Locking or reloading revokes that URL and clears the decrypted catalog.
+
+To add or replace only the reviewed catalog for an existing encrypted mosaic,
+use catalog-only mode. It reads the deployed config, verifies that the access
+word matches its verifier, reuses the established KDF, chooses a fresh catalog
+IV distinct from the image IV, and leaves the image ciphertext byte-for-byte
+unchanged:
+
+```sh
+node scripts/encrypt-skald-mosaic.mjs \
+  --catalog-only \
+  --catalog-input /absolute/path/to/reviewed-mosaic-map.json \
+  --approved-catalog-sha256 <reviewed-lowercase-catalog-sha256>
+```
 
 Encryption and site verification recursively reject `.jpg`, `.jpeg`, `.png`,
 `.webp`, and `.gif` files, case-insensitively, anywhere below the deployable

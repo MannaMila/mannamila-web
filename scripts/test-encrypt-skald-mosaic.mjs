@@ -106,6 +106,30 @@ try {
   assert.notEqual(missingApproval.status, 0);
   assert.match(missingApproval.stderr, /approved-sha256/i);
 
+  const missingCatalog = spawnSync(
+    process.execPath,
+    [
+      script,
+      "--input",
+      input,
+      "--output-dir",
+      output,
+      "--approved-sha256",
+      approvedPlaintext.sha256,
+      "--approved-width",
+      String(approvedPlaintext.width),
+      "--approved-height",
+      String(approvedPlaintext.height),
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: environmentFor(testPassword),
+    },
+  );
+  assert.notEqual(missingCatalog.status, 0);
+  assert.match(missingCatalog.stderr, /catalog-input/i);
+
   const missingPassword = run(null);
   assert.notEqual(missingPassword.status, 0);
   assert.match(missingPassword.stderr, /SKALD_MOSAIC_PASSWORD/);
