@@ -15,7 +15,7 @@ import {
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const skaldRoot = dirname(fileURLToPath(import.meta.url));
 const defaultTimeoutMs = 10_000;
-const mosaicRoute = "folio-24b3206ad4eceb1abe0c";
+const mosaicRoute = "mosaic";
 const mosaicConfig = `${mosaicRoute}/mosaic-config.json`;
 const mosaicAsset = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
 const mosaicConfigInstalled = await access(join(skaldRoot, mosaicConfig))

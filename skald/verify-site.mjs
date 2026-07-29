@@ -12,7 +12,7 @@ import {
 
 const root = dirname(fileURLToPath(import.meta.url));
 const read = (path) => readFile(join(root, path), "utf8");
-const mosaicRoute = "folio-24b3206ad4eceb1abe0c";
+const mosaicRoute = "mosaic";
 const mosaicConfigPath = `${mosaicRoute}/mosaic-config.json`;
 const mosaicCipherPath = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
 const allowMissingMosaic = process.env.SKALD_ALLOW_MISSING_MOSAIC === "1";
@@ -181,7 +181,11 @@ assert.doesNotMatch(
   /<meta\b[^>]+(?:property="og:description"|name="twitter:description")[^>]+content="[^"]*Coming to/i,
   "social metadata must stay release-neutral",
 );
-assert.doesNotMatch(index, new RegExp(mosaicRoute), "the private mosaic route must remain unlinked");
+assert.doesNotMatch(
+  index,
+  /href=["'](?:https:\/\/skald\.mannamila\.com\/|\/|\.\/)?mosaic\/(?:[^"']*)["']/i,
+  "the private /mosaic/ route must remain unlinked",
+);
 
 for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
   assert.match(

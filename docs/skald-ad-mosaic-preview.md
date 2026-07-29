@@ -2,7 +2,7 @@
 
 The unlinked preview route is:
 
-`https://skald.mannamila.com/folio-24b3206ad4eceb1abe0c/`
+`https://skald.mannamila.com/mosaic/`
 
 Share its access word out of band. The deployed JavaScript does not contain the
 word or a readable image URL.
@@ -31,8 +31,8 @@ node scripts/encrypt-skald-mosaic.mjs \
 
 The command validates the JPEG and writes only:
 
-- `skald/folio-24b3206ad4eceb1abe0c/mosaic-config.json`
-- `skald/folio-24b3206ad4eceb1abe0c/assets/skald-museum-art-mosaic.enc`
+- `skald/mosaic/mosaic-config.json`
+- `skald/mosaic/assets/skald-museum-art-mosaic.enc`
 
 The config contains the approved plaintext SHA-256, byte count, exact
 dimensions and media type, plus the random salt, PBKDF2 iteration count,

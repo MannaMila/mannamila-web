@@ -20,7 +20,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const defaultOutputDir = join(repoRoot, "skald/folio-24b3206ad4eceb1abe0c");
+const defaultOutputDir = join(repoRoot, "skald/mosaic");
 const encryptedAssetName = "skald-museum-art-mosaic.enc";
 const configName = "mosaic-config.json";
 
