@@ -23,10 +23,14 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultOutputDir = join(repoRoot, "skald/mosaic");
 const encryptedAssetName = "skald-museum-art-mosaic.enc";
 const encryptedCatalogAssetName = "skald-museum-art-map.enc";
+const encryptedViewerAssetName = "skald-museum-art-viewer.enc";
 const configName = "mosaic-config.json";
 
 export const MOSAIC_PBKDF2_ITERATIONS = 600_000;
 export const MOSAIC_SCHEMA_VERSION = 2;
+export const MOSAIC_VIEWER_MANIFEST_SCHEMA_VERSION = 1;
+export const MOSAIC_VIEWER_PACK_MEDIA_TYPE =
+  "application/vnd.skald.mosaic-viewer-pack";
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const plaintextRasterPattern = /\.(?:jpe?g|png|webp|gif)$/i;
@@ -60,6 +64,10 @@ const parseArgs = () => {
     input: null,
     catalogInput: null,
     catalogOnly: false,
+    viewerPackOnly: false,
+    viewerManifest: null,
+    viewerRoot: null,
+    approvedViewerManifestSha256: null,
     outputDir: defaultOutputDir,
     approvedSha256: null,
     approvedCatalogSha256: null,
@@ -77,6 +85,17 @@ const parseArgs = () => {
       index += 1;
     } else if (argument === "--catalog-only") {
       options.catalogOnly = true;
+    } else if (argument === "--viewer-pack-only") {
+      options.viewerPackOnly = true;
+    } else if (argument === "--viewer-manifest") {
+      options.viewerManifest = args[index + 1] ?? null;
+      index += 1;
+    } else if (argument === "--viewer-root") {
+      options.viewerRoot = args[index + 1] ?? null;
+      index += 1;
+    } else if (argument === "--approved-viewer-manifest-sha256") {
+      options.approvedViewerManifestSha256 = args[index + 1] ?? null;
+      index += 1;
     } else if (argument === "--output-dir") {
       options.outputDir = args[index + 1] ?? null;
       index += 1;
@@ -98,11 +117,45 @@ const parseArgs = () => {
   }
 
   if (!options.outputDir) throw new Error("--output-dir requires a path");
+  if (options.catalogOnly && options.viewerPackOnly) {
+    throw new Error("--catalog-only and --viewer-pack-only are mutually exclusive.");
+  }
+  if (options.viewerPackOnly) {
+    if (
+      options.input ||
+      options.catalogInput ||
+      options.approvedSha256 ||
+      options.approvedCatalogSha256 ||
+      options.approvedWidth !== null ||
+      options.approvedHeight !== null
+    ) {
+      throw new Error("--viewer-pack-only cannot be combined with mosaic or catalog inputs.");
+    }
+    if (!options.viewerManifest) {
+      throw new Error("--viewer-manifest is required with --viewer-pack-only.");
+    }
+    if (!options.viewerRoot) {
+      throw new Error("--viewer-root is required with --viewer-pack-only.");
+    }
+    if (!/^[a-f0-9]{64}$/i.test(options.approvedViewerManifestSha256 ?? "")) {
+      throw new Error(
+        "--approved-viewer-manifest-sha256 requires a 64-character SHA-256 digest.",
+      );
+    }
+  } else if (
+    options.viewerManifest ||
+    options.viewerRoot ||
+    options.approvedViewerManifestSha256
+  ) {
+    throw new Error(
+      "--viewer-manifest, --viewer-root, and --approved-viewer-manifest-sha256 require --viewer-pack-only.",
+    );
+  }
   if (options.catalogOnly) {
     if (options.input || options.approvedSha256 || options.approvedWidth || options.approvedHeight) {
       throw new Error("--catalog-only cannot be combined with mosaic image input or approvals.");
     }
-  } else {
+  } else if (!options.viewerPackOnly) {
     if (!options.input) throw new Error("--input is required");
     if (!/^[a-f0-9]{64}$/i.test(options.approvedSha256 ?? "")) {
       throw new Error("--approved-sha256 requires a 64-character SHA-256 digest.");
@@ -114,7 +167,7 @@ const parseArgs = () => {
       throw new Error("--approved-height requires a positive integer.");
     }
   }
-  if (!options.catalogInput) {
+  if (!options.viewerPackOnly && !options.catalogInput) {
     throw new Error("--catalog-input is required for every encrypted mosaic bundle.");
   }
   if (options.catalogInput && !/^[a-f0-9]{64}$/i.test(options.approvedCatalogSha256 ?? "")) {
@@ -130,10 +183,13 @@ const parseArgs = () => {
     input: resolveFromCwd(options.input),
     catalogInput: resolveFromCwd(options.catalogInput),
     catalogOnly: options.catalogOnly,
+    viewerPackOnly: options.viewerPackOnly,
+    viewerManifest: resolveFromCwd(options.viewerManifest),
+    viewerRoot: resolveFromCwd(options.viewerRoot),
     outputDir: isAbsolute(options.outputDir)
       ? options.outputDir
       : resolve(process.cwd(), options.outputDir),
-    approvedPlaintext: options.catalogOnly
+    approvedPlaintext: options.catalogOnly || options.viewerPackOnly
       ? null
       : {
           sha256: options.approvedSha256.toLowerCase(),
@@ -141,6 +197,8 @@ const parseArgs = () => {
           height: options.approvedHeight,
         },
     approvedCatalogSha256: options.approvedCatalogSha256?.toLowerCase() ?? null,
+    approvedViewerManifestSha256:
+      options.approvedViewerManifestSha256?.toLowerCase() ?? null,
   };
 };
 
@@ -305,6 +363,231 @@ export const mosaicCatalogAdditionalData = (plaintextContract) =>
     ].join("\n"),
   );
 
+const canonicalJson = (value) => {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  return `{${Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+    .join(",")}}`;
+};
+
+const hasExactKeys = (value, expectedKeys) => {
+  if (!value || Array.isArray(value) || typeof value !== "object") return false;
+  const actual = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return actual.length === expected.length &&
+    actual.every((key, index) => key === expected[index]);
+};
+
+const viewerLayerKeys = [
+  "role",
+  "id",
+  "sourcePath",
+  "sha256",
+  "offset",
+  "bytes",
+  "naturalWidth",
+  "naturalHeight",
+  "x",
+  "y",
+  "width",
+  "height",
+];
+
+const rectanglesOverlap = (left, right) =>
+  left.x < right.x + right.width &&
+  left.x + left.width > right.x &&
+  left.y < right.y + right.height &&
+  left.y + left.height > right.y;
+
+export const validateMosaicViewerLayerManifest = (manifest) => {
+  if (
+    !hasExactKeys(manifest, ["schemaVersion", "width", "height", "layers"]) ||
+    manifest.schemaVersion !== MOSAIC_VIEWER_MANIFEST_SCHEMA_VERSION ||
+    !Number.isSafeInteger(manifest.width) ||
+    manifest.width <= 0 ||
+    !Number.isSafeInteger(manifest.height) ||
+    manifest.height <= 0 ||
+    !Array.isArray(manifest.layers) ||
+    manifest.layers.length < 2
+  ) {
+    throw new Error("Invalid mosaic viewer layer manifest.");
+  }
+
+  const ids = new Set();
+  const sourcePaths = new Set();
+  const tiles = [];
+  let overview = null;
+  let expectedOffset = 0;
+  for (const layer of manifest.layers) {
+    if (
+      !hasExactKeys(layer, viewerLayerKeys) ||
+      !["overview", "tile"].includes(layer.role) ||
+      typeof layer.id !== "string" ||
+      !/^[a-z0-9][a-z0-9-]*$/.test(layer.id) ||
+      typeof layer.sourcePath !== "string" ||
+      !/^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*\/\/)[A-Za-z0-9._/-]+\.jpe?g$/i.test(
+        layer.sourcePath,
+      ) ||
+      layer.sourcePath.split("/").some((segment) => segment === "." || segment === "..") ||
+      layer.sourcePath.includes("\\") ||
+      !/^[a-f0-9]{64}$/.test(layer.sha256 ?? "") ||
+      !Number.isSafeInteger(layer.offset) ||
+      layer.offset !== expectedOffset ||
+      !Number.isSafeInteger(layer.bytes) ||
+      layer.bytes <= 0 ||
+      !["naturalWidth", "naturalHeight", "width", "height"].every(
+        (field) => Number.isSafeInteger(layer[field]) && layer[field] > 0,
+      ) ||
+      !["x", "y"].every(
+        (field) => Number.isSafeInteger(layer[field]) && layer[field] >= 0,
+      ) ||
+      layer.x + layer.width > manifest.width ||
+      layer.y + layer.height > manifest.height
+    ) {
+      throw new Error("Invalid mosaic viewer layer record.");
+    }
+    if (ids.has(layer.id) || sourcePaths.has(layer.sourcePath)) {
+      throw new Error("The mosaic viewer manifest contains duplicate layers.");
+    }
+    ids.add(layer.id);
+    sourcePaths.add(layer.sourcePath);
+    expectedOffset += layer.bytes;
+
+    if (layer.role === "overview") {
+      if (overview) {
+        throw new Error("The mosaic viewer manifest must contain one overview.");
+      }
+      if (
+        layer.x !== 0 ||
+        layer.y !== 0 ||
+        layer.width !== manifest.width ||
+        layer.height !== manifest.height ||
+        layer.naturalWidth * layer.height !== layer.naturalHeight * layer.width
+      ) {
+        throw new Error("The mosaic viewer overview dimensions are invalid.");
+      }
+      overview = layer;
+    } else {
+      if (
+        layer.naturalWidth !== layer.width ||
+        layer.naturalHeight !== layer.height
+      ) {
+        throw new Error("The mosaic viewer tile dimensions are invalid.");
+      }
+      if (tiles.some((tile) => rectanglesOverlap(tile, layer))) {
+        throw new Error("The mosaic viewer tiles overlap.");
+      }
+      tiles.push(layer);
+    }
+  }
+
+  if (!overview) {
+    throw new Error("The mosaic viewer manifest must contain one overview.");
+  }
+  const tileArea = tiles.reduce(
+    (total, tile) => total + tile.width * tile.height,
+    0,
+  );
+  if (tileArea !== manifest.width * manifest.height) {
+    throw new Error("The mosaic viewer tiles must cover the complete mosaic.");
+  }
+  return manifest;
+};
+
+export const canonicalizeMosaicViewerLayerManifest = (manifest) =>
+  Buffer.from(canonicalJson(validateMosaicViewerLayerManifest(manifest)));
+
+export const mosaicViewerManifestSha256 = (manifest) =>
+  sha256(canonicalizeMosaicViewerLayerManifest(manifest));
+
+export const inspectMosaicViewerPack = (plaintext, manifest) => {
+  const validatedManifest = validateMosaicViewerLayerManifest(manifest);
+  const pack = Buffer.from(plaintext);
+  const expectedBytes = validatedManifest.layers.reduce(
+    (total, layer) => total + layer.bytes,
+    0,
+  );
+  if (pack.length !== expectedBytes) {
+    throw new Error("The mosaic viewer pack byte length is invalid.");
+  }
+  for (const layer of validatedManifest.layers) {
+    const layerBytes = pack.subarray(layer.offset, layer.offset + layer.bytes);
+    const jpeg = inspectJpeg(layerBytes);
+    if (
+      jpeg.bytes !== layer.bytes ||
+      jpeg.sha256 !== layer.sha256 ||
+      jpeg.width !== layer.naturalWidth ||
+      jpeg.height !== layer.naturalHeight
+    ) {
+      throw new Error(`Mosaic viewer layer ${layer.id} does not match its approval.`);
+    }
+  }
+  return {
+    mediaType: MOSAIC_VIEWER_PACK_MEDIA_TYPE,
+    bytes: pack.length,
+    sha256: sha256(pack),
+    width: validatedManifest.width,
+    height: validatedManifest.height,
+    layerCount: validatedManifest.layers.length,
+    manifestSha256: mosaicViewerManifestSha256(validatedManifest),
+  };
+};
+
+export const buildMosaicViewerPack = async (
+  viewerRoot,
+  manifest,
+  { approvedManifestSha256 } = {},
+) => {
+  const validatedManifest = validateMosaicViewerLayerManifest(manifest);
+  const actualManifestSha256 = mosaicViewerManifestSha256(validatedManifest);
+  if (
+    !approvedManifestSha256 ||
+    actualManifestSha256 !== approvedManifestSha256.toLowerCase()
+  ) {
+    throw new Error("The mosaic viewer manifest does not match the approved SHA-256.");
+  }
+
+  const layers = [];
+  for (const layer of validatedManifest.layers) {
+    const layerPath = resolve(viewerRoot, layer.sourcePath);
+    const relativePath = relative(resolve(viewerRoot), layerPath);
+    if (
+      relativePath.startsWith("..") ||
+      isAbsolute(relativePath)
+    ) {
+      throw new Error("Mosaic viewer layer paths must remain inside --viewer-root.");
+    }
+    layers.push(await readFile(layerPath));
+  }
+  const plaintext = Buffer.concat(layers);
+  const plaintextContract = inspectMosaicViewerPack(
+    plaintext,
+    validatedManifest,
+  );
+  return {
+    plaintext,
+    plaintextContract,
+    manifest: validatedManifest,
+  };
+};
+
+export const mosaicViewerPackAdditionalData = (plaintextContract, manifest) =>
+  Buffer.from(
+    [
+      "skald-mosaic-viewer-pack-v1",
+      `mediaType=${plaintextContract.mediaType}`,
+      `bytes=${plaintextContract.bytes}`,
+      `sha256=${plaintextContract.sha256}`,
+      `width=${plaintextContract.width}`,
+      `height=${plaintextContract.height}`,
+      `layerCount=${plaintextContract.layerCount}`,
+      `manifestSha256=${plaintextContract.manifestSha256}`,
+      `manifest=${canonicalizeMosaicViewerLayerManifest(manifest).toString("utf8")}`,
+    ].join("\n"),
+  );
+
 const decodeBase64 = (value, expectedLength, label) => {
   if (typeof value !== "string") throw new Error(`Invalid ${label}.`);
   const decoded = Buffer.from(value, "base64");
@@ -382,6 +665,70 @@ export const validateMosaicCatalogConfig = (config) => {
   return {
     ...base,
     plaintextContract,
+    iv,
+  };
+};
+
+export const validateMosaicViewerConfig = (config) => {
+  const base = validateMosaicCatalogConfig(config);
+  const plaintextContract = config?.viewer?.plaintext;
+  const manifest = config?.viewer?.manifest;
+  if (
+    !hasExactKeys(plaintextContract, [
+      "mediaType",
+      "bytes",
+      "sha256",
+      "width",
+      "height",
+      "layerCount",
+      "manifestSha256",
+    ]) ||
+    plaintextContract.mediaType !== MOSAIC_VIEWER_PACK_MEDIA_TYPE ||
+    !Number.isSafeInteger(plaintextContract.bytes) ||
+    plaintextContract.bytes <= 0 ||
+    !/^[a-f0-9]{64}$/.test(plaintextContract.sha256 ?? "") ||
+    !Number.isSafeInteger(plaintextContract.width) ||
+    plaintextContract.width <= 0 ||
+    !Number.isSafeInteger(plaintextContract.height) ||
+    plaintextContract.height <= 0 ||
+    !Number.isSafeInteger(plaintextContract.layerCount) ||
+    plaintextContract.layerCount <= 1 ||
+    !/^[a-f0-9]{64}$/.test(plaintextContract.manifestSha256 ?? "")
+  ) {
+    throw new Error("Invalid encrypted mosaic viewer plaintext contract.");
+  }
+
+  validateMosaicViewerLayerManifest(manifest);
+  const manifestBytes = manifest.layers.reduce(
+    (total, layer) => total + layer.bytes,
+    0,
+  );
+  if (
+    plaintextContract.width !== config.plaintext.width ||
+    plaintextContract.height !== config.plaintext.height ||
+    plaintextContract.width !== manifest.width ||
+    plaintextContract.height !== manifest.height ||
+    plaintextContract.layerCount !== manifest.layers.length ||
+    plaintextContract.bytes !== manifestBytes ||
+    plaintextContract.manifestSha256 !== mosaicViewerManifestSha256(manifest) ||
+    config?.viewer?.cipher?.name !== "AES-GCM" ||
+    config?.viewer?.cipher?.url !== `./assets/${encryptedViewerAssetName}`
+  ) {
+    throw new Error("Invalid encrypted mosaic viewer cryptographic contract.");
+  }
+
+  const iv = decodeBase64(config.viewer.cipher.iv, 12, "viewer AES-GCM IV");
+  if (timingSafeEqual(iv, base.iv)) {
+    throw new Error("The catalog and viewer must use distinct AES-GCM IVs.");
+  }
+  const mosaicIv = decodeBase64(config.cipher.iv, 12, "AES-GCM IV");
+  if (timingSafeEqual(iv, mosaicIv)) {
+    throw new Error("The mosaic and viewer must use distinct AES-GCM IVs.");
+  }
+  return {
+    ...base,
+    plaintextContract,
+    manifest,
     iv,
   };
 };
@@ -477,6 +824,52 @@ export const decryptAndVerifyMosaicCatalogBytes = (ciphertext, password, config)
     throw new Error("Decrypted mosaic catalog does not match its approved plaintext contract.");
   }
   return plaintext;
+};
+
+export const decryptAndVerifyMosaicViewerPackBytes = (
+  ciphertext,
+  password,
+  config,
+) => {
+  if (ciphertext.length <= 16) {
+    throw new Error("Encrypted mosaic viewer ciphertext is incomplete.");
+  }
+  const validatedConfig = validateMosaicViewerConfig(config);
+  const { plaintextContract, manifest, iv } = validatedConfig;
+  const derived = deriveAndVerifyMosaicKey(password, config, validatedConfig);
+  const authTag = ciphertext.subarray(ciphertext.length - 16);
+  const decipher = createDecipheriv("aes-256-gcm", derived.subarray(0, 32), iv);
+  decipher.setAAD(mosaicViewerPackAdditionalData(plaintextContract, manifest));
+  decipher.setAuthTag(authTag);
+
+  let plaintext;
+  try {
+    plaintext = Buffer.concat([
+      decipher.update(ciphertext.subarray(0, -16)),
+      decipher.final(),
+    ]);
+  } catch {
+    throw new Error("Encrypted mosaic viewer authentication failed.");
+  }
+
+  const actualContract = inspectMosaicViewerPack(plaintext, manifest);
+  if (
+    Object.keys(actualContract).some(
+      (key) => actualContract[key] !== plaintextContract[key],
+    )
+  ) {
+    throw new Error(
+      "Decrypted mosaic viewer pack does not match its approved plaintext contract.",
+    );
+  }
+  return {
+    plaintext,
+    manifest,
+    layers: manifest.layers.map((layer) => ({
+      ...layer,
+      data: plaintext.subarray(layer.offset, layer.offset + layer.bytes),
+    })),
+  };
 };
 
 export const encryptMosaicBytes = (
@@ -599,14 +992,73 @@ export const encryptMosaicCatalogBytes = (
   };
 };
 
+export const encryptMosaicViewerPackBytes = (
+  plaintext,
+  password,
+  config,
+  manifest,
+  {
+    approvedManifestSha256,
+    iv = randomBytes(12),
+  } = {},
+) => {
+  const validatedConfig = validateMosaicCatalogConfig(config);
+  const derived = deriveAndVerifyMosaicKey(password, config, validatedConfig);
+  if (iv.length !== 12) throw new Error("Viewer AES-GCM IV must be 12 bytes.");
+  const mosaicIv = decodeBase64(config.cipher.iv, 12, "AES-GCM IV");
+  const catalogIv = decodeBase64(config.catalog.cipher.iv, 12, "catalog AES-GCM IV");
+  if (timingSafeEqual(iv, mosaicIv) || timingSafeEqual(iv, catalogIv)) {
+    throw new Error("The mosaic, catalog, and viewer must use distinct AES-GCM IVs.");
+  }
+
+  const actualManifestSha256 = mosaicViewerManifestSha256(manifest);
+  if (
+    !approvedManifestSha256 ||
+    actualManifestSha256 !== approvedManifestSha256.toLowerCase()
+  ) {
+    throw new Error("The mosaic viewer manifest does not match the approved SHA-256.");
+  }
+  const plaintextContract = inspectMosaicViewerPack(plaintext, manifest);
+  if (
+    plaintextContract.width !== config.plaintext.width ||
+    plaintextContract.height !== config.plaintext.height
+  ) {
+    throw new Error("The mosaic viewer dimensions do not match the approved mosaic.");
+  }
+
+  const cipher = createCipheriv("aes-256-gcm", derived.subarray(0, 32), iv);
+  cipher.setAAD(mosaicViewerPackAdditionalData(plaintextContract, manifest));
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext),
+    cipher.final(),
+    cipher.getAuthTag(),
+  ]);
+  return {
+    encrypted,
+    config: {
+      plaintext: plaintextContract,
+      manifest,
+      cipher: {
+        name: "AES-GCM",
+        iv: iv.toString("base64"),
+        url: `./assets/${encryptedViewerAssetName}`,
+      },
+    },
+  };
+};
+
 const main = async () => {
   const {
     input,
     catalogInput,
     catalogOnly,
+    viewerPackOnly,
+    viewerManifest,
+    viewerRoot,
     outputDir,
     approvedPlaintext,
     approvedCatalogSha256,
+    approvedViewerManifestSha256,
   } = parseArgs();
   const password = process.env.SKALD_MOSAIC_PASSWORD;
   if (!password) {
@@ -622,15 +1074,71 @@ const main = async () => {
   };
   assertInputOutsideOutput(input, "mosaic");
   assertInputOutsideOutput(catalogInput, "catalog");
+  assertInputOutsideOutput(viewerManifest, "viewer manifest");
+  assertInputOutsideOutput(viewerRoot, "viewer root");
   await assertNoPlaintextRasterImages(outputDir);
 
   const assetsDir = join(outputDir, "assets");
   const configPath = join(outputDir, configName);
   const catalogPath = join(assetsDir, encryptedCatalogAssetName);
+  const viewerPath = join(assetsDir, encryptedViewerAssetName);
   const configTemp = `${configPath}.tmp-${process.pid}`;
   const catalogTemp = `${catalogPath}.tmp-${process.pid}`;
+  const viewerTemp = `${viewerPath}.tmp-${process.pid}`;
 
   await mkdir(assetsDir, { recursive: true });
+  if (viewerPackOnly) {
+    const existingConfig = JSON.parse(await readFile(configPath, "utf8"));
+    validateMosaicCatalogConfig(existingConfig);
+    let manifest;
+    try {
+      manifest = JSON.parse(
+        new TextDecoder("utf-8", { fatal: true }).decode(
+          await readFile(viewerManifest),
+        ),
+      );
+    } catch {
+      throw new Error("The mosaic viewer manifest must be valid UTF-8 JSON.");
+    }
+    const pack = await buildMosaicViewerPack(viewerRoot, manifest, {
+      approvedManifestSha256: approvedViewerManifestSha256,
+    });
+    const viewer = encryptMosaicViewerPackBytes(
+      pack.plaintext,
+      password,
+      existingConfig,
+      pack.manifest,
+      { approvedManifestSha256: approvedViewerManifestSha256 },
+    );
+    const config = { ...existingConfig, viewer: viewer.config };
+    validateMosaicViewerConfig(config);
+    const configBytes = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
+    try {
+      await Promise.all([
+        writeFile(viewerTemp, viewer.encrypted),
+        writeFile(configTemp, configBytes),
+      ]);
+      await rename(viewerTemp, viewerPath);
+      await rename(configTemp, configPath);
+    } finally {
+      await Promise.all([
+        rm(viewerTemp, { force: true }),
+        rm(configTemp, { force: true }),
+      ]);
+    }
+    console.log(
+      `Encrypted Skald mosaic viewer pack: ${pack.plaintext.length} plaintext bytes -> ${viewer.encrypted.length} encrypted bytes.`,
+    );
+    console.log(`Viewer manifest SHA-256: ${approvedViewerManifestSha256}`);
+    console.log(`Viewer plaintext SHA-256: ${sha256(pack.plaintext)}`);
+    console.log(`Viewer ciphertext SHA-256: ${sha256(viewer.encrypted)}`);
+    console.log(`Preserved ${join(assetsDir, encryptedAssetName)}`);
+    console.log(`Preserved ${join(assetsDir, encryptedCatalogAssetName)}`);
+    console.log(`Wrote ${configPath}`);
+    console.log(`Wrote ${viewerPath}`);
+    return;
+  }
+
   if (catalogOnly) {
     const existingConfig = JSON.parse(await readFile(configPath, "utf8"));
     const catalogPlaintext = await readFile(catalogInput);
@@ -693,6 +1201,7 @@ const main = async () => {
     await Promise.all([
       rm(encryptedTemp, { force: true }),
       rm(catalogTemp, { force: true }),
+      rm(viewerTemp, { force: true }),
       rm(configTemp, { force: true }),
     ]);
   }

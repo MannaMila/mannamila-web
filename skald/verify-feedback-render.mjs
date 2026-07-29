@@ -12,7 +12,9 @@ import {
   decryptAndVerifyMosaicCatalogBytes,
   encryptMosaicCatalogBytes,
   encryptMosaicBytes,
+  encryptMosaicViewerPackBytes,
   inspectJpeg,
+  mosaicViewerManifestSha256,
 } from "../scripts/encrypt-skald-mosaic.mjs";
 
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -22,6 +24,7 @@ const mosaicRoute = "mosaic";
 const mosaicConfig = `${mosaicRoute}/mosaic-config.json`;
 const mosaicAsset = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
 const mosaicCatalog = `${mosaicRoute}/assets/skald-museum-art-map.enc`;
+const mosaicViewerPack = `${mosaicRoute}/assets/skald-museum-art-viewer.enc`;
 const mosaicConfigInstalled = await access(join(skaldRoot, mosaicConfig))
   .then(() => true)
   .catch(() => false);
@@ -31,31 +34,43 @@ const mosaicAssetInstalled = await access(join(skaldRoot, mosaicAsset))
 const mosaicCatalogInstalled = await access(join(skaldRoot, mosaicCatalog))
   .then(() => true)
   .catch(() => false);
+const mosaicViewerPackInstalled = await access(join(skaldRoot, mosaicViewerPack))
+  .then(() => true)
+  .catch(() => false);
 assert.equal(
-  mosaicConfigInstalled && mosaicAssetInstalled && mosaicCatalogInstalled,
-  mosaicConfigInstalled || mosaicAssetInstalled || mosaicCatalogInstalled,
-  "the encrypted mosaic config, image ciphertext, and artwork-map ciphertext must be installed together",
+  mosaicConfigInstalled && mosaicAssetInstalled && mosaicCatalogInstalled && mosaicViewerPackInstalled,
+  mosaicConfigInstalled || mosaicAssetInstalled || mosaicCatalogInstalled || mosaicViewerPackInstalled,
+  "the encrypted mosaic config, download, catalog, and progressive viewer ciphertext must be installed together",
 );
 
 let mosaicPassword;
 let mosaicConfigContent;
 let mosaicAssetContent;
 let mosaicCatalogContent;
+let mosaicViewerPackContent;
 if (mosaicAssetInstalled) {
   mosaicPassword = process.env.SKALD_MOSAIC_PASSWORD;
   assert.ok(mosaicPassword, "SKALD_MOSAIC_PASSWORD is required to verify the encrypted mosaic");
-  [mosaicConfigContent, mosaicAssetContent, mosaicCatalogContent] = await Promise.all([
+  [mosaicConfigContent, mosaicAssetContent, mosaicCatalogContent, mosaicViewerPackContent] = await Promise.all([
     readFile(join(skaldRoot, mosaicConfig)),
     readFile(join(skaldRoot, mosaicAsset)),
     readFile(join(skaldRoot, mosaicCatalog)),
+    readFile(join(skaldRoot, mosaicViewerPack)),
   ]);
 } else {
   mosaicPassword = "render-test-only-password";
   const plaintext = await readFile(join(skaldRoot, "assets/skald-odyssey-og.jpg"));
+  const plaintextContract = inspectJpeg(plaintext);
   const catalogPlaintext = Buffer.from(`${JSON.stringify({
     width: 1200,
     height: 630,
-    tiles: [],
+    tiles: [{
+      path: "tiles/render-test.jpg",
+      x: 0,
+      y: 0,
+      width: 1200,
+      height: 630,
+    }],
     artworks: [{
       index: 1,
       id: "render-test-artwork",
@@ -77,7 +92,7 @@ if (mosaicAssetInstalled) {
     }],
   })}\n`);
   const encrypted = encryptMosaicBytes(plaintext, mosaicPassword, {
-    approvedPlaintext: inspectJpeg(plaintext),
+    approvedPlaintext: plaintextContract,
   });
   const encryptedCatalog = encryptMosaicCatalogBytes(
     catalogPlaintext,
@@ -87,10 +102,57 @@ if (mosaicAssetInstalled) {
       approvedCatalogSha256: createHash("sha256").update(catalogPlaintext).digest("hex"),
     },
   );
-  const config = { ...encrypted.config, catalog: encryptedCatalog.config };
+  const viewerManifest = {
+    schemaVersion: 1,
+    width: plaintextContract.width,
+    height: plaintextContract.height,
+    layers: [
+      {
+        role: "overview",
+        id: "render-test-overview",
+        sourcePath: "overview.jpg",
+        sha256: plaintextContract.sha256,
+        offset: 0,
+        bytes: plaintext.length,
+        naturalWidth: plaintextContract.width,
+        naturalHeight: plaintextContract.height,
+        x: 0,
+        y: 0,
+        width: plaintextContract.width,
+        height: plaintextContract.height,
+      },
+      {
+        role: "tile",
+        id: "render-test-tile",
+        sourcePath: "viewer/tiles/render-test.jpg",
+        sha256: plaintextContract.sha256,
+        offset: plaintext.length,
+        bytes: plaintext.length,
+        naturalWidth: plaintextContract.width,
+        naturalHeight: plaintextContract.height,
+        x: 0,
+        y: 0,
+        width: plaintextContract.width,
+        height: plaintextContract.height,
+      },
+    ],
+  };
+  const viewerPackPlaintext = Buffer.concat([plaintext, plaintext]);
+  const configWithCatalog = { ...encrypted.config, catalog: encryptedCatalog.config };
+  const encryptedViewer = encryptMosaicViewerPackBytes(
+    viewerPackPlaintext,
+    mosaicPassword,
+    configWithCatalog,
+    viewerManifest,
+    {
+      approvedManifestSha256: mosaicViewerManifestSha256(viewerManifest),
+    },
+  );
+  const config = { ...configWithCatalog, viewer: encryptedViewer.config };
   mosaicConfigContent = Buffer.from(`${JSON.stringify(config, null, 2)}\n`);
   mosaicAssetContent = encrypted.encrypted;
   mosaicCatalogContent = encryptedCatalog.encrypted;
+  mosaicViewerPackContent = encryptedViewer.encrypted;
 }
 const expectedMosaicConfig = JSON.parse(mosaicConfigContent.toString("utf8"));
 const expectedMosaicMap = JSON.parse(
@@ -147,6 +209,7 @@ const staticFiles = new Map([
   [`/${mosaicConfig}`, [mosaicConfigContent, "application/json; charset=utf-8"]],
   [`/${mosaicAsset}`, [mosaicAssetContent, "application/octet-stream"]],
   [`/${mosaicCatalog}`, [mosaicCatalogContent, "application/octet-stream"]],
+  [`/${mosaicViewerPack}`, [mosaicViewerPackContent, "application/octet-stream"]],
 ]);
 
 const startStaticServer = async () => {
@@ -428,14 +491,16 @@ const main = async () => {
         `(() => ({
           gateHidden: document.querySelector("[data-access-gate]").hidden,
           viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-          imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+          atlasHidden: document.querySelector("[data-mosaic-atlas]").hidden,
+          overviewHasSource: document.querySelector("[data-mosaic-overview]").hasAttribute("src"),
           artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
           robots: document.querySelector('meta[name="robots"]').content,
         }))()`,
       );
       assert.equal(lockedMosaic.gateHidden, false, "mosaic gate must render before access");
       assert.equal(lockedMosaic.viewerHidden, true, "mosaic viewer must remain hidden before access");
-      assert.equal(lockedMosaic.imageHasSource, false, "mosaic asset must not be requested before access");
+      assert.equal(lockedMosaic.atlasHidden, true, "mosaic atlas must remain hidden before access");
+      assert.equal(lockedMosaic.overviewHasSource, false, "mosaic viewer must not be decoded before access");
       assert.equal(lockedMosaic.artworkInfoHidden, true, "artwork details must stay hidden before access");
       assert.equal(
         requests.includes(`/${mosaicConfig}`),
@@ -451,6 +516,11 @@ const main = async () => {
         requests.includes(`/${mosaicCatalog}`),
         false,
         "artwork metadata must not be requested before access is accepted",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicViewerPack}`),
+        false,
+        "progressive viewer bytes must not be requested before access is accepted",
       );
       for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
         assert.match(lockedMosaic.robots, new RegExp(`(?:^|, )${directive}(?:,|$)`));
@@ -473,12 +543,12 @@ const main = async () => {
         `(() => ({
           errorHidden: document.querySelector("[data-access-error]").hidden,
           viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-          imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
+          overviewHasSource: document.querySelector("[data-mosaic-overview]").hasAttribute("src"),
         }))()`,
       );
       assert.equal(rejectedMosaic.errorHidden, false, "wrong mosaic access word must show an error");
       assert.equal(rejectedMosaic.viewerHidden, true, "wrong mosaic access word must keep the viewer locked");
-      assert.equal(rejectedMosaic.imageHasSource, false, "wrong mosaic access word must not request the asset");
+      assert.equal(rejectedMosaic.overviewHasSource, false, "wrong access must not decode the viewer");
       assert.equal(requests.includes(`/${mosaicConfig}`), true, "an access attempt must load only encryption metadata");
       assert.equal(
         requests.includes(`/${mosaicAsset}`),
@@ -489,6 +559,11 @@ const main = async () => {
         requests.includes(`/${mosaicCatalog}`),
         false,
         "a wrong access word must be rejected before artwork metadata is downloaded",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicViewerPack}`),
+        false,
+        "a wrong access word must be rejected before progressive viewer bytes are downloaded",
       );
 
       await evaluate(
@@ -508,14 +583,20 @@ const main = async () => {
         `(() => ({
           gateHidden: document.querySelector("[data-access-gate]").hidden,
           viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-          imageSource: document.querySelector("[data-mosaic-image]").getAttribute("src"),
-          imageHidden: document.querySelector("[data-mosaic-image]").hidden,
-          imageWidth: document.querySelector("[data-mosaic-image]").naturalWidth,
-          imageHeight: document.querySelector("[data-mosaic-image]").naturalHeight,
+          atlasHidden: document.querySelector("[data-mosaic-atlas]").hidden,
+          atlasWidth: Number.parseFloat(document.querySelector("[data-mosaic-atlas]").style.width),
+          atlasHeight: Number.parseFloat(document.querySelector("[data-mosaic-atlas]").style.height),
+          overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
+          overviewHidden: document.querySelector("[data-mosaic-overview]").hidden,
+          overviewWidth: document.querySelector("[data-mosaic-overview]").naturalWidth,
+          overviewHeight: document.querySelector("[data-mosaic-overview]").naturalHeight,
+          tileCount: document.querySelectorAll("[data-tile-id]").length,
+          sourcedTileCount: [...document.querySelectorAll("[data-tile-id]")]
+            .filter((tile) => tile.hasAttribute("src")).length,
           placeholderHidden: document.querySelector("[data-asset-placeholder]").hidden,
           status: document.querySelector("[data-asset-status]").textContent,
-          downloadHref: document.querySelector("[data-download]").getAttribute("href"),
-          downloadName: document.querySelector("[data-download]").download,
+          downloadHidden: document.querySelector("[data-download]").hidden,
+          downloadDisabled: document.querySelector("[data-download]").disabled,
           pickerDisabled: document.querySelector("[data-artwork-picker]").disabled,
           pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           error: document.querySelector("[data-access-error]").textContent,
@@ -523,33 +604,58 @@ const main = async () => {
       );
       assert.equal(unlockedMosaic.gateHidden, true, `correct access must hide the gate: ${unlockedMosaic.error}`);
       assert.equal(unlockedMosaic.viewerHidden, false, `correct access must open the viewer: ${unlockedMosaic.error}`);
-      assert.match(unlockedMosaic.imageSource, /^blob:/, "the image must render only from a decrypted Blob URL");
-      assert.equal(unlockedMosaic.imageHidden, false, "the decrypted mosaic must render after access");
+      assert.equal(unlockedMosaic.atlasHidden, false, "the progressive mosaic atlas must render after access");
+      assert.match(unlockedMosaic.overviewSource, /^blob:/, "the overview must use a decrypted Blob URL");
+      assert.equal(unlockedMosaic.overviewHidden, false, "the progressive overview must render after access");
       assert.equal(
-        unlockedMosaic.imageWidth,
+        unlockedMosaic.atlasWidth,
         expectedMosaicConfig.plaintext.width,
-        "the decrypted mosaic must render at its approved width",
+        "the atlas must preserve the approved logical width",
       );
       assert.equal(
-        unlockedMosaic.imageHeight,
+        unlockedMosaic.atlasHeight,
         expectedMosaicConfig.plaintext.height,
-        "the decrypted mosaic must render at its approved height",
+        "the atlas must preserve the approved logical height",
+      );
+      const expectedOverview = expectedMosaicConfig.viewer.manifest.layers.find(
+        (layer) => layer.role === "overview",
+      );
+      assert.equal(unlockedMosaic.overviewWidth, expectedOverview.naturalWidth);
+      assert.equal(unlockedMosaic.overviewHeight, expectedOverview.naturalHeight);
+      assert.equal(
+        unlockedMosaic.tileCount,
+        expectedMosaicMap.tiles.length,
+        "the atlas must expose every reviewed high-resolution tile",
+      );
+      assert.equal(
+        unlockedMosaic.sourcedTileCount,
+        0,
+        "fit view must avoid decoding high-resolution tiles",
       );
       assert.equal(unlockedMosaic.placeholderHidden, true, "the decrypted mosaic must replace its placeholder");
-      assert.match(unlockedMosaic.status, /\d[\d,]* × \d[\d,]* pixels · decrypted in this tab/);
-      assert.match(unlockedMosaic.downloadHref, /^blob:/, "download must use only the decrypted in-memory Blob");
-      assert.equal(unlockedMosaic.downloadName, "skald-museum-art-mosaic.jpg");
+      assert.match(unlockedMosaic.status, /\d[\d,]* × \d[\d,]* pixels · progressive encrypted viewer/);
+      assert.equal(unlockedMosaic.downloadHidden, false, "full-resolution download must remain available");
+      assert.equal(unlockedMosaic.downloadDisabled, false, "full-resolution download must be actionable");
       assert.equal(unlockedMosaic.pickerDisabled, false, "the keyboard artwork picker must unlock");
       assert.equal(
         unlockedMosaic.pickerOptionCount,
         expectedMosaicMap.artworks.length + 1,
         "the keyboard artwork picker must expose every decrypted artwork",
       );
-      assert.equal(requests.includes(`/${mosaicAsset}`), true, "correct access must fetch encrypted mosaic bytes");
+      assert.equal(
+        requests.includes(`/${mosaicAsset}`),
+        false,
+        "opening the viewer must not fetch the monolithic full-resolution download",
+      );
       assert.equal(
         requests.includes(`/${mosaicCatalog}`),
         true,
         "correct access must fetch encrypted artwork metadata",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicViewerPack}`),
+        true,
+        "correct access must fetch the progressive viewer pack",
       );
 
       const desktopStage = await evaluate(
@@ -560,7 +666,7 @@ const main = async () => {
             x: Math.round(rect.left + rect.width / 2),
             y: Math.round(rect.top + rect.height / 2),
             beforeZoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
-            beforeTransform: document.querySelector("[data-mosaic-image]").style.transform,
+            beforeTransform: document.querySelector("[data-mosaic-atlas]").style.transform,
           };
         })()`,
       );
@@ -571,11 +677,12 @@ const main = async () => {
         deltaX: 0,
         deltaY: -240,
       });
+      await delay(50);
       const desktopAfterWheel = await evaluate(
         client,
         `(() => ({
           zoom: Number.parseFloat(document.querySelector("[data-zoom-output]").value),
-          transform: document.querySelector("[data-mosaic-image]").style.transform,
+          transform: document.querySelector("[data-mosaic-atlas]").style.transform,
         }))()`,
       );
       assert.ok(desktopAfterWheel.zoom > desktopStage.beforeZoom, "mouse-wheel input must zoom in");
@@ -583,6 +690,110 @@ const main = async () => {
         desktopAfterWheel.transform,
         desktopStage.beforeTransform,
         "mouse-wheel input must transform the mosaic",
+      );
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+      await delay(50);
+
+      const wheelBurstBefore = await evaluate(
+        client,
+        `(() => {
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const atlas = document.querySelector("[data-mosaic-atlas]");
+          const rect = stage.getBoundingClientRect();
+          const originalGetBoundingClientRect = stage.getBoundingClientRect.bind(stage);
+          const scale = Number.parseFloat(
+            atlas.style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0",
+          );
+          window.__mosaicStageRectReads = 0;
+          window.__mosaicOriginalStageRect = originalGetBoundingClientRect;
+          stage.getBoundingClientRect = () => {
+            window.__mosaicStageRectReads += 1;
+            return originalGetBoundingClientRect();
+          };
+          window.__mosaicZoomRenderMutations = 0;
+          window.__mosaicZoomRenderObserver?.disconnect();
+          window.__mosaicZoomRenderObserver = new MutationObserver((records) => {
+            window.__mosaicZoomRenderMutations += records.filter(
+              (record) => record.type === "attributes" && record.attributeName === "style",
+            ).length;
+          });
+          window.__mosaicZoomRenderObserver.observe(atlas, {
+            attributes: true,
+            attributeFilter: ["style"],
+          });
+          for (let index = 0; index < 120; index += 1) {
+            stage.dispatchEvent(new WheelEvent("wheel", {
+              bubbles: true,
+              cancelable: true,
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+              deltaY: -1,
+              deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+            }));
+          }
+          return scale;
+        })()`,
+      );
+      await delay(50);
+      const wheelBurstAfter = await evaluate(
+        client,
+        `(() => {
+          window.__mosaicZoomRenderObserver?.disconnect();
+          const stage = document.querySelector("[data-mosaic-stage]");
+          stage.getBoundingClientRect = window.__mosaicOriginalStageRect;
+          const transform = document.querySelector("[data-mosaic-atlas]").style.transform;
+          return {
+            scale: Number.parseFloat(transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"),
+            mutations: window.__mosaicZoomRenderMutations,
+            rectReads: window.__mosaicStageRectReads,
+          };
+        })()`,
+      );
+      assert.ok(
+        wheelBurstAfter.scale >= wheelBurstBefore * 1.3,
+        `fine-grained wheel input must zoom responsively (${wheelBurstAfter.scale} after ${wheelBurstBefore})`,
+      );
+      assert.ok(
+        wheelBurstAfter.mutations <= 2,
+        `wheel bursts must coalesce into display-frame renders, got ${wheelBurstAfter.mutations} image transforms`,
+      );
+      assert.ok(
+        wheelBurstAfter.rectReads <= 1,
+        `wheel bursts must reuse cached stage geometry, got ${wheelBurstAfter.rectReads} layout reads`,
+      );
+      await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
+      await delay(50);
+      const lineWheelBefore = await evaluate(
+        client,
+        `Number.parseFloat(
+          document.querySelector("[data-mosaic-atlas]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
+        )`,
+      );
+      await evaluate(
+        client,
+        `(() => {
+          const stage = document.querySelector("[data-mosaic-stage]");
+          const rect = stage.getBoundingClientRect();
+          stage.dispatchEvent(new WheelEvent("wheel", {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+            deltaY: -3,
+            deltaMode: WheelEvent.DOM_DELTA_LINE,
+          }));
+        })()`,
+      );
+      await delay(50);
+      const lineWheelAfter = await evaluate(
+        client,
+        `Number.parseFloat(
+          document.querySelector("[data-mosaic-atlas]").style.transform.match(/scale\\(([^)]+)\\)/)?.[1] ?? "0"
+        )`,
+      );
+      assert.ok(
+        lineWheelAfter >= lineWheelBefore * 1.1,
+        `line-mode wheel input must be normalized (${lineWheelAfter} after ${lineWheelBefore})`,
       );
       await evaluate(client, `document.querySelector("[data-action='fit']").click()`);
 
@@ -619,7 +830,7 @@ const main = async () => {
       const firstArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
@@ -683,7 +894,7 @@ const main = async () => {
       const lastArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(lastArtwork.x + lastArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(lastArtwork.y + lastArtwork.height / 2) / expectedMosaicMap.height}),
@@ -742,10 +953,10 @@ const main = async () => {
             })),
           )};
           const stage = document.querySelector("[data-mosaic-stage]");
-          const image = document.querySelector("[data-mosaic-image]");
+          const atlas = document.querySelector("[data-mosaic-atlas]");
           const failures = [];
           for (const artwork of artworks) {
-            const rect = image.getBoundingClientRect();
+            const rect = atlas.getBoundingClientRect();
             stage.dispatchEvent(new MouseEvent("click", {
               bubbles: true,
               clientX: rect.left + rect.width * ((artwork.x + artwork.width / 2) / ${expectedMosaicMap.width}),
@@ -766,9 +977,57 @@ const main = async () => {
         [],
         "every reviewed mosaic cell must open its matching artwork record",
       );
+      await evaluate(
+        client,
+        `(() => {
+          const picker = document.querySelector("[data-artwork-picker]");
+          picker.value = ${JSON.stringify(lastArtwork.id)};
+          picker.dispatchEvent(new Event("change", { bubbles: true }));
+        })()`,
+      );
+      await waitUntil(
+        client,
+        `[...document.querySelectorAll("[data-tile-id]")]
+          .some((tile) => tile.hasAttribute("src") && tile.naturalWidth > 0 && !tile.hidden)`,
+        "viewport high-resolution tile",
+      );
+      const loadedTiles = await evaluate(
+        client,
+        `(() => {
+          const tiles = [...document.querySelectorAll("[data-tile-id]")];
+          return {
+            total: tiles.length,
+            sourced: tiles.filter((tile) => tile.hasAttribute("src")).length,
+            visible: tiles.filter((tile) => !tile.hidden).length,
+            maximumWidth: Math.max(...tiles.map((tile) => tile.naturalWidth)),
+            maximumHeight: Math.max(...tiles.map((tile) => tile.naturalHeight)),
+          };
+        })()`,
+      );
+      assert.equal(loadedTiles.total, expectedMosaicMap.tiles.length);
+      assert.ok(loadedTiles.sourced >= 1 && loadedTiles.sourced <= 4);
+      assert.ok(loadedTiles.visible >= 1 && loadedTiles.visible <= 4);
+      assert.ok(loadedTiles.maximumWidth <= 4000);
+      assert.ok(loadedTiles.maximumHeight <= 4000);
+      assert.equal(
+        requests.includes(`/${mosaicAsset}`),
+        false,
+        "high-resolution viewing must still avoid the monolithic download",
+      );
       if (options.screenshotsDir) {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
       }
+      await evaluate(client, `document.querySelector("[data-download]").click()`);
+      await waitUntil(
+        client,
+        `document.querySelector("[data-asset-status]").textContent.includes("full-resolution download ready")`,
+        "lazy full-resolution download",
+      );
+      assert.equal(
+        requests.filter((request) => request === `/${mosaicAsset}`).length,
+        1,
+        "the full-resolution ciphertext must be fetched once, only on download",
+      );
 
       const relockedMosaic = await evaluate(
         client,
@@ -777,8 +1036,12 @@ const main = async () => {
           return {
             gateHidden: document.querySelector("[data-access-gate]").hidden,
             viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-            imageHasSource: document.querySelector("[data-mosaic-image]").hasAttribute("src"),
-            downloadHasHref: document.querySelector("[data-download]").hasAttribute("href"),
+            atlasHidden: document.querySelector("[data-mosaic-atlas]").hidden,
+            atlasTransform: document.querySelector("[data-mosaic-atlas]").style.transform,
+            overviewHasSource: document.querySelector("[data-mosaic-overview]").hasAttribute("src"),
+            sourcedTileCount: [...document.querySelectorAll("[data-tile-id]")]
+              .filter((tile) => tile.hasAttribute("src")).length,
+            downloadHidden: document.querySelector("[data-download]").hidden,
             artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
             selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
             sourceLinkCount: document.querySelector("[data-artwork-source-links]").childElementCount,
@@ -789,8 +1052,11 @@ const main = async () => {
       );
       assert.equal(relockedMosaic.gateHidden, false, "locking must restore the encrypted access gate");
       assert.equal(relockedMosaic.viewerHidden, true, "locking must hide the decrypted viewer");
-      assert.equal(relockedMosaic.imageHasSource, false, "locking must discard the decrypted image URL");
-      assert.equal(relockedMosaic.downloadHasHref, false, "locking must discard the decrypted download URL");
+      assert.equal(relockedMosaic.atlasHidden, true, "locking must hide the progressive atlas");
+      assert.equal(relockedMosaic.atlasTransform, "", "locking must clear the atlas transform");
+      assert.equal(relockedMosaic.overviewHasSource, false, "locking must discard the overview URL");
+      assert.equal(relockedMosaic.sourcedTileCount, 0, "locking must discard high-resolution tile URLs");
+      assert.equal(relockedMosaic.downloadHidden, true, "locking must hide the full-resolution download");
       assert.equal(relockedMosaic.artworkInfoHidden, true, "locking must close artwork details");
       assert.equal(relockedMosaic.selectionHidden, true, "locking must clear the artwork highlight");
       assert.equal(relockedMosaic.sourceLinkCount, 0, "locking must clear artwork source links");
@@ -823,7 +1089,8 @@ const main = async () => {
         ".viewer-controls",
         ".viewer-controls > *",
         ".mosaic-stage",
-        ".mosaic-image",
+        ".mosaic-atlas",
+        ".mosaic-overview",
         ".viewer-footer",
         ".viewer-footer > *",
       ];
@@ -854,12 +1121,12 @@ const main = async () => {
         `(() => ({
           gateHidden: document.querySelector("[data-access-gate]").hidden,
           viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
-          imageSource: document.querySelector("[data-mosaic-image]").getAttribute("src"),
+          overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
         }))()`,
       );
       assert.equal(mobileMosaicState.gateHidden, true, "correct mobile access must hide the gate");
       assert.equal(mobileMosaicState.viewerHidden, false, "correct mobile access must open the viewer");
-      assert.match(mobileMosaicState.imageSource, /^blob:/, "mobile viewer must use a decrypted Blob URL");
+      assert.match(mobileMosaicState.overviewSource, /^blob:/, "mobile viewer must use a decrypted overview Blob");
 
       const mobileStage = await evaluate(
         client,
@@ -886,6 +1153,7 @@ const main = async () => {
           { id: 2, x: mobileStage.x + 82, y: mobileStage.y },
         ],
       });
+      await delay(50);
       const mobileAfterPinchOut = await evaluate(
         client,
         `Number.parseFloat(document.querySelector("[data-zoom-output]").value)`,
@@ -919,7 +1187,7 @@ const main = async () => {
       const mobileArtworkPoint = await evaluate(
         client,
         `(() => {
-          const rect = document.querySelector("[data-mosaic-image]").getBoundingClientRect();
+          const rect = document.querySelector("[data-mosaic-atlas]").getBoundingClientRect();
           return {
             x: Math.round(rect.left + rect.width * ${(firstArtwork.x + firstArtwork.width / 2) / expectedMosaicMap.width}),
             y: Math.round(rect.top + rect.height * ${(firstArtwork.y + firstArtwork.height / 2) / expectedMosaicMap.height}),
@@ -980,6 +1248,25 @@ const main = async () => {
       if (options.screenshotsDir) {
         await capture(client, join(options.screenshotsDir, "skald-mosaic-details-landscape-844x390.png"));
       }
+
+      const pagehideState = await evaluate(
+        client,
+        `(() => {
+          window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+          return {
+            gateHidden: document.querySelector("[data-access-gate]").hidden,
+            viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
+            overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
+            tileSources: [...document.querySelectorAll("[data-tile-id][src]")].length,
+            pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
+          };
+        })()`,
+      );
+      assert.equal(pagehideState.gateHidden, false, "pagehide must restore the encrypted access gate");
+      assert.equal(pagehideState.viewerHidden, true, "pagehide must discard the decrypted viewer");
+      assert.equal(pagehideState.overviewSource, null, "pagehide must revoke the overview");
+      assert.equal(pagehideState.tileSources, 0, "pagehide must revoke viewport tiles");
+      assert.equal(pagehideState.pickerOptionCount, 1, "pagehide must clear decrypted metadata");
 
       const privacySelectors = [
         ".site-header",

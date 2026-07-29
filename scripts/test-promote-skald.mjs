@@ -88,12 +88,19 @@ try {
     await readFile(join(target, mosaicRoute, "attribution.html"), "utf8"),
     /Photo: Sailko \/ CC BY 3\.0/,
   );
-  assert.match(
-    await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
-    /PBKDF2/,
+  const promotedMosaicViewer = await readFile(
+    join(target, mosaicRoute, "viewer.js"),
+    "utf8",
   );
+  assert.match(promotedMosaicViewer, /PBKDF2/);
   const promotedMosaicConfig = JSON.parse(
     await readFile(join(target, mosaicRoute, "mosaic-config.json"), "utf8"),
+  );
+  assert.equal(promotedMosaicConfig.plaintext.width, 16_000);
+  assert.equal(promotedMosaicConfig.plaintext.height, 8_000);
+  assert.equal(
+    promotedMosaicConfig.cipher.url,
+    "./assets/skald-museum-art-mosaic.enc",
   );
   assert.equal(promotedMosaicConfig.catalog.plaintext.width, 16_000);
   assert.equal(promotedMosaicConfig.catalog.plaintext.height, 8_000);
@@ -102,8 +109,107 @@ try {
     promotedMosaicConfig.catalog.plaintext.sha256,
     "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895",
   );
+  assert.equal(
+    promotedMosaicConfig.viewer.plaintext.mediaType,
+    "application/vnd.skald.mosaic-viewer-pack",
+  );
+  assert.equal(promotedMosaicConfig.viewer.plaintext.width, 16_000);
+  assert.equal(promotedMosaicConfig.viewer.plaintext.height, 8_000);
+  assert.equal(promotedMosaicConfig.viewer.plaintext.layerCount, 9);
+  assert.equal(
+    promotedMosaicConfig.viewer.plaintext.manifestSha256,
+    "0f04131c1e29fc2262fce1dbbe8eece15f058ac1065c7ec8dee77e402fc33003",
+  );
+  assert.equal(
+    promotedMosaicConfig.viewer.cipher.url,
+    "./assets/skald-museum-art-viewer.enc",
+  );
+  const promotedViewerLayers = promotedMosaicConfig.viewer.manifest.layers;
+  assert.equal(promotedViewerLayers.length, 9);
+  const promotedOverviewLayers = promotedViewerLayers.filter(
+    (layer) => layer.role === "overview",
+  );
+  const promotedTileLayers = promotedViewerLayers.filter(
+    (layer) => layer.role === "tile",
+  );
+  assert.equal(promotedOverviewLayers.length, 1);
+  assert.equal(promotedOverviewLayers[0].naturalWidth, 4_096);
+  assert.equal(promotedOverviewLayers[0].naturalHeight, 2_048);
+  assert.equal(promotedOverviewLayers[0].width, 16_000);
+  assert.equal(promotedOverviewLayers[0].height, 8_000);
+  assert.equal(promotedTileLayers.length, 8);
+  assert.ok(
+    promotedTileLayers.every(
+      (layer) =>
+        layer.naturalWidth === 4_000 &&
+        layer.naturalHeight === 4_000 &&
+        layer.width === 4_000 &&
+        layer.height === 4_000,
+    ),
+  );
+  assert.deepEqual(
+    promotedTileLayers.map((layer) => layer.id),
+    [
+      "tile-0-0",
+      "tile-1-0",
+      "tile-2-0",
+      "tile-3-0",
+      "tile-0-1",
+      "tile-1-1",
+      "tile-2-1",
+      "tile-3-1",
+    ],
+  );
+  const promotedViewerCipher = await readFile(
+    join(target, mosaicRoute, "assets/skald-museum-art-viewer.enc"),
+  );
+  assert.ok(
+    promotedViewerCipher.length > 16,
+    "the promoted viewer pack must include ciphertext and an authentication tag",
+  );
+  assert.notDeepEqual(
+    promotedViewerCipher.subarray(0, 3),
+    Buffer.from([0xff, 0xd8, 0xff]),
+    "the promoted overview and tile pack must not expose readable JPEG bytes",
+  );
+  const unlockFlowStart = promotedMosaicViewer.indexOf("const decryptMosaic");
+  const unlockFlowEnd = promotedMosaicViewer.indexOf(
+    "const triggerFullResolutionDownload",
+  );
+  assert.ok(unlockFlowStart >= 0 && unlockFlowEnd > unlockFlowStart);
+  const unlockFlow = promotedMosaicViewer.slice(
+    unlockFlowStart,
+    unlockFlowEnd,
+  );
+  assert.match(unlockFlow, /loadEncryptedBytes\(config\.viewer\.assetUrl\)/);
+  assert.match(unlockFlow, /loadEncryptedBytes\(config\.catalog\.assetUrl\)/);
   assert.doesNotMatch(
-    await readFile(join(target, mosaicRoute, "viewer.js"), "utf8"),
+    unlockFlow,
+    /config\.image\.assetUrl/,
+    "unlocking the progressive viewer must not fetch the 16K master",
+  );
+  const fullResolutionDownloadFlowStart = promotedMosaicViewer.indexOf(
+    "const downloadFullResolutionImage",
+  );
+  const fullResolutionDownloadFlowEnd = promotedMosaicViewer.indexOf(
+    "const unlock",
+    fullResolutionDownloadFlowStart,
+  );
+  assert.ok(
+    fullResolutionDownloadFlowStart >= 0 &&
+      fullResolutionDownloadFlowEnd > fullResolutionDownloadFlowStart,
+  );
+  const fullResolutionDownloadFlow = promotedMosaicViewer.slice(
+    fullResolutionDownloadFlowStart,
+    fullResolutionDownloadFlowEnd,
+  );
+  assert.match(
+    fullResolutionDownloadFlow,
+    /loadEncryptedBytes\(view\.config\.image\.assetUrl\)/,
+    "the 16K master must remain an explicit full-resolution download",
+  );
+  assert.doesNotMatch(
+    promotedMosaicViewer,
     /ACCESS_WORD|["']\.\/[^"']+\.jpg["']/,
   );
   await assert.rejects(readFile(join(target, retiredMosaicRoute, "obsolete.html")));
@@ -130,6 +236,7 @@ try {
   assert.ok(manifest.files[`${mosaicRoute}/mosaic-config.json`]);
   assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-mosaic.enc`]);
   assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-map.enc`]);
+  assert.ok(manifest.files[`${mosaicRoute}/assets/skald-museum-art-viewer.enc`]);
   assert.equal(manifest.files[`${mosaicRoute}/mosaic-map.json`], undefined);
   assert.equal(manifest.files[`${retiredMosaicRoute}/index.html`], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);

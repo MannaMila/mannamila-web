@@ -13,10 +13,16 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import {
   assertPlaintextMatchesContract,
+  buildMosaicViewerPack,
   decryptAndVerifyMosaicBytes,
   decryptAndVerifyMosaicCatalogBytes,
+  decryptAndVerifyMosaicViewerPackBytes,
+  encryptMosaicViewerPackBytes,
   inspectJpeg,
   inspectMosaicCatalog,
+  mosaicViewerManifestSha256,
+  validateMosaicViewerConfig,
+  validateMosaicViewerLayerManifest,
 } from "./encrypt-skald-mosaic.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,6 +31,8 @@ const input = join(repoRoot, "skald/assets/skald-odyssey-og.jpg");
 const output = await mkdtemp(join(tmpdir(), "skald-mosaic-encryption-"));
 const catalogInputRoot = await mkdtemp(join(tmpdir(), "skald-mosaic-catalog-input-"));
 const catalogInput = join(catalogInputRoot, "mosaic-map.json");
+const viewerRoot = join(catalogInputRoot, "viewer-root");
+const viewerManifestPath = join(catalogInputRoot, "viewer-layers.json");
 const testPassword = "test-only-mosaic-password";
 const plaintext = await readFile(input);
 const approvedPlaintext = {
@@ -58,6 +66,49 @@ const catalogPlaintext = Buffer.from(`${JSON.stringify({
 })}\n`);
 const approvedCatalogSha256 = createHash("sha256").update(catalogPlaintext).digest("hex");
 await writeFile(catalogInput, catalogPlaintext);
+await mkdir(viewerRoot, { recursive: true });
+await Promise.all([
+  writeFile(join(viewerRoot, "overview.jpg"), plaintext),
+  writeFile(join(viewerRoot, "tile.jpg"), plaintext),
+]);
+
+const viewerManifest = {
+  schemaVersion: 1,
+  width: approvedPlaintext.width,
+  height: approvedPlaintext.height,
+  layers: [
+    {
+      role: "overview",
+      id: "overview",
+      sourcePath: "overview.jpg",
+      sha256: approvedPlaintext.sha256,
+      offset: 0,
+      bytes: plaintext.length,
+      naturalWidth: approvedPlaintext.width,
+      naturalHeight: approvedPlaintext.height,
+      x: 0,
+      y: 0,
+      width: approvedPlaintext.width,
+      height: approvedPlaintext.height,
+    },
+    {
+      role: "tile",
+      id: "tile",
+      sourcePath: "tile.jpg",
+      sha256: approvedPlaintext.sha256,
+      offset: plaintext.length,
+      bytes: plaintext.length,
+      naturalWidth: approvedPlaintext.width,
+      naturalHeight: approvedPlaintext.height,
+      x: 0,
+      y: 0,
+      width: approvedPlaintext.width,
+      height: approvedPlaintext.height,
+    },
+  ],
+};
+const approvedViewerManifestSha256 = mosaicViewerManifestSha256(viewerManifest);
+await writeFile(viewerManifestPath, `${JSON.stringify(viewerManifest, null, 2)}\n`);
 
 const environmentFor = (password) => {
   const environment = { ...process.env };
@@ -85,6 +136,37 @@ const run = (password, approval = approvedPlaintext) =>
       catalogInput,
       "--approved-catalog-sha256",
       approvedCatalogSha256,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: environmentFor(password),
+    },
+  );
+
+const runViewer = (
+  password,
+  {
+    manifestPath = viewerManifestPath,
+    root = viewerRoot,
+    approvedManifestSha256 = approvedViewerManifestSha256,
+    extraArgs = [],
+  } = {},
+) =>
+  spawnSync(
+    process.execPath,
+    [
+      script,
+      "--viewer-pack-only",
+      "--output-dir",
+      output,
+      "--viewer-manifest",
+      manifestPath,
+      "--viewer-root",
+      root,
+      "--approved-viewer-manifest-sha256",
+      approvedManifestSha256,
+      ...extraArgs,
     ],
     {
       cwd: repoRoot,
@@ -229,6 +311,287 @@ try {
     () => decryptAndVerifyMosaicCatalogBytes(catalogCiphertext, "wrong-password", config),
     /access word/i,
   );
+
+  for (const args of [
+    ["--viewer-pack-only", "--output-dir", output],
+    [
+      "--viewer-pack-only",
+      "--output-dir",
+      output,
+      "--viewer-manifest",
+      viewerManifestPath,
+      "--approved-viewer-manifest-sha256",
+      approvedViewerManifestSha256,
+    ],
+    [
+      "--viewer-pack-only",
+      "--output-dir",
+      output,
+      "--viewer-manifest",
+      viewerManifestPath,
+      "--viewer-root",
+      viewerRoot,
+    ],
+  ]) {
+    const incompleteViewer = spawnSync(process.execPath, [script, ...args], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: environmentFor(testPassword),
+    });
+    assert.notEqual(incompleteViewer.status, 0);
+    assert.match(incompleteViewer.stderr, /viewer-(?:manifest|root)|approved-viewer/i);
+  }
+
+  const masterCipherSha256 = createHash("sha256").update(ciphertext).digest("hex");
+  const catalogCipherSha256 = createHash("sha256")
+    .update(catalogCiphertext)
+    .digest("hex");
+  const viewerEncrypted = runViewer(testPassword);
+  assert.equal(viewerEncrypted.status, 0, viewerEncrypted.stderr);
+  assert.match(viewerEncrypted.stdout, /Encrypted Skald mosaic viewer pack/);
+
+  const viewerConfigRaw = await readFile(
+    join(output, "mosaic-config.json"),
+    "utf8",
+  );
+  const viewerConfig = JSON.parse(viewerConfigRaw);
+  const viewerCiphertext = await readFile(
+    join(output, "assets/skald-museum-art-viewer.enc"),
+  );
+  assert.equal(
+    createHash("sha256")
+      .update(await readFile(join(output, "assets/skald-museum-art-mosaic.enc")))
+      .digest("hex"),
+    masterCipherSha256,
+    "viewer-pack mode must preserve the master ciphertext byte-for-byte",
+  );
+  assert.equal(
+    createHash("sha256")
+      .update(await readFile(join(output, "assets/skald-museum-art-map.enc")))
+      .digest("hex"),
+    catalogCipherSha256,
+    "viewer-pack mode must preserve the catalog ciphertext byte-for-byte",
+  );
+  assert.deepEqual(viewerConfig.plaintext, config.plaintext);
+  assert.deepEqual(viewerConfig.catalog, config.catalog);
+  assert.deepEqual(
+    validateMosaicViewerConfig(viewerConfig).manifest,
+    viewerManifest,
+  );
+  assert.equal(
+    viewerConfig.viewer.plaintext.manifestSha256,
+    approvedViewerManifestSha256,
+  );
+  assert.equal(viewerConfig.viewer.plaintext.layerCount, 2);
+  assert.equal(viewerConfig.viewer.plaintext.bytes, plaintext.length * 2);
+  assert.equal(viewerConfig.viewer.cipher.name, "AES-GCM");
+  assert.equal(
+    viewerConfig.viewer.cipher.url,
+    "./assets/skald-museum-art-viewer.enc",
+  );
+  assert.equal(Buffer.from(viewerConfig.viewer.cipher.iv, "base64").length, 12);
+  assert.notEqual(viewerConfig.viewer.cipher.iv, viewerConfig.cipher.iv);
+  assert.notEqual(
+    viewerConfig.viewer.cipher.iv,
+    viewerConfig.catalog.cipher.iv,
+  );
+  assert.doesNotMatch(viewerConfigRaw, new RegExp(testPassword));
+
+  const decryptedViewer = decryptAndVerifyMosaicViewerPackBytes(
+    viewerCiphertext,
+    testPassword,
+    viewerConfig,
+  );
+  assert.deepEqual(
+    decryptedViewer.plaintext,
+    Buffer.concat([plaintext, plaintext]),
+  );
+  assert.deepEqual(decryptedViewer.layers[0].data, plaintext);
+  assert.deepEqual(decryptedViewer.layers[1].data, plaintext);
+  assert.throws(
+    () =>
+      decryptAndVerifyMosaicViewerPackBytes(
+        viewerCiphertext,
+        "wrong-password",
+        viewerConfig,
+      ),
+    /access word/i,
+  );
+
+  const tamperedViewerCiphertext = Buffer.from(viewerCiphertext);
+  tamperedViewerCiphertext[0] ^= 1;
+  assert.throws(
+    () =>
+      decryptAndVerifyMosaicViewerPackBytes(
+        tamperedViewerCiphertext,
+        testPassword,
+        viewerConfig,
+      ),
+    /authentication failed/i,
+  );
+
+  const tamperedViewerContractConfig = structuredClone(viewerConfig);
+  tamperedViewerContractConfig.viewer.plaintext.sha256 = "0".repeat(64);
+  assert.throws(
+    () =>
+      decryptAndVerifyMosaicViewerPackBytes(
+        viewerCiphertext,
+        testPassword,
+        tamperedViewerContractConfig,
+      ),
+    /authentication failed/i,
+  );
+
+  const tamperedViewerManifestConfig = structuredClone(viewerConfig);
+  tamperedViewerManifestConfig.viewer.manifest.layers[0].id =
+    "different-overview";
+  tamperedViewerManifestConfig.viewer.plaintext.manifestSha256 =
+    mosaicViewerManifestSha256(
+      tamperedViewerManifestConfig.viewer.manifest,
+    );
+  assert.throws(
+    () =>
+      decryptAndVerifyMosaicViewerPackBytes(
+        viewerCiphertext,
+        testPassword,
+        tamperedViewerManifestConfig,
+      ),
+    /authentication failed/i,
+  );
+
+  for (const duplicateIv of [
+    viewerConfig.cipher.iv,
+    viewerConfig.catalog.cipher.iv,
+  ]) {
+    const duplicateIvConfig = structuredClone(viewerConfig);
+    duplicateIvConfig.viewer.cipher.iv = duplicateIv;
+    assert.throws(
+      () => validateMosaicViewerConfig(duplicateIvConfig),
+      /distinct AES-GCM IVs/i,
+    );
+  }
+
+  const preservedViewerCipherSha256 = createHash("sha256")
+    .update(viewerCiphertext)
+    .digest("hex");
+  const preservedViewerConfigSha256 = createHash("sha256")
+    .update(viewerConfigRaw)
+    .digest("hex");
+  const failedViewer = runViewer(testPassword, {
+    approvedManifestSha256: "0".repeat(64),
+  });
+  assert.notEqual(failedViewer.status, 0);
+  assert.match(failedViewer.stderr, /approved SHA-256/i);
+  assert.equal(
+    createHash("sha256")
+      .update(
+        await readFile(join(output, "assets/skald-museum-art-viewer.enc")),
+      )
+      .digest("hex"),
+    preservedViewerCipherSha256,
+    "a failed viewer-pack run must preserve its ciphertext",
+  );
+  assert.equal(
+    createHash("sha256")
+      .update(await readFile(join(output, "mosaic-config.json")))
+      .digest("hex"),
+    preservedViewerConfigSha256,
+    "a failed viewer-pack run must preserve its config",
+  );
+
+  const twoTileManifest = structuredClone(viewerManifest);
+  twoTileManifest.layers.splice(
+    1,
+    1,
+    {
+      ...viewerManifest.layers[1],
+      id: "tile-left",
+      sourcePath: "tile-left.jpg",
+      width: approvedPlaintext.width / 2,
+      naturalWidth: approvedPlaintext.width / 2,
+    },
+    {
+      ...viewerManifest.layers[1],
+      id: "tile-right",
+      sourcePath: "tile-right.jpg",
+      offset: plaintext.length * 2,
+      x: approvedPlaintext.width / 2,
+      width: approvedPlaintext.width / 2,
+      naturalWidth: approvedPlaintext.width / 2,
+    },
+  );
+  assert.deepEqual(
+    validateMosaicViewerLayerManifest(twoTileManifest),
+    twoTileManifest,
+  );
+
+  for (const mutateManifest of [
+    (manifest) => {
+      manifest.layers[1].id = manifest.layers[0].id;
+    },
+    (manifest) => {
+      manifest.layers[1].sourcePath = manifest.layers[0].sourcePath;
+    },
+    (manifest) => {
+      manifest.layers[1].offset = 0;
+    },
+    (manifest) => {
+      manifest.layers[2].x -= 1;
+    },
+    (manifest) => {
+      manifest.layers[2].width -= 1;
+      manifest.layers[2].naturalWidth -= 1;
+    },
+    (manifest) => {
+      manifest.layers[1].naturalWidth -= 1;
+    },
+    (manifest) => {
+      manifest.layers[1].sourcePath = "../tile-left.jpg";
+    },
+  ]) {
+    const invalidManifest = structuredClone(twoTileManifest);
+    mutateManifest(invalidManifest);
+    assert.throws(
+      () => validateMosaicViewerLayerManifest(invalidManifest),
+      /viewer/i,
+    );
+  }
+
+  const wrongLayerHashManifest = structuredClone(viewerManifest);
+  wrongLayerHashManifest.layers[1].sha256 = "0".repeat(64);
+  await assert.rejects(
+    buildMosaicViewerPack(viewerRoot, wrongLayerHashManifest, {
+      approvedManifestSha256: mosaicViewerManifestSha256(
+        wrongLayerHashManifest,
+      ),
+    }),
+    /does not match its approval/i,
+  );
+
+  const builtViewerPack = await buildMosaicViewerPack(
+    viewerRoot,
+    viewerManifest,
+    { approvedManifestSha256: approvedViewerManifestSha256 },
+  );
+  for (const duplicateIv of [
+    Buffer.from(config.cipher.iv, "base64"),
+    Buffer.from(config.catalog.cipher.iv, "base64"),
+  ]) {
+    assert.throws(
+      () =>
+        encryptMosaicViewerPackBytes(
+          builtViewerPack.plaintext,
+          testPassword,
+          config,
+          viewerManifest,
+          {
+            approvedManifestSha256: approvedViewerManifestSha256,
+            iv: duplicateIv,
+          },
+        ),
+      /distinct AES-GCM IVs/i,
+    );
+  }
 
   const tamperedCatalogConfig = structuredClone(config);
   tamperedCatalogConfig.catalog.plaintext.sha256 = "0".repeat(64);

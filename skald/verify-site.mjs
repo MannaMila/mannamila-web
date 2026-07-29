@@ -8,8 +8,10 @@ import {
   assertNoPlaintextRasterImages,
   decryptAndVerifyMosaicBytes,
   decryptAndVerifyMosaicCatalogBytes,
+  decryptAndVerifyMosaicViewerPackBytes,
   MOSAIC_SCHEMA_VERSION,
   validateMosaicConfig,
+  validateMosaicViewerConfig,
 } from "../scripts/encrypt-skald-mosaic.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -18,6 +20,7 @@ const mosaicRoute = "mosaic";
 const mosaicConfigPath = `${mosaicRoute}/mosaic-config.json`;
 const mosaicCipherPath = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
 const mosaicCatalogCipherPath = `${mosaicRoute}/assets/skald-museum-art-map.enc`;
+const mosaicViewerCipherPath = `${mosaicRoute}/assets/skald-museum-art-viewer.enc`;
 const mosaicPlaintextMapPath = `${mosaicRoute}/mosaic-map.json`;
 const expectedMosaicMapSha256 = "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895";
 const allowMissingMosaic = process.env.SKALD_ALLOW_MISSING_MOSAIC === "1";
@@ -60,15 +63,21 @@ assert.equal(
   false,
   "the reviewed artwork map must not be published as bot-readable plaintext",
 );
-const [mosaicConfigExists, mosaicCipherExists, mosaicCatalogCipherExists] = await Promise.all([
+const [
+  mosaicConfigExists,
+  mosaicCipherExists,
+  mosaicCatalogCipherExists,
+  mosaicViewerCipherExists,
+] = await Promise.all([
   pathExists(mosaicConfigPath),
   pathExists(mosaicCipherPath),
   pathExists(mosaicCatalogCipherPath),
+  pathExists(mosaicViewerCipherPath),
 ]);
 assert.equal(
-  mosaicConfigExists && mosaicCipherExists && mosaicCatalogCipherExists,
-  mosaicConfigExists || mosaicCipherExists || mosaicCatalogCipherExists,
-  "the encrypted mosaic config, image ciphertext, and artwork-map ciphertext must be installed together",
+  mosaicConfigExists && mosaicCipherExists && mosaicCatalogCipherExists && mosaicViewerCipherExists,
+  mosaicConfigExists || mosaicCipherExists || mosaicCatalogCipherExists || mosaicViewerCipherExists,
+  "the encrypted mosaic config, download, catalog, and progressive viewer ciphertext must be installed together",
 );
 if (!mosaicConfigExists && !allowMissingMosaic) {
   throw new Error(
@@ -245,9 +254,11 @@ assert.doesNotMatch(
 );
 assert.match(
   mosaicIndex,
-  /<img\b(?=[^>]*data-mosaic-image)(?=[^>]*hidden)[^>]*>/,
-  "the mosaic image must stay hidden until its asset loads successfully",
+  /<div\b(?=[^>]*data-mosaic-atlas)(?=[^>]*hidden)[^>]*>/,
+  "the progressive mosaic atlas must stay hidden until its overview loads successfully",
 );
+assert.match(mosaicIndex, /data-mosaic-overview/);
+assert.match(mosaicIndex, /data-mosaic-tiles/);
 assert.doesNotMatch(mosaicViewer, /ACCESS_WORD/);
 assert.doesNotMatch(mosaicViewer, /sessionStorage/);
 assert.doesNotMatch(mosaicViewer, /innerHTML/);
@@ -257,11 +268,18 @@ assert.match(mosaicViewer, /AES-GCM/);
 assert.match(mosaicViewer, /crypto\.subtle/);
 assert.match(mosaicViewer, /\.\/mosaic-config\.json/);
 assert.match(mosaicViewer, /config\.catalog\.cipher\.url/);
+assert.match(mosaicViewer, /config\.viewer\.cipher\.url/);
 assert.doesNotMatch(mosaicViewer, /\.\/mosaic-map\.json/);
 assert.match(mosaicViewer, /skald-mosaic-v2/);
+assert.match(mosaicViewer, /skald-mosaic-viewer-pack-v1/);
 assert.match(mosaicViewer, /config\.plaintext\.sha256/);
-assert.match(mosaicViewer, /image\.naturalWidth !== config\.plaintext\.width/);
-assert.match(mosaicViewer, /image\.naturalHeight !== config\.plaintext\.height/);
+assert.match(mosaicViewer, /requestAnimationFrame/);
+assert.match(mosaicViewer, /WHEEL_ZOOM_SPEED/);
+assert.match(mosaicViewer, /const TILE_ENTER_SCALE = 0\.25;/);
+assert.match(mosaicViewer, /const TILE_EXIT_SCALE = 0\.2;/);
+assert.match(mosaicViewer, /const MAX_RENDERED_TILES = 4;/);
+assert.match(mosaicViewer, /loadLayerImage\(overview,\s*config\.viewer\.overviewLayer/);
+assert.match(mosaicViewer, /element\.naturalWidth !== layer\.naturalWidth/);
 assert.match(mosaicViewer, /URL\.createObjectURL/);
 assert.match(mosaicViewer, /URL\.revokeObjectURL/);
 assert.match(mosaicViewer, /new Map\(\)/);
@@ -270,6 +288,8 @@ assert.match(mosaicViewer, /data-artwork-title/);
 assert.match(mosaicStyles, /:focus-visible/);
 assert.match(mosaicStyles, /prefers-reduced-motion/);
 assert.match(mosaicStyles, /\.artwork-info/);
+assert.match(mosaicStyles, /\.mosaic-atlas/);
+assert.match(mosaicStyles, /contain:\s*layout paint style/);
 
 const validateArtworkMap = (mosaicMap) => {
   assert.equal(mosaicMap.width, 16_000);
@@ -320,6 +340,7 @@ if (mosaicConfigExists) {
   const mosaicConfig = JSON.parse(mosaicConfigRaw);
   const mosaicCipher = await readFile(join(root, mosaicCipherPath));
   const mosaicCatalogCipher = await readFile(join(root, mosaicCatalogCipherPath));
+  const mosaicViewerCipher = await readFile(join(root, mosaicViewerCipherPath));
   assert.equal(mosaicConfig.schemaVersion, MOSAIC_SCHEMA_VERSION);
   assert.equal(mosaicConfig.plaintext?.mediaType, "image/jpeg");
   assert.ok(Number.isSafeInteger(mosaicConfig.plaintext?.bytes));
@@ -344,12 +365,44 @@ if (mosaicConfigExists) {
   assert.equal(Buffer.from(mosaicConfig.catalog?.cipher?.iv ?? "", "base64").length, 12);
   assert.equal(mosaicConfig.catalog?.cipher?.url, "./assets/skald-museum-art-map.enc");
   assert.notEqual(mosaicConfig.catalog.cipher.iv, mosaicConfig.cipher.iv);
+  assert.equal(
+    mosaicConfig.viewer?.plaintext?.mediaType,
+    "application/vnd.skald.mosaic-viewer-pack",
+  );
+  assert.equal(mosaicConfig.viewer?.plaintext?.width, mosaicConfig.plaintext.width);
+  assert.equal(mosaicConfig.viewer?.plaintext?.height, mosaicConfig.plaintext.height);
+  assert.equal(mosaicConfig.viewer?.plaintext?.layerCount, 9);
+  assert.match(mosaicConfig.viewer?.plaintext?.sha256 ?? "", /^[a-f0-9]{64}$/);
+  assert.match(mosaicConfig.viewer?.plaintext?.manifestSha256 ?? "", /^[a-f0-9]{64}$/);
+  assert.equal(mosaicConfig.viewer?.manifest?.layers?.length, 9);
+  assert.equal(
+    mosaicConfig.viewer.manifest.layers.filter((layer) => layer.role === "overview").length,
+    1,
+  );
+  assert.equal(
+    mosaicConfig.viewer.manifest.layers.filter((layer) => layer.role === "tile").length,
+    8,
+  );
+  assert.ok(
+    mosaicConfig.viewer.manifest.layers
+      .filter((layer) => layer.role === "tile")
+      .every((layer) => layer.naturalWidth <= 4000 && layer.naturalHeight <= 4000),
+  );
+  assert.equal(mosaicConfig.viewer?.cipher?.name, "AES-GCM");
+  assert.equal(Buffer.from(mosaicConfig.viewer?.cipher?.iv ?? "", "base64").length, 12);
+  assert.equal(mosaicConfig.viewer?.cipher?.url, "./assets/skald-museum-art-viewer.enc");
+  assert.notEqual(mosaicConfig.viewer.cipher.iv, mosaicConfig.cipher.iv);
+  assert.notEqual(mosaicConfig.viewer.cipher.iv, mosaicConfig.catalog.cipher.iv);
   assert.doesNotMatch(mosaicConfigRaw, /"password"\s*:/i);
-  assert.doesNotMatch(mosaicConfigRaw, /\.jpg/i);
+  assert.doesNotMatch(mosaicConfigRaw, /"url"\s*:\s*"[^"]+\.jpe?g"/i);
   assert.ok(mosaicCipher.length > 16, "encrypted mosaic must include ciphertext and a GCM tag");
   assert.ok(
     mosaicCatalogCipher.length > 16,
     "encrypted artwork map must include ciphertext and a GCM tag",
+  );
+  assert.ok(
+    mosaicViewerCipher.length > 16,
+    "encrypted progressive viewer must include ciphertext and a GCM tag",
   );
   assert.notEqual(
     mosaicCatalogCipher[0],
@@ -361,7 +414,13 @@ if (mosaicConfigExists) {
     Buffer.from([0xff, 0xd8, 0xff]),
     "the deployed mosaic asset must not be a readable JPEG",
   );
+  assert.notDeepEqual(
+    mosaicViewerCipher.subarray(0, 3),
+    Buffer.from([0xff, 0xd8, 0xff]),
+    "the deployed progressive viewer must not expose readable JPEG bytes",
+  );
   validateMosaicConfig(mosaicConfig);
+  validateMosaicViewerConfig(mosaicConfig);
   const decryptedMosaic = decryptAndVerifyMosaicBytes(
     mosaicCipher,
     process.env.SKALD_MOSAIC_PASSWORD,
@@ -386,6 +445,30 @@ if (mosaicConfigExists) {
   validateArtworkMap(mosaicMap);
   assert.equal(mosaicMap.width, mosaicConfig.plaintext.width);
   assert.equal(mosaicMap.height, mosaicConfig.plaintext.height);
+  const decryptedViewer = decryptAndVerifyMosaicViewerPackBytes(
+    mosaicViewerCipher,
+    process.env.SKALD_MOSAIC_PASSWORD,
+    mosaicConfig,
+  );
+  assert.equal(
+    decryptedViewer.plaintext.length,
+    mosaicConfig.viewer.plaintext.bytes,
+    "the decrypted progressive viewer must match its approved byte count",
+  );
+  const viewerTiles = mosaicConfig.viewer.manifest.layers.filter(
+    (layer) => layer.role === "tile",
+  );
+  assert.deepEqual(
+    viewerTiles.map(({ sourcePath, x, y, width, height }) => ({
+      path: sourcePath.replace(/^viewer\//, ""),
+      x,
+      y,
+      width,
+      height,
+    })),
+    mosaicMap.tiles,
+    "the encrypted progressive tiles must match the reviewed mosaic map",
+  );
 }
 
 const forbiddenIndexText = [
