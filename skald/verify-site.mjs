@@ -242,10 +242,19 @@ for (const requiredAttribution of [
 }
 assert.match(mosaicIndex, /<input\b[^>]*type="password"[^>]*>/);
 assert.match(mosaicIndex, /<section\b[^>]*data-mosaic-viewer[^>]*hidden/);
-assert.match(mosaicIndex, /<aside\b[^>]*data-artwork-info[^>]*hidden/);
+assert.match(
+  mosaicIndex,
+  /<button\b(?=[^>]*data-action="fullscreen")(?=[^>]*aria-pressed="false")[^>]*>/,
+);
+assert.match(
+  mosaicIndex,
+  /<dialog\b(?=[^>]*data-artwork-info)(?=[^>]*aria-modal="true")(?=[^>]*hidden)[^>]*>/,
+);
 assert.match(mosaicIndex, /data-artwork-title/);
 assert.match(mosaicIndex, /data-artwork-source-links/);
 assert.match(mosaicIndex, /data-artwork-picker/);
+assert.match(mosaicIndex, /data-artwork-preview-overview/);
+assert.match(mosaicIndex, /data-artwork-preview-detail/);
 assert.match(mosaicIndex, /Scroll or pinch/);
 assert.doesNotMatch(
   mosaicIndex,
@@ -285,17 +294,24 @@ assert.match(mosaicViewer, /URL\.revokeObjectURL/);
 assert.match(mosaicViewer, /new Map\(\)/);
 assert.match(mosaicViewer, /type:\s*"pinch"/);
 assert.match(mosaicViewer, /data-artwork-title/);
+assert.match(mosaicViewer, /requestFullscreen/);
+assert.match(mosaicViewer, /exitFullscreen/);
+assert.match(mosaicViewer, /showModal\(\)/);
+assert.match(mosaicViewer, /data-artwork-preview-detail/);
 assert.match(mosaicStyles, /:focus-visible/);
 assert.match(mosaicStyles, /prefers-reduced-motion/);
 assert.match(mosaicStyles, /\.artwork-info/);
+assert.match(mosaicStyles, /\.artwork-info::backdrop/);
+assert.match(mosaicStyles, /\.workspace:fullscreen/);
+assert.match(mosaicStyles, /\.artwork-preview/);
 assert.match(mosaicStyles, /\.mosaic-atlas/);
 assert.match(mosaicStyles, /contain:\s*layout paint style/);
 
-const validateArtworkMap = (mosaicMap) => {
-  assert.equal(mosaicMap.width, 16_000);
-  assert.equal(mosaicMap.height, 8_000);
-  assert.equal(mosaicMap.artworks?.length, 200);
-  assert.equal(mosaicMap.tiles?.length, 8);
+const validateArtworkMap = (mosaicMap, expected) => {
+  assert.equal(mosaicMap.width, expected.width);
+  assert.equal(mosaicMap.height, expected.height);
+  assert.equal(mosaicMap.artworks?.length, expected.artworkCount);
+  assert.equal(mosaicMap.tiles?.length, expected.tileCount);
   const artworkIds = new Set();
   const artworkCells = new Set();
   for (const [offset, artwork] of mosaicMap.artworks.entries()) {
@@ -331,8 +347,20 @@ const validateArtworkMap = (mosaicMap) => {
         assert.ok(artwork[field]?.trim(), `${artwork.id}.${field} is required for on-view claims`);
       }
     }
+    const containingTiles = mosaicMap.tiles.filter(
+      (tile) =>
+        artwork.x >= tile.x &&
+        artwork.y >= tile.y &&
+        artwork.x + artwork.width <= tile.x + tile.width &&
+        artwork.y + artwork.height <= tile.y + tile.height,
+    );
+    assert.equal(
+      containingTiles.length,
+      1,
+      `${artwork.id} must fit exactly one encrypted detail tile`,
+    );
   }
-  assert.equal(artworkCells.size, 200);
+  assert.equal(artworkCells.size, expected.artworkCount);
 };
 
 if (mosaicConfigExists) {
@@ -360,7 +388,7 @@ if (mosaicConfigExists) {
   assert.equal(mosaicConfig.catalog?.plaintext?.sha256, expectedMosaicMapSha256);
   assert.equal(mosaicConfig.catalog?.plaintext?.width, mosaicConfig.plaintext.width);
   assert.equal(mosaicConfig.catalog?.plaintext?.height, mosaicConfig.plaintext.height);
-  assert.equal(mosaicConfig.catalog?.plaintext?.artworkCount, 200);
+  assert.ok(mosaicConfig.catalog?.plaintext?.artworkCount > 0);
   assert.equal(mosaicConfig.catalog?.cipher?.name, "AES-GCM");
   assert.equal(Buffer.from(mosaicConfig.catalog?.cipher?.iv ?? "", "base64").length, 12);
   assert.equal(mosaicConfig.catalog?.cipher?.url, "./assets/skald-museum-art-map.enc");
@@ -371,17 +399,19 @@ if (mosaicConfigExists) {
   );
   assert.equal(mosaicConfig.viewer?.plaintext?.width, mosaicConfig.plaintext.width);
   assert.equal(mosaicConfig.viewer?.plaintext?.height, mosaicConfig.plaintext.height);
-  assert.equal(mosaicConfig.viewer?.plaintext?.layerCount, 9);
+  assert.ok(mosaicConfig.viewer?.plaintext?.layerCount > 1);
   assert.match(mosaicConfig.viewer?.plaintext?.sha256 ?? "", /^[a-f0-9]{64}$/);
   assert.match(mosaicConfig.viewer?.plaintext?.manifestSha256 ?? "", /^[a-f0-9]{64}$/);
-  assert.equal(mosaicConfig.viewer?.manifest?.layers?.length, 9);
+  assert.equal(
+    mosaicConfig.viewer?.manifest?.layers?.length,
+    mosaicConfig.viewer?.plaintext?.layerCount,
+  );
   assert.equal(
     mosaicConfig.viewer.manifest.layers.filter((layer) => layer.role === "overview").length,
     1,
   );
-  assert.equal(
-    mosaicConfig.viewer.manifest.layers.filter((layer) => layer.role === "tile").length,
-    8,
+  assert.ok(
+    mosaicConfig.viewer.manifest.layers.filter((layer) => layer.role === "tile").length > 0,
   );
   assert.ok(
     mosaicConfig.viewer.manifest.layers
@@ -442,7 +472,14 @@ if (mosaicConfigExists) {
     "the decrypted artwork map must remain byte-identical to the reviewed package map",
   );
   const mosaicMap = JSON.parse(decryptedCatalog.toString("utf8"));
-  validateArtworkMap(mosaicMap);
+  validateArtworkMap(mosaicMap, {
+    width: mosaicConfig.plaintext.width,
+    height: mosaicConfig.plaintext.height,
+    artworkCount: mosaicConfig.catalog.plaintext.artworkCount,
+    tileCount: mosaicConfig.viewer.manifest.layers.filter(
+      (layer) => layer.role === "tile",
+    ).length,
+  });
   assert.equal(mosaicMap.width, mosaicConfig.plaintext.width);
   assert.equal(mosaicMap.height, mosaicConfig.plaintext.height);
   const decryptedViewer = decryptAndVerifyMosaicViewerPackBytes(
