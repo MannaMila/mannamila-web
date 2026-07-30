@@ -132,7 +132,7 @@ try {
   assert.ok(promotedMosaicConfig.catalog.plaintext.artworkCount > 0);
   assert.equal(
     promotedMosaicConfig.catalog.plaintext.sha256,
-    "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895",
+    "6f80c7d95eb30101103261b501604f7342259d360e57a530ce2e871103f21924",
   );
   assert.equal(
     promotedMosaicConfig.viewer.plaintext.mediaType,

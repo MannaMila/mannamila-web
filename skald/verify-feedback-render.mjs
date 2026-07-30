@@ -998,6 +998,12 @@ const main = async () => {
       assert.ok(Math.abs(fullscreenEntered.stageTop) < 1);
       assert.ok(Math.abs(fullscreenEntered.stageRight - fullscreenEntered.innerWidth) < 1);
       assert.ok(Math.abs(fullscreenEntered.stageBottom - fullscreenEntered.innerHeight) < 1);
+      if (options.screenshotsDir) {
+        await capture(
+          client,
+          join(options.screenshotsDir, "skald-mosaic-fullscreen-desktop-1440x1000.png"),
+        );
+      }
       const fullscreenExited = await evaluate(
         client,
         `(() => {
@@ -1920,6 +1926,12 @@ const main = async () => {
       assert.ok(
         Math.abs(mobileFullscreenEntered.stageBottom - mobileFullscreenEntered.innerHeight) < 1,
       );
+      if (options.screenshotsDir) {
+        await capture(
+          client,
+          join(options.screenshotsDir, "skald-mosaic-fullscreen-mobile-390x844.png"),
+        );
+      }
       const mobileFullscreenExited = await evaluate(
         client,
         `(() => {
