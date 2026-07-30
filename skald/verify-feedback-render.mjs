@@ -75,6 +75,7 @@ if (mosaicAssetInstalled) {
     artworks: [{
       index: 1,
       id: "render-test-artwork",
+      catalog_class: "museum-artifact",
       x: 0,
       y: 0,
       width: 1200,
@@ -83,7 +84,9 @@ if (mosaicAssetInstalled) {
       creator: "Test fixture",
       date: "2026",
       museum: "Test museum",
+      city: "Test city, Test country",
       source_provider: "Test source",
+      books: [1, 13],
       on_view: false,
       gallery: "",
       as_of: "2026-07",
@@ -165,6 +168,43 @@ const expectedMosaicMap = JSON.parse(
 );
 const firstArtwork = expectedMosaicMap.artworks[0];
 const lastArtwork = expectedMosaicMap.artworks.at(-1);
+const bookNumerals = [
+  "",
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+  "XIII",
+  "XIV",
+  "XV",
+  "XVI",
+  "XVII",
+  "XVIII",
+  "XIX",
+  "XX",
+  "XXI",
+  "XXII",
+  "XXIII",
+  "XXIV",
+];
+const expectedCollection = (artwork) =>
+  [artwork.museum || artwork.source_provider, artwork.city].filter(Boolean).join(" · ");
+const expectedBookReferences = (artwork) => {
+  if (artwork.books.length === 0) return "Browse all Odyssey art";
+  const references = new Intl.ListFormat("en", {
+    style: "long",
+    type: "conjunction",
+  }).format(artwork.books.map((book) => bookNumerals[book]));
+  return `${artwork.books.length === 1 ? "Book" : "Books"} ${references}`;
+};
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -879,6 +919,14 @@ const main = async () => {
         `(() => {
           const workspace = document.querySelector("[data-mosaic-viewer]");
           const button = document.querySelector("[data-action='fullscreen']");
+          const visible = (element) => {
+            const style = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              rect.width > 0 &&
+              rect.height > 0;
+          };
           let activeElement = null;
           Object.defineProperty(document, "fullscreenElement", {
             configurable: true,
@@ -899,31 +947,104 @@ const main = async () => {
             },
           });
           button.click();
+          const stageRect = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          const buttonRect = button.getBoundingClientRect();
           return {
             active: document.fullscreenElement === workspace,
             pressed: button.getAttribute("aria-pressed"),
             label: button.textContent.trim(),
+            state: workspace.dataset.fullscreen,
+            ariaLabel: button.getAttribute("aria-label"),
+            titleVisible: visible(document.querySelector(".viewer-title")),
+            otherControlsVisible: [...document.querySelector(".viewer-controls").children]
+              .filter((element) => element !== button)
+              .some(visible),
+            footerVisible: visible(document.querySelector(".viewer-footer")),
+            statusVisible: visible(document.querySelector("[data-asset-status]")),
+            exitIconVisible: visible(document.querySelector("[data-fullscreen-exit-icon]")),
+            textLabelVisible: visible(document.querySelector("[data-fullscreen-label]")),
+            buttonWidth: buttonRect.width,
+            buttonHeight: buttonRect.height,
+            buttonTop: buttonRect.top,
+            buttonRight: buttonRect.right,
+            stageLeft: stageRect.left,
+            stageTop: stageRect.top,
+            stageRight: stageRect.right,
+            stageBottom: stageRect.bottom,
+            innerWidth,
+            innerHeight,
           };
         })()`,
       );
       assert.equal(fullscreenEntered.active, true, "fullscreen control must target the complete viewer");
       assert.equal(fullscreenEntered.pressed, "true");
       assert.match(fullscreenEntered.label, /Exit full screen/i);
+      assert.equal(fullscreenEntered.state, "true");
+      assert.equal(fullscreenEntered.ariaLabel, "Exit full screen");
+      assert.equal(fullscreenEntered.titleVisible, false);
+      assert.equal(fullscreenEntered.otherControlsVisible, false);
+      assert.equal(fullscreenEntered.footerVisible, false);
+      assert.equal(fullscreenEntered.statusVisible, false);
+      assert.equal(fullscreenEntered.exitIconVisible, true);
+      assert.equal(fullscreenEntered.textLabelVisible, false);
+      assert.ok(fullscreenEntered.buttonWidth <= 44.5);
+      assert.ok(fullscreenEntered.buttonHeight <= 44.5);
+      assert.ok(fullscreenEntered.buttonTop >= 0 && fullscreenEntered.buttonTop <= 26);
+      assert.ok(
+        fullscreenEntered.innerWidth - fullscreenEntered.buttonRight >= 0 &&
+          fullscreenEntered.innerWidth - fullscreenEntered.buttonRight <= 26,
+      );
+      assert.ok(Math.abs(fullscreenEntered.stageLeft) < 1);
+      assert.ok(Math.abs(fullscreenEntered.stageTop) < 1);
+      assert.ok(Math.abs(fullscreenEntered.stageRight - fullscreenEntered.innerWidth) < 1);
+      assert.ok(Math.abs(fullscreenEntered.stageBottom - fullscreenEntered.innerHeight) < 1);
+      if (options.screenshotsDir) {
+        await capture(
+          client,
+          join(options.screenshotsDir, "skald-mosaic-fullscreen-desktop-1440x1000.png"),
+        );
+      }
       const fullscreenExited = await evaluate(
         client,
         `(() => {
           const button = document.querySelector("[data-action='fullscreen']");
+          const visible = (element) => {
+            const style = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              rect.width > 0 &&
+              rect.height > 0;
+          };
           button.click();
           return {
             active: document.fullscreenElement !== null,
             pressed: button.getAttribute("aria-pressed"),
             label: button.textContent.trim(),
+            state: document.querySelector("[data-mosaic-viewer]").dataset.fullscreen,
+            ariaLabel: button.getAttribute("aria-label"),
+            titleVisible: visible(document.querySelector(".viewer-title")),
+            otherControlsVisible: [...document.querySelector(".viewer-controls").children]
+              .filter((element) => element !== button)
+              .some(visible),
+            footerVisible: visible(document.querySelector(".viewer-footer")),
+            statusVisible: visible(document.querySelector("[data-asset-status]")),
+            exitIconVisible: visible(document.querySelector("[data-fullscreen-exit-icon]")),
+            textLabelVisible: visible(document.querySelector("[data-fullscreen-label]")),
           };
         })()`,
       );
       assert.equal(fullscreenExited.active, false, "fullscreen control must exit the viewer");
       assert.equal(fullscreenExited.pressed, "false");
       assert.match(fullscreenExited.label, /^Full screen$/i);
+      assert.equal(fullscreenExited.state, "false");
+      assert.equal(fullscreenExited.ariaLabel, "Enter full screen");
+      assert.equal(fullscreenExited.titleVisible, true);
+      assert.equal(fullscreenExited.otherControlsVisible, true);
+      assert.equal(fullscreenExited.footerVisible, true);
+      assert.equal(fullscreenExited.statusVisible, true);
+      assert.equal(fullscreenExited.exitIconVisible, false);
+      assert.equal(fullscreenExited.textLabelVisible, true);
 
       const desktopStage = await evaluate(
         client,
@@ -1138,6 +1259,7 @@ const main = async () => {
             title: document.querySelector("[data-artwork-title]").textContent,
             creator: document.querySelector("[data-artwork-creator]").textContent,
             museum: document.querySelector("[data-artwork-museum]").textContent,
+            books: document.querySelector("[data-artwork-books]").textContent,
             status: document.querySelector("[data-artwork-status]").textContent,
             license: document.querySelector("[data-artwork-license]").textContent,
             sourceHref: document.querySelector("[data-artwork-source-links] a")?.href ?? "",
@@ -1180,7 +1302,8 @@ const main = async () => {
       assert.equal(desktopArtworkDetails.title, firstArtwork.title);
       assert.match(desktopArtworkDetails.creator, /Pieter Lastman/);
       assert.match(desktopArtworkDetails.creator, /1625/);
-      assert.equal(desktopArtworkDetails.museum, firstArtwork.museum);
+      assert.equal(desktopArtworkDetails.museum, expectedCollection(firstArtwork));
+      assert.equal(desktopArtworkDetails.books, expectedBookReferences(firstArtwork));
       assert.match(desktopArtworkDetails.status, /Collection record/);
       assert.match(desktopArtworkDetails.license, /Public Domain/);
       assert.equal(desktopArtworkDetails.sourceHref, firstArtwork.museum_url);
@@ -1728,6 +1851,101 @@ const main = async () => {
       assert.equal(mobileMosaicState.viewerHidden, false, "correct mobile access must open the viewer");
       assert.match(mobileMosaicState.overviewSource, /^blob:/, "mobile viewer must use a decrypted overview Blob");
 
+      const mobileFullscreenEntered = await evaluate(
+        client,
+        `(() => {
+          const workspace = document.querySelector("[data-mosaic-viewer]");
+          const button = document.querySelector("[data-action='fullscreen']");
+          const visible = (element) => {
+            const style = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              rect.width > 0 &&
+              rect.height > 0;
+          };
+          let activeElement = null;
+          Object.defineProperty(document, "fullscreenElement", {
+            configurable: true,
+            get: () => activeElement,
+          });
+          Object.defineProperty(workspace, "requestFullscreen", {
+            configurable: true,
+            value: async () => {
+              activeElement = workspace;
+              document.dispatchEvent(new Event("fullscreenchange"));
+            },
+          });
+          Object.defineProperty(document, "exitFullscreen", {
+            configurable: true,
+            value: async () => {
+              activeElement = null;
+              document.dispatchEvent(new Event("fullscreenchange"));
+            },
+          });
+          button.click();
+          const stageRect = document.querySelector("[data-mosaic-stage]").getBoundingClientRect();
+          const buttonRect = button.getBoundingClientRect();
+          return {
+            state: workspace.dataset.fullscreen,
+            ariaLabel: button.getAttribute("aria-label"),
+            titleVisible: visible(document.querySelector(".viewer-title")),
+            otherControlsVisible: [...document.querySelector(".viewer-controls").children]
+              .filter((element) => element !== button)
+              .some(visible),
+            footerVisible: visible(document.querySelector(".viewer-footer")),
+            statusVisible: visible(document.querySelector("[data-asset-status]")),
+            exitIconVisible: visible(document.querySelector("[data-fullscreen-exit-icon]")),
+            textLabelVisible: visible(document.querySelector("[data-fullscreen-label]")),
+            buttonWidth: buttonRect.width,
+            buttonHeight: buttonRect.height,
+            stageLeft: stageRect.left,
+            stageTop: stageRect.top,
+            stageRight: stageRect.right,
+            stageBottom: stageRect.bottom,
+            innerWidth,
+            innerHeight,
+          };
+        })()`,
+      );
+      assert.equal(mobileFullscreenEntered.state, "true");
+      assert.equal(mobileFullscreenEntered.ariaLabel, "Exit full screen");
+      assert.equal(mobileFullscreenEntered.titleVisible, false);
+      assert.equal(mobileFullscreenEntered.otherControlsVisible, false);
+      assert.equal(mobileFullscreenEntered.footerVisible, false);
+      assert.equal(mobileFullscreenEntered.statusVisible, false);
+      assert.equal(mobileFullscreenEntered.exitIconVisible, true);
+      assert.equal(mobileFullscreenEntered.textLabelVisible, false);
+      assert.ok(mobileFullscreenEntered.buttonWidth <= 44.5);
+      assert.ok(mobileFullscreenEntered.buttonHeight <= 44.5);
+      assert.ok(Math.abs(mobileFullscreenEntered.stageLeft) < 1);
+      assert.ok(Math.abs(mobileFullscreenEntered.stageTop) < 1);
+      assert.ok(
+        Math.abs(mobileFullscreenEntered.stageRight - mobileFullscreenEntered.innerWidth) < 1,
+      );
+      assert.ok(
+        Math.abs(mobileFullscreenEntered.stageBottom - mobileFullscreenEntered.innerHeight) < 1,
+      );
+      if (options.screenshotsDir) {
+        await capture(
+          client,
+          join(options.screenshotsDir, "skald-mosaic-fullscreen-mobile-390x844.png"),
+        );
+      }
+      const mobileFullscreenExited = await evaluate(
+        client,
+        `(() => {
+          const button = document.querySelector("[data-action='fullscreen']");
+          button.click();
+          return {
+            state: document.querySelector("[data-mosaic-viewer]").dataset.fullscreen,
+            ariaLabel: button.getAttribute("aria-label"),
+          };
+        })()`,
+      );
+      assert.equal(mobileFullscreenExited.state, "false");
+      assert.equal(mobileFullscreenExited.ariaLabel, "Enter full screen");
+
       const mobileStage = await evaluate(
         client,
         `(() => {
@@ -1812,6 +2030,8 @@ const main = async () => {
           const rect = panel.getBoundingClientRect();
           return {
             title: document.querySelector("[data-artwork-title]").textContent,
+            museum: document.querySelector("[data-artwork-museum]").textContent,
+            books: document.querySelector("[data-artwork-books]").textContent,
             left: rect.left,
             right: rect.right,
             top: rect.top,
@@ -1823,6 +2043,8 @@ const main = async () => {
         })()`,
       );
       assert.equal(mobileArtworkDetails.title, firstArtwork.title);
+      assert.equal(mobileArtworkDetails.museum, expectedCollection(firstArtwork));
+      assert.equal(mobileArtworkDetails.books, expectedBookReferences(firstArtwork));
       assert.ok(Math.abs(mobileArtworkDetails.left) < 0.5);
       assert.ok(Math.abs(mobileArtworkDetails.right - mobileArtworkDetails.innerWidth) < 0.5);
       assert.ok(Math.abs(mobileArtworkDetails.top) < 0.5);

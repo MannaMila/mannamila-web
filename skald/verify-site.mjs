@@ -22,7 +22,7 @@ const mosaicCipherPath = `${mosaicRoute}/assets/skald-museum-art-mosaic.enc`;
 const mosaicCatalogCipherPath = `${mosaicRoute}/assets/skald-museum-art-map.enc`;
 const mosaicViewerCipherPath = `${mosaicRoute}/assets/skald-museum-art-viewer.enc`;
 const mosaicPlaintextMapPath = `${mosaicRoute}/mosaic-map.json`;
-const expectedMosaicMapSha256 = "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895";
+const expectedMosaicMapSha256 = "6f80c7d95eb30101103261b501604f7342259d360e57a530ce2e871103f21924";
 const allowMissingMosaic = process.env.SKALD_ALLOW_MISSING_MOSAIC === "1";
 
 const pathExists = (path) =>
@@ -246,11 +246,14 @@ assert.match(
   mosaicIndex,
   /<button\b(?=[^>]*data-action="fullscreen")(?=[^>]*aria-pressed="false")[^>]*>/,
 );
+assert.match(mosaicIndex, /data-fullscreen-label/);
+assert.match(mosaicIndex, /data-fullscreen-exit-icon/);
 assert.match(
   mosaicIndex,
   /<dialog\b(?=[^>]*data-artwork-info)(?=[^>]*aria-modal="true")(?=[^>]*hidden)[^>]*>/,
 );
 assert.match(mosaicIndex, /data-artwork-title/);
+assert.match(mosaicIndex, /data-artwork-books/);
 assert.match(mosaicIndex, /data-artwork-source-links/);
 assert.match(mosaicIndex, /data-artwork-picker/);
 assert.match(mosaicIndex, /data-artwork-preview-overview/);
@@ -296,6 +299,7 @@ assert.match(mosaicViewer, /type:\s*"pinch"/);
 assert.match(mosaicViewer, /data-artwork-title/);
 assert.match(mosaicViewer, /requestFullscreen/);
 assert.match(mosaicViewer, /exitFullscreen/);
+assert.match(mosaicViewer, /dataset\.fullscreen/);
 assert.match(mosaicViewer, /showModal\(\)/);
 assert.match(mosaicViewer, /data-artwork-preview-detail/);
 assert.match(mosaicStyles, /:focus-visible/);
@@ -303,6 +307,8 @@ assert.match(mosaicStyles, /prefers-reduced-motion/);
 assert.match(mosaicStyles, /\.artwork-info/);
 assert.match(mosaicStyles, /\.artwork-info::backdrop/);
 assert.match(mosaicStyles, /\.workspace:fullscreen/);
+assert.match(mosaicStyles, /\[data-fullscreen="true"\]/);
+assert.match(mosaicStyles, /\[data-fullscreen-exit-icon\]/);
 assert.match(mosaicStyles, /\.artwork-preview/);
 assert.match(mosaicStyles, /\.mosaic-atlas/);
 assert.match(mosaicStyles, /contain:\s*layout paint style/);
@@ -334,6 +340,23 @@ const validateArtworkMap = (mosaicMap, expected) => {
       assert.equal(typeof artwork[field], "string", `${artwork.id}.${field} must be text`);
       assert.ok(artwork[field].trim(), `${artwork.id}.${field} must not be empty`);
     }
+    assert.ok(
+      ["museum-artifact", "chapter-only-plate"].includes(artwork.catalog_class),
+      `${artwork.id}.catalog_class must identify its source class`,
+    );
+    for (const field of ["museum", "city"]) {
+      assert.equal(typeof artwork[field], "string", `${artwork.id}.${field} must be text`);
+    }
+    assert.ok(Array.isArray(artwork.books), `${artwork.id}.books must be an array`);
+    assert.deepEqual(
+      artwork.books,
+      [...new Set(artwork.books)].sort((left, right) => left - right),
+      `${artwork.id}.books must be sorted and unique`,
+    );
+    assert.ok(
+      artwork.books.every((book) => Number.isSafeInteger(book) && book >= 1 && book <= 24),
+      `${artwork.id}.books must contain Odyssey book numbers`,
+    );
     assert.equal(typeof artwork.on_view, "boolean");
     assert.ok(
       [artwork.museum_url, artwork.file_page_url].some((value) => /^https:\/\//.test(value)),
