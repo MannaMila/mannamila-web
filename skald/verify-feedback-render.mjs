@@ -663,6 +663,11 @@ const main = async () => {
           atlasHidden: document.querySelector("[data-mosaic-atlas]").hidden,
           overviewHasSource: document.querySelector("[data-mosaic-overview]").hasAttribute("src"),
           artworkInfoHidden: document.querySelector("[data-artwork-info]").hidden,
+          artworkInfoOpen: document.querySelector("[data-artwork-info]").open,
+          modalImageSources: [
+            document.querySelector("[data-artwork-preview-overview]"),
+            document.querySelector("[data-artwork-preview-detail]"),
+          ].filter((image) => image?.hasAttribute("src")).length,
           robots: document.querySelector('meta[name="robots"]').content,
         }))()`,
       );
@@ -671,6 +676,8 @@ const main = async () => {
       assert.equal(lockedMosaic.atlasHidden, true, "mosaic atlas must remain hidden before access");
       assert.equal(lockedMosaic.overviewHasSource, false, "mosaic viewer must not be decoded before access");
       assert.equal(lockedMosaic.artworkInfoHidden, true, "artwork details must stay hidden before access");
+      assert.equal(lockedMosaic.artworkInfoOpen, false, "artwork dialog must be closed before access");
+      assert.equal(lockedMosaic.modalImageSources, 0, "artwork dialog images must be source-free before access");
       assert.equal(
         requests.includes(`/${mosaicConfig}`),
         false,
@@ -867,6 +874,57 @@ const main = async () => {
         "correct access must fetch the progressive viewer pack",
       );
 
+      const fullscreenEntered = await evaluate(
+        client,
+        `(() => {
+          const workspace = document.querySelector("[data-mosaic-viewer]");
+          const button = document.querySelector("[data-action='fullscreen']");
+          let activeElement = null;
+          Object.defineProperty(document, "fullscreenElement", {
+            configurable: true,
+            get: () => activeElement,
+          });
+          Object.defineProperty(workspace, "requestFullscreen", {
+            configurable: true,
+            value: async () => {
+              activeElement = workspace;
+              document.dispatchEvent(new Event("fullscreenchange"));
+            },
+          });
+          Object.defineProperty(document, "exitFullscreen", {
+            configurable: true,
+            value: async () => {
+              activeElement = null;
+              document.dispatchEvent(new Event("fullscreenchange"));
+            },
+          });
+          button.click();
+          return {
+            active: document.fullscreenElement === workspace,
+            pressed: button.getAttribute("aria-pressed"),
+            label: button.textContent.trim(),
+          };
+        })()`,
+      );
+      assert.equal(fullscreenEntered.active, true, "fullscreen control must target the complete viewer");
+      assert.equal(fullscreenEntered.pressed, "true");
+      assert.match(fullscreenEntered.label, /Exit full screen/i);
+      const fullscreenExited = await evaluate(
+        client,
+        `(() => {
+          const button = document.querySelector("[data-action='fullscreen']");
+          button.click();
+          return {
+            active: document.fullscreenElement !== null,
+            pressed: button.getAttribute("aria-pressed"),
+            label: button.textContent.trim(),
+          };
+        })()`,
+      );
+      assert.equal(fullscreenExited.active, false, "fullscreen control must exit the viewer");
+      assert.equal(fullscreenExited.pressed, "false");
+      assert.match(fullscreenExited.label, /^Full screen$/i);
+
       const desktopStage = await evaluate(
         client,
         `(() => {
@@ -1062,22 +1120,61 @@ const main = async () => {
       });
       await waitUntil(
         client,
-        `!document.querySelector("[data-artwork-info]").hidden`,
+        `document.querySelector("[data-artwork-info]").open &&
+          document.querySelector("[data-artwork-preview-detail]").dataset.ready === "true"`,
         "desktop artwork details",
       );
       const desktopArtworkDetails = await evaluate(
         client,
-        `(() => ({
-          selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
-          index: document.querySelector("[data-artwork-index]").textContent,
-          title: document.querySelector("[data-artwork-title]").textContent,
-          creator: document.querySelector("[data-artwork-creator]").textContent,
-          museum: document.querySelector("[data-artwork-museum]").textContent,
-          status: document.querySelector("[data-artwork-status]").textContent,
-          license: document.querySelector("[data-artwork-license]").textContent,
-          sourceHref: document.querySelector("[data-artwork-source-links] a")?.href ?? "",
-        }))()`,
+        `(() => {
+          const panel = document.querySelector("[data-artwork-info]");
+          const detail = document.querySelector("[data-artwork-preview-detail]");
+          const rect = panel.getBoundingClientRect();
+          return {
+            open: panel.open,
+            ariaModal: panel.getAttribute("aria-modal"),
+            selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+            index: document.querySelector("[data-artwork-index]").textContent,
+            title: document.querySelector("[data-artwork-title]").textContent,
+            creator: document.querySelector("[data-artwork-creator]").textContent,
+            museum: document.querySelector("[data-artwork-museum]").textContent,
+            status: document.querySelector("[data-artwork-status]").textContent,
+            license: document.querySelector("[data-artwork-license]").textContent,
+            sourceHref: document.querySelector("[data-artwork-source-links] a")?.href ?? "",
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            innerWidth,
+            innerHeight,
+            closeFocused:
+              document.activeElement === document.querySelector("[data-action='close-details']"),
+            detailSource: detail.getAttribute("src"),
+            detailNaturalWidth: detail.naturalWidth,
+            detailNaturalHeight: detail.naturalHeight,
+            tileId: detail.dataset.sourceTile,
+            cropX: Number(detail.dataset.cropX),
+            cropY: Number(detail.dataset.cropY),
+            cropWidth: Number(detail.dataset.cropWidth),
+            cropHeight: Number(detail.dataset.cropHeight),
+            sourcedStageTiles: document.querySelectorAll("[data-tile-id][src]").length,
+          };
+        })()`,
       );
+      const firstArtworkTile = expectedMosaicMap.tiles.find(
+        (tile) =>
+          firstArtwork.x >= tile.x &&
+          firstArtwork.y >= tile.y &&
+          firstArtwork.x + firstArtwork.width <= tile.x + tile.width &&
+          firstArtwork.y + firstArtwork.height <= tile.y + tile.height,
+      );
+      assert.equal(desktopArtworkDetails.open, true);
+      assert.equal(desktopArtworkDetails.ariaModal, "true");
+      assert.ok(Math.abs(desktopArtworkDetails.left) < 0.5);
+      assert.ok(Math.abs(desktopArtworkDetails.top) < 0.5);
+      assert.ok(Math.abs(desktopArtworkDetails.right - desktopArtworkDetails.innerWidth) < 0.5);
+      assert.ok(Math.abs(desktopArtworkDetails.bottom - desktopArtworkDetails.innerHeight) < 0.5);
+      assert.equal(desktopArtworkDetails.closeFocused, true);
       assert.equal(desktopArtworkDetails.selectionHidden, false);
       assert.equal(desktopArtworkDetails.index, "001");
       assert.equal(desktopArtworkDetails.title, firstArtwork.title);
@@ -1087,18 +1184,61 @@ const main = async () => {
       assert.match(desktopArtworkDetails.status, /Collection record/);
       assert.match(desktopArtworkDetails.license, /Public Domain/);
       assert.equal(desktopArtworkDetails.sourceHref, firstArtwork.museum_url);
+      assert.match(desktopArtworkDetails.detailSource, /^blob:/);
+      assert.equal(desktopArtworkDetails.detailNaturalWidth, firstArtworkTile.width);
+      assert.equal(desktopArtworkDetails.detailNaturalHeight, firstArtworkTile.height);
+      assert.equal(desktopArtworkDetails.tileId, firstArtworkTile.path);
+      assert.equal(desktopArtworkDetails.cropX, firstArtwork.x - firstArtworkTile.x);
+      assert.equal(desktopArtworkDetails.cropY, firstArtwork.y - firstArtworkTile.y);
+      assert.equal(desktopArtworkDetails.cropWidth, firstArtwork.width);
+      assert.equal(desktopArtworkDetails.cropHeight, firstArtwork.height);
+      assert.equal(
+        desktopArtworkDetails.sourcedStageTiles,
+        0,
+        "full-screen detail must own the sole high-resolution tile decode",
+      );
+      assert.equal(
+        requests.includes(`/${mosaicAsset}`),
+        false,
+        "full-screen artwork details must not fetch the monolithic download",
+      );
+      const refusedDismissal = await evaluate(
+        client,
+        `(() => {
+          const panel = document.querySelector("[data-artwork-info]");
+          const cancel = new Event("cancel", { bubbles: false, cancelable: true });
+          panel.dispatchEvent(cancel);
+          document.dispatchEvent(new KeyboardEvent("keydown", {
+            key: "Escape",
+            bubbles: true,
+            cancelable: true,
+          }));
+          return {
+            cancelPrevented: cancel.defaultPrevented,
+            open: panel.open,
+            hidden: panel.hidden,
+          };
+        })()`,
+      );
+      assert.equal(refusedDismissal.cancelPrevented, true);
+      assert.equal(refusedDismissal.open, true);
+      assert.equal(refusedDismissal.hidden, false);
       const closedArtworkDetails = await evaluate(
         client,
         `(() => {
           document.querySelector("[data-action='close-details']").click();
           return {
             infoHidden: document.querySelector("[data-artwork-info]").hidden,
+            infoOpen: document.querySelector("[data-artwork-info]").open,
             selectionHidden: document.querySelector("[data-artwork-selection]").hidden,
+            detailSource: document.querySelector("[data-artwork-preview-detail]").getAttribute("src"),
           };
         })()`,
       );
       assert.equal(closedArtworkDetails.infoHidden, true, "the close control must hide artwork details");
+      assert.equal(closedArtworkDetails.infoOpen, false, "the X control must close the artwork dialog");
       assert.equal(closedArtworkDetails.selectionHidden, true, "the close control must clear the highlight");
+      assert.equal(closedArtworkDetails.detailSource, null, "the X control must release the detail image");
 
       const lastArtworkPoint = await evaluate(
         client,
@@ -1163,6 +1303,7 @@ const main = async () => {
           )};
           const stage = document.querySelector("[data-mosaic-stage]");
           const overview = document.querySelector("[data-mosaic-overview]");
+          const close = document.querySelector("[data-action='close-details']");
           const failures = [];
           for (const artwork of artworks) {
             const rect = overview.getBoundingClientRect();
@@ -1177,6 +1318,7 @@ const main = async () => {
             ) {
               failures.push(artwork.index);
             }
+            close.click();
           }
           return failures;
         })()`,
@@ -1193,6 +1335,19 @@ const main = async () => {
           picker.value = ${JSON.stringify(lastArtwork.id)};
           picker.dispatchEvent(new Event("change", { bubbles: true }));
         })()`,
+      );
+      await waitUntil(
+        client,
+        `document.querySelector("[data-artwork-info]").open &&
+          document.querySelector("[data-artwork-preview-detail]").dataset.ready === "true"`,
+        "picker artwork details",
+      );
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
+      }
+      await evaluate(
+        client,
+        `document.querySelector("[data-action='close-details']").click()`,
       );
       await waitUntil(
         client,
@@ -1230,10 +1385,6 @@ const main = async () => {
         false,
         "high-resolution viewing must still avoid the monolithic download",
       );
-      if (options.screenshotsDir) {
-        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
-      }
-
       const heldGesturePoint = await evaluate(
         client,
         `(() => {
@@ -1276,8 +1427,8 @@ const main = async () => {
       assert.equal(heldGestureState.visibleTiles, 0);
       assert.equal(
         heldGestureState.selectionHidden,
-        false,
-        "artwork selection must remain present during gesture fallback rendering",
+        true,
+        "closing the full-screen artwork detail must leave no stale selection during gestures",
       );
       await client.send("Input.dispatchMouseEvent", {
         type: "mouseReleased",
@@ -1443,8 +1594,8 @@ const main = async () => {
       );
       assert.equal(
         compositorRecovery.actionResult.result.value.selectionHidden,
-        false,
-        "the compositor recovery gate must keep an artwork selection painted",
+        true,
+        "Fit recovery must not restore an artwork selection after its detail view closes",
       );
       const markedFitFrames = compositorRecovery.frames
         .map(decodePng)
@@ -1650,7 +1801,8 @@ const main = async () => {
       await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       await waitUntil(
         client,
-        `!document.querySelector("[data-artwork-info]").hidden`,
+        `document.querySelector("[data-artwork-info]").open &&
+          document.querySelector("[data-artwork-preview-detail]").dataset.ready === "true"`,
         "mobile artwork details",
       );
       const mobileArtworkDetails = await evaluate(
@@ -1666,14 +1818,16 @@ const main = async () => {
             bottom: rect.bottom,
             innerWidth,
             innerHeight,
+            detailSource: document.querySelector("[data-artwork-preview-detail]").getAttribute("src"),
           };
         })()`,
       );
       assert.equal(mobileArtworkDetails.title, firstArtwork.title);
-      assert.ok(mobileArtworkDetails.left >= -0.5);
-      assert.ok(mobileArtworkDetails.right <= mobileArtworkDetails.innerWidth + 0.5);
-      assert.ok(mobileArtworkDetails.top >= -0.5);
-      assert.ok(mobileArtworkDetails.bottom <= mobileArtworkDetails.innerHeight + 0.5);
+      assert.ok(Math.abs(mobileArtworkDetails.left) < 0.5);
+      assert.ok(Math.abs(mobileArtworkDetails.right - mobileArtworkDetails.innerWidth) < 0.5);
+      assert.ok(Math.abs(mobileArtworkDetails.top) < 0.5);
+      assert.ok(Math.abs(mobileArtworkDetails.bottom - mobileArtworkDetails.innerHeight) < 0.5);
+      assert.match(mobileArtworkDetails.detailSource, /^blob:/);
       const mosaicDetailsSelectors = [
         ...mosaicSelectors,
         ".artwork-info",
@@ -1707,6 +1861,12 @@ const main = async () => {
             viewerHidden: document.querySelector("[data-mosaic-viewer]").hidden,
             overviewSource: document.querySelector("[data-mosaic-overview]").getAttribute("src"),
             tileSources: [...document.querySelectorAll("[data-tile-id][src]")].length,
+            modalOpen: document.querySelector("[data-artwork-info]").open,
+            modalHidden: document.querySelector("[data-artwork-info]").hidden,
+            modalSources: [
+              document.querySelector("[data-artwork-preview-overview]"),
+              document.querySelector("[data-artwork-preview-detail]"),
+            ].filter((image) => image.hasAttribute("src")).length,
             pickerOptionCount: document.querySelector("[data-artwork-picker]").options.length,
           };
         })()`,
@@ -1715,6 +1875,9 @@ const main = async () => {
       assert.equal(pagehideState.viewerHidden, true, "pagehide must discard the decrypted viewer");
       assert.equal(pagehideState.overviewSource, null, "pagehide must revoke the overview");
       assert.equal(pagehideState.tileSources, 0, "pagehide must revoke viewport tiles");
+      assert.equal(pagehideState.modalOpen, false, "pagehide must close the artwork dialog");
+      assert.equal(pagehideState.modalHidden, true, "pagehide must hide the artwork dialog");
+      assert.equal(pagehideState.modalSources, 0, "pagehide must revoke artwork detail sources");
       assert.equal(pagehideState.pickerOptionCount, 1, "pagehide must clear decrypted metadata");
 
       const privacySelectors = [

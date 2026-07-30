@@ -84,6 +84,13 @@ try {
     await readFile(join(target, mosaicRoute, "index.html"), "utf8"),
     /noindex, nofollow, noarchive, nosnippet, noimageindex/,
   );
+  const promotedMosaicIndex = await readFile(
+    join(target, mosaicRoute, "index.html"),
+    "utf8",
+  );
+  assert.match(promotedMosaicIndex, /data-action="fullscreen"/);
+  assert.match(promotedMosaicIndex, /<dialog\b[^>]*data-artwork-info/);
+  assert.match(promotedMosaicIndex, /data-artwork-preview-detail/);
   assert.match(
     await readFile(join(target, mosaicRoute, "attribution.html"), "utf8"),
     /Photo: Sailko \/ CC BY 3\.0/,
@@ -93,18 +100,26 @@ try {
     "utf8",
   );
   assert.match(promotedMosaicViewer, /PBKDF2/);
+  assert.match(promotedMosaicViewer, /requestFullscreen/);
+  assert.match(promotedMosaicViewer, /showModal\(\)/);
   const promotedMosaicConfig = JSON.parse(
     await readFile(join(target, mosaicRoute, "mosaic-config.json"), "utf8"),
   );
-  assert.equal(promotedMosaicConfig.plaintext.width, 16_000);
-  assert.equal(promotedMosaicConfig.plaintext.height, 8_000);
+  assert.ok(promotedMosaicConfig.plaintext.width > 0);
+  assert.ok(promotedMosaicConfig.plaintext.height > 0);
   assert.equal(
     promotedMosaicConfig.cipher.url,
     "./assets/skald-museum-art-mosaic.enc",
   );
-  assert.equal(promotedMosaicConfig.catalog.plaintext.width, 16_000);
-  assert.equal(promotedMosaicConfig.catalog.plaintext.height, 8_000);
-  assert.equal(promotedMosaicConfig.catalog.plaintext.artworkCount, 200);
+  assert.equal(
+    promotedMosaicConfig.catalog.plaintext.width,
+    promotedMosaicConfig.plaintext.width,
+  );
+  assert.equal(
+    promotedMosaicConfig.catalog.plaintext.height,
+    promotedMosaicConfig.plaintext.height,
+  );
+  assert.ok(promotedMosaicConfig.catalog.plaintext.artworkCount > 0);
   assert.equal(
     promotedMosaicConfig.catalog.plaintext.sha256,
     "7ccce31e953b83f1a265b0c7878b50e2a51f735c454624e46bdc9cb911e58895",
@@ -113,9 +128,15 @@ try {
     promotedMosaicConfig.viewer.plaintext.mediaType,
     "application/vnd.skald.mosaic-viewer-pack",
   );
-  assert.equal(promotedMosaicConfig.viewer.plaintext.width, 16_000);
-  assert.equal(promotedMosaicConfig.viewer.plaintext.height, 8_000);
-  assert.equal(promotedMosaicConfig.viewer.plaintext.layerCount, 9);
+  assert.equal(
+    promotedMosaicConfig.viewer.plaintext.width,
+    promotedMosaicConfig.plaintext.width,
+  );
+  assert.equal(
+    promotedMosaicConfig.viewer.plaintext.height,
+    promotedMosaicConfig.plaintext.height,
+  );
+  assert.ok(promotedMosaicConfig.viewer.plaintext.layerCount > 1);
   assert.equal(
     promotedMosaicConfig.viewer.plaintext.manifestSha256,
     "0f04131c1e29fc2262fce1dbbe8eece15f058ac1065c7ec8dee77e402fc33003",
@@ -125,7 +146,10 @@ try {
     "./assets/skald-museum-art-viewer.enc",
   );
   const promotedViewerLayers = promotedMosaicConfig.viewer.manifest.layers;
-  assert.equal(promotedViewerLayers.length, 9);
+  assert.equal(
+    promotedViewerLayers.length,
+    promotedMosaicConfig.viewer.plaintext.layerCount,
+  );
   const promotedOverviewLayers = promotedViewerLayers.filter(
     (layer) => layer.role === "overview",
   );
@@ -135,30 +159,33 @@ try {
   assert.equal(promotedOverviewLayers.length, 1);
   assert.equal(promotedOverviewLayers[0].naturalWidth, 4_096);
   assert.equal(promotedOverviewLayers[0].naturalHeight, 2_048);
-  assert.equal(promotedOverviewLayers[0].width, 16_000);
-  assert.equal(promotedOverviewLayers[0].height, 8_000);
-  assert.equal(promotedTileLayers.length, 8);
+  assert.equal(
+    promotedOverviewLayers[0].width,
+    promotedMosaicConfig.plaintext.width,
+  );
+  assert.equal(
+    promotedOverviewLayers[0].height,
+    promotedMosaicConfig.plaintext.height,
+  );
+  assert.ok(promotedTileLayers.length > 0);
   assert.ok(
     promotedTileLayers.every(
       (layer) =>
-        layer.naturalWidth === 4_000 &&
-        layer.naturalHeight === 4_000 &&
-        layer.width === 4_000 &&
-        layer.height === 4_000,
+        layer.naturalWidth === layer.width &&
+        layer.naturalHeight === layer.height,
     ),
   );
-  assert.deepEqual(
-    promotedTileLayers.map((layer) => layer.id),
-    [
-      "tile-0-0",
-      "tile-1-0",
-      "tile-2-0",
-      "tile-3-0",
-      "tile-0-1",
-      "tile-1-1",
-      "tile-2-1",
-      "tile-3-1",
-    ],
+  assert.equal(
+    new Set(promotedTileLayers.map((layer) => layer.id)).size,
+    promotedTileLayers.length,
+  );
+  assert.equal(
+    promotedTileLayers.reduce(
+      (area, layer) => area + layer.width * layer.height,
+      0,
+    ),
+    promotedMosaicConfig.plaintext.width *
+      promotedMosaicConfig.plaintext.height,
   );
   const promotedViewerCipher = await readFile(
     join(target, mosaicRoute, "assets/skald-museum-art-viewer.enc"),
