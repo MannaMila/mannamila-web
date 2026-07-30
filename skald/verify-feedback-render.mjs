@@ -876,7 +876,7 @@ const main = async () => {
 
       const fullscreenEntered = await evaluate(
         client,
-        `(async () => {
+        `(() => {
           const workspace = document.querySelector("[data-mosaic-viewer]");
           const button = document.querySelector("[data-action='fullscreen']");
           let activeElement = null;
@@ -899,7 +899,6 @@ const main = async () => {
             },
           });
           button.click();
-          await new Promise(resolve => setTimeout(resolve, 0));
           return {
             active: document.fullscreenElement === workspace,
             pressed: button.getAttribute("aria-pressed"),
@@ -912,10 +911,9 @@ const main = async () => {
       assert.match(fullscreenEntered.label, /Exit full screen/i);
       const fullscreenExited = await evaluate(
         client,
-        `(async () => {
+        `(() => {
           const button = document.querySelector("[data-action='fullscreen']");
           button.click();
-          await new Promise(resolve => setTimeout(resolve, 0));
           return {
             active: document.fullscreenElement !== null,
             pressed: button.getAttribute("aria-pressed"),
@@ -1154,7 +1152,7 @@ const main = async () => {
             detailSource: detail.getAttribute("src"),
             detailNaturalWidth: detail.naturalWidth,
             detailNaturalHeight: detail.naturalHeight,
-            tileId: detail.dataset.tileId,
+            tileId: detail.dataset.sourceTile,
             cropX: Number(detail.dataset.cropX),
             cropY: Number(detail.dataset.cropY),
             cropWidth: Number(detail.dataset.cropWidth),
@@ -1344,6 +1342,9 @@ const main = async () => {
           document.querySelector("[data-artwork-preview-detail]").dataset.ready === "true"`,
         "picker artwork details",
       );
+      if (options.screenshotsDir) {
+        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
+      }
       await evaluate(
         client,
         `document.querySelector("[data-action='close-details']").click()`,
@@ -1384,10 +1385,6 @@ const main = async () => {
         false,
         "high-resolution viewing must still avoid the monolithic download",
       );
-      if (options.screenshotsDir) {
-        await capture(client, join(options.screenshotsDir, "skald-mosaic-details-desktop-1440x1000.png"));
-      }
-
       const heldGesturePoint = await evaluate(
         client,
         `(() => {
@@ -1430,8 +1427,8 @@ const main = async () => {
       assert.equal(heldGestureState.visibleTiles, 0);
       assert.equal(
         heldGestureState.selectionHidden,
-        false,
-        "artwork selection must remain present during gesture fallback rendering",
+        true,
+        "closing the full-screen artwork detail must leave no stale selection during gestures",
       );
       await client.send("Input.dispatchMouseEvent", {
         type: "mouseReleased",
@@ -1597,8 +1594,8 @@ const main = async () => {
       );
       assert.equal(
         compositorRecovery.actionResult.result.value.selectionHidden,
-        false,
-        "the compositor recovery gate must keep an artwork selection painted",
+        true,
+        "Fit recovery must not restore an artwork selection after its detail view closes",
       );
       const markedFitFrames = compositorRecovery.frames
         .map(decodePng)
