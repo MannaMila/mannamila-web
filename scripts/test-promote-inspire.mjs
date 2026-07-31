@@ -34,8 +34,11 @@ try {
   const apply = run("--apply", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Inspire/);
+  assert.match(await readFile(join(target, "privacy/index.html"), "utf8"), /Mila Inspire — Privacy Policy/);
+  assert.match(await readFile(join(target, "support/index.html"), "utf8"), /Mila Inspire Support/);
   await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
   assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
+  await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "inspire.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
 
@@ -45,7 +48,13 @@ try {
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
   assert.ok(manifest.files["styles.css"]);
+  assert.ok(manifest.files["app.js"]);
   assert.ok(manifest.files["retire-analytics.js"]);
+  assert.ok(manifest.files["availability.json"]);
+  assert.ok(manifest.files["site-config.json"]);
+  assert.ok(manifest.files["privacy/index.html"]);
+  assert.ok(manifest.files["support/index.html"]);
+  assert.ok(manifest.files["assets/mila-inspire-og.jpg"]);
   assert.equal(manifest.files["analytics.js"], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 

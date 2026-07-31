@@ -4,12 +4,15 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
   access,
+  chmod,
   copyFile,
   lstat,
-  readFile,
+  mkdir,
   readdir,
+  readFile,
   realpath,
   rm,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -17,7 +20,17 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = join(repoRoot, "inspire");
-const publicRoots = ["index.html", "styles.css", "retire-analytics.js"];
+const publicRoots = [
+  "index.html",
+  "styles.css",
+  "app.js",
+  "retire-analytics.js",
+  "availability.json",
+  "site-config.json",
+  "assets",
+  "privacy",
+  "support",
+];
 const retiredPublicRoots = ["analytics.js"];
 const preservedTopLevel = new Set([
   ".git",
@@ -88,16 +101,32 @@ const verifySource = () => {
 
 const toPosix = (path) => path.split(sep).join("/");
 
+const walkFiles = async (root, current = root) => {
+  const entries = await readdir(current, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    const absolute = join(current, entry.name);
+    if (entry.isSymbolicLink()) throw new Error(`Symlinks are not allowed in the public tree: ${absolute}`);
+    if (entry.isDirectory()) files.push(...(await walkFiles(root, absolute)));
+    else if (entry.isFile()) files.push(toPosix(relative(root, absolute)));
+    else throw new Error(`Unsupported public-tree entry: ${absolute}`);
+  }
+
+  return files;
+};
+
 const sourceFiles = async () => {
   const files = [];
   for (const root of publicRoots) {
     const absolute = join(sourceRoot, root);
     const info = await lstat(absolute);
     if (info.isSymbolicLink()) throw new Error(`Symlinks are not allowed in the public tree: ${absolute}`);
-    if (!info.isFile()) throw new Error(`Expected a public file: ${absolute}`);
-    files.push(toPosix(relative(sourceRoot, absolute)));
+    if (info.isDirectory()) files.push(...(await walkFiles(sourceRoot, absolute)));
+    else if (info.isFile()) files.push(root);
+    else throw new Error(`Unsupported public-tree entry: ${absolute}`);
   }
-  return files.sort();
+  return [...new Set(files)].sort();
 };
 
 const targetFiles = async (target, roots) => {
@@ -107,10 +136,10 @@ const targetFiles = async (target, roots) => {
     if (!(await pathExists(absolute))) continue;
     const info = await lstat(absolute);
     if (info.isSymbolicLink()) throw new Error(`Symlinks are not allowed in the deployed public tree: ${absolute}`);
-    if (!info.isFile()) throw new Error(`Expected a deployed public file: ${absolute}`);
-    files.push(root);
+    if (info.isDirectory()) files.push(...(await walkFiles(target, absolute)));
+    else if (info.isFile()) files.push(root);
   }
-  return files.sort();
+  return [...new Set(files)].sort();
 };
 
 const sha256 = async (path) => createHash("sha256").update(await readFile(path)).digest("hex");
@@ -164,6 +193,18 @@ const manifestFor = (identity, fileChecksums) => ({
   files: fileChecksums,
 });
 
+const copyPublicTree = async (target, files, roots) => {
+  for (const root of roots) await rm(join(target, root), { recursive: true, force: true });
+
+  for (const file of files) {
+    const destination = join(target, file);
+    await mkdir(dirname(destination), { recursive: true });
+    await copyFile(join(sourceRoot, file), destination);
+    const mode = (await stat(join(sourceRoot, file))).mode;
+    await chmod(destination, mode);
+  }
+};
+
 const compare = (expected, actual) => {
   const expectedFiles = Object.keys(expected).sort();
   const actualFiles = Object.keys(actual).sort();
@@ -207,10 +248,7 @@ const main = async () => {
   }
 
   if (options.mode === "apply") {
-    for (const root of managedTargetRoots) {
-      await rm(join(target, root), { recursive: true, force: true });
-    }
-    for (const file of files) await copyFile(join(sourceRoot, file), join(target, file));
+    await copyPublicTree(target, files, managedTargetRoots);
     await writeFile(join(target, generatedManifest), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(`Promoted ${files.length} approved public files from ${identity.sourceCommit}.`);
     console.log(formatChanges(changes));
