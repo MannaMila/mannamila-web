@@ -149,7 +149,7 @@
     <h2>What we do NOT do</h2>
     <ul>
       <li><strong>No accounts.</strong> There is nothing to sign up for and no password to create — only the local parent PIN.</li>
-      <li><strong>No analytics or crash reporting.</strong> No analytics or crash-reporting software ships in the app at all. This is not a switch we turned off — the code is simply not in the app, and we verify each release build to confirm it contains no analytics endpoints.</li>
+      <li><strong>No analytics or crash reporting.</strong> The app collects no analytics and sends no crash reports. No third-party analytics or crash-reporting SDK ships in the app, release builds carry no analytics configuration at all, and an automated check on every release verifies the shipped app contains no active analytics setup and no unexpected service endpoints. If a future version ever offers optional, parent-controlled diagnostics, it will be off by default, disclosed here first, and this policy will be updated before that version reaches any store.</li>
       <li><strong>No ads.</strong> No ad networks, no sponsored content, nothing.</li>
       <li><strong>No tracking.</strong> No advertising identifier, no fingerprinting, no cross-app tracking.</li>
       <li><strong>No selling data.</strong> We hold no data to sell, and we would not sell it if we did.</li>
