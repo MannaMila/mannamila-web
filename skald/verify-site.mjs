@@ -577,15 +577,36 @@ assert.match(styles, /main\s*\{[^}]*overflow-x:\s*clip;/s);
 
 assert.match(privacy, /https:\/\/skald\.mannamila\.com\/privacy\//g);
 assert.match(privacy, /\.\.\/updates-privacy\//);
-assert.match(privacy, /Beginning with version 0\.4\.1, Skald does not send usage analytics or crash diagnostics/);
+assert.match(privacy, /\.\.\/feedback\/privacy\//);
+assert.match(privacy, /Beginning with version 0\.5\.0, Skald does not send usage analytics or crash diagnostics/);
+assert.match(
+  privacy,
+  /It does not initialize Amplitude or Sentry, create an Analytics ID, or operate a telemetry upload queue/,
+);
 assert.match(privacy, /The app does not transmit the ID or create a replacement/);
 assert.match(privacy, /No Analytics ID exists on this installation/);
 assert.match(privacy, /Request deletion of previously shared data/);
 assert.match(privacy, /The public Skald website is also separate from the app/);
+// The 0.5.0 attribution and content-delivery lanes the app-repo hosted-policy
+// gate greps for. Keep these in step with scripts/verify_hosted_privacy_policy.sh.
+assert.match(privacy, /Skald is offered in the United States, Canada, Australia, and New Zealand\./);
+assert.match(privacy, /<h2>Advertising attribution<\/h2>/);
+assert.match(privacy, /facebook-core 18\.3\.0/);
+assert.match(privacy, /SKAdNetwork is the only iOS attribution mechanism/);
+assert.match(privacy, /The iOS app sends no data to Meta/);
+assert.match(privacy, /Attribution has no in-app opt-out/);
+assert.match(privacy, /https:\/\/delivery\.mannamila\.com/);
+assert.match(privacy, /processes the network IP transiently to enforce per-IP rate limits/);
 assert.match(privacy, /United Kingdom information — pending before UK distribution/);
 assert.doesNotMatch(privacy, /product analytics and crash diagnostics are required/);
 assert.doesNotMatch(privacy, /Share usage analytics and crash diagnostics/);
 assert.doesNotMatch(privacy, /Android grants only <strong>INTERNET<\/strong>/);
+assert.doesNotMatch(
+  privacy,
+  /0\.4\.1/,
+  "the hosted policy must not claim a posture for the unreleased 0.4.1 build",
+);
+assert.doesNotMatch(privacy, /\{\{[^}]+\}\}/, "the hosted policy must not ship an unresolved placeholder");
 assert.match(index, /Skald 0\.4\.1 does not send usage analytics or crash diagnostics/);
 assert.doesNotMatch(index, /Disclosed analytics and diagnostics send/);
 assert.doesNotMatch(index, /analytics, and diagnostics need a connection/);
