@@ -607,7 +607,7 @@ assert.doesNotMatch(
   "the hosted policy must not claim a posture for the unreleased 0.4.1 build",
 );
 assert.doesNotMatch(privacy, /\{\{[^}]+\}\}/, "the hosted policy must not ship an unresolved placeholder");
-assert.match(index, /Skald 0\.4\.1 does not send usage analytics or crash diagnostics/);
+assert.match(index, /Beginning with version 0\.5\.0, Skald does not send usage analytics or crash diagnostics/);
 assert.doesNotMatch(index, /Disclosed analytics and diagnostics send/);
 assert.doesNotMatch(index, /analytics, and diagnostics need a connection/);
 assert.match(support, /deletion of data shared by an earlier version/);
