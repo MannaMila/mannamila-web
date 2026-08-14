@@ -34,11 +34,15 @@ const publicRoots = [
   "waitlist-privacy",
   "support",
   "feedback",
-  "mosaic",
 ];
 const retiredPublicRoots = ["analytics.js", "folio-24b3206ad4eceb1abe0c"];
 const feedbackRoots = ["feedback"];
 const preservedTopLevel = new Set([
+  // Deployed directly to skald-web, not mirrored from this repo: the live
+  // mosaic is the v2 atlas (this repo still holds the retired v1 studio), and
+  // the translation atlas builds from the app repo's tools/translation-atlas.
+  "mosaic",
+  "translations",
   ".git",
   ".gitignore",
   ".github",
