@@ -1,0 +1,54 @@
+{
+  "source_main_sha": "6d846a8d46b1467ad68c353c5e489245155465c2",
+  "decision": "APPROVED",
+  "scope": "Complete 0.7.0 App Store and Google Play metadata candidate, complete candidate website copy, and all candidate screenshot captions in docs/marketing/store-web-2026-09-13.",
+  "roles": [
+    {
+      "role": "Textual accuracy, source anchors, philology, and claims",
+      "agent": "/root/accuracy_review",
+      "model": "gpt-5.6-sol",
+      "effort": "high",
+      "findings": "Verified 24 translation editions in 11 modern languages plus Ancient Greek; 3,288 passage-anchored notes; 230 artworks and objects across 48 museums and collections; and 54 DOI-identified articles represented by 68 citation placements, including 42 with direct full-text URLs. Required bounded wording for counts, rereading behavior, rights, and online article access.",
+      "decision": "APPROVE_WITH_CORRECTIONS"
+    },
+    {
+      "role": "Reader usefulness, clarity, art relevance, and provenance",
+      "agent": "/root/reader_review",
+      "model": "gpt-5.6-sol",
+      "effort": "high",
+      "findings": "Approved the candidate voice and reader value after correcting museum-only collection wording, publisher-link wording, and the implication that every artwork record has artist and date metadata. Recommended the plainer translation caption as an optional tone improvement.",
+      "decision": "APPROVE_WITH_CORRECTIONS"
+    },
+    {
+      "role": "Final content arbiter",
+      "agent": "/root/content_arbiter",
+      "model": "gpt-5.6-sol",
+      "effort": "high",
+      "findings": "Resolved both reviews by using museums and collections, DOI links, and collection, source, and rights metadata; added objects to the promotional art count within the platform limit; and adopted the factual 24 translations, to read and compare screenshot caption. All other candidate copy was reviewed and retained without change.",
+      "decision": "APPROVED"
+    }
+  ],
+  "reviewed_input_sha256": {
+    "brief.md": "d51987a585c188f6f98ca1c6e1318e50574f576200e9615983638cb152caf131",
+    "review-1-audit.md": "79ae6a163591d8a1cba00dcea427cb10b87eb9862e933daf6ca97e2b28c04b0c",
+    "review-2-audit.md": "4b3b795a89f60203ac9960954a5a64f33991f1b1965e6c54fd1fd0612fe3c826",
+    "candidate-store.json": "1a263818ec896ee6cd3753172cee9d8dad61c7bf9812c11b46144143e8ceb633",
+    "candidate-index.html": "66f0a71be610df9100965ea9059078134cd4751aa101e3a2f14da4f0e8104249",
+    "candidate-captions.json": "8169389b57439446cba84c6e320bc088c8c42a0992d969a7384f62faf6de9d89"
+  },
+  "resolved_decision_notes": [
+    "Use 48 museums and collections because the 48 catalog groups include museums, galleries, a national library, a palace, and named collections.",
+    "Use DOI link for the 12 citation-only articles; 42 of the 54 distinct articles have direct full-text URLs online in addition to DOI links.",
+    "Describe artwork details as collection, source, and rights because artist and date metadata are not present on every catalog record.",
+    "The promotional text names 230 artworks and objects and remains within the 170-byte limit.",
+    "Use 24 translations, to read and compare in screenshot captions to keep the claim factual and matter of fact.",
+    "Retain the version 0.7.0 preview notice and all unaffected candidate copy as approved. Store copy remains staged for the upcoming release."
+  ],
+  "retained_candidate_copy": "APPROVED: every candidate byte not superseded by the resolved decision notes is retained and approved.",
+  "registry_amendment": "The final independent reports were reread after their last edits. The 68 figure denotes citation-note placements across 59 distinct anchored line spans, not distinct articles; the resolved public copy correctly states 54 distinct DOI-identified articles and 42 direct full-text links online. No approved artifact bytes changed.",
+  "approved_sha256": {
+    "resolved-store.json": "307b37f2aa25c6ee415f283fe716f91628d6516aaed3f69bb17373734add95e7",
+    "resolved-index.html": "69ebb57b8f69ddf227e46d154e56646cd845ec3241a051a45f7df228a2fc29db",
+    "resolved-captions.json": "0e49922c93b8d847b965246605414c5c5bcb2ad2abcf400e7cd7c747bed57eb1"
+  }
+}
