@@ -54,6 +54,7 @@ const requiredFiles = [
   "assets/museum-guide.webp",
   "assets/nostos-route.webp",
   "assets/skald-odyssey-og.jpg",
+  "assets/skald-odyssey-og-070.jpg",
 ];
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
@@ -191,11 +192,11 @@ assert.match(
 assert.match(index, /src="\.\/assets\/app-store-badge\.svg"/);
 assert.match(index, /src="\.\/assets\/google-play-badge\.png"/);
 assert.match(index, /data-updates-container/);
-assert.match(index, /src="\.\/assets\/nostos-route\.webp"/);
-assert.match(index, /alt="Skald voyage map tracing Odysseus's route from Troy across the Mediterranean and back to Ithaca\."/);
+assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=070-native-20260913"/);
+assert.match(index, /alt="Skald 0\.7\.0 voyage map with locations from the Odyssey\."/);
 assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
-assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og\.jpg">/);
+assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-070\.jpg\?v=070-native-20260915">/);
 assert.doesNotMatch(
   index,
   /<meta\b[^>]+(?:property="og:description"|name="twitter:description")[^>]+content="[^"]*Coming to/i,
