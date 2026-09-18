@@ -1,17 +1,29 @@
 {
   "storeUploads": 0,
+  "renderedAt": "2026-09-18",
   "languages": {
     "en": {
-      "sourceSha256": "5d8a0792497042116ca72e10a679e1c3de0511c12a250be8d91942ceb66e4787",
-      "htmlSha256": "a16cab8e8610055d123b2482a51e295fd4f48fa90c0ff88a23ba31515c30a967",
+      "source": "MannaMila/skald docs/legal/privacy-policy.md at ec9104e4b (byte-identical to docs/sessions/2026-09-18-eu-offline/resolved/hosted-privacy-policy-proposed.md after its two-line preamble)",
+      "sourceSha256": "756bd91cb9c11cb0fdf8dbd52b7726ed69f00ca5c66616c2ff8f69d6fbe5b6c4",
+      "sourceLastUpdated": "2026-09-18",
+      "htmlSha256": "ca70b873310937961b8322e5a67886d150dd2c43f8286491030955953f89a593",
+      "visibleWords": 2180,
       "visibleTextMatchesReviewedSource": true,
-      "sourceAndDeploymentStagingMatch": true
+      "scriptTags": ["<script src=\"../retire-analytics.js\" defer></script>"],
+      "offSiteUrls": ["https://www.facebook.com/privacy/policy/"],
+      "appRepoHostedPolicyGate": "scripts/verify_hosted_privacy_policy.sh markers and placeholder check pass against the local render (fetch step swapped for a file read; the script pins https://skald.mannamila.com/ so it cannot read a local URL)"
     },
     "fr": {
+      "source": "MannaMila/skald docs/sessions/2026-09-13-ios-att/french-resolved/privacy-policy.fr.md (reviewed 2026-09-13; predates PR #411 and PR #414)",
       "sourceSha256": "7dbe1796f56470dcf03a8143d2cf8fd8c6d892d7f011fb0b84a7017a3f9433b5",
-      "htmlSha256": "f72504680f81885b072319f352755c80e540338c594be02463338e030c60b7fb",
+      "sourceLastUpdated": "2026-09-13",
+      "htmlSha256": "d4d3ad5baa4487020bac1a74dd21365ca7bd83410c07cef492d0de40d4f27f71",
+      "visibleWords": 2338,
       "visibleTextMatchesReviewedSource": true,
-      "sourceAndDeploymentStagingMatch": true
+      "bodyChanged": false,
+      "headChanged": "added the retire-analytics.js loader the analytics contract requires on every route",
+      "scriptTags": ["<script src=\"../../retire-analytics.js\" defer></script>"],
+      "staleAgainstEnglish": true
     }
   },
   "verificationStage": "pre-publication"

@@ -6,16 +6,28 @@
     "clientWidth": 390,
     "scrollWidth": 390,
     "title": "Skald: Odyssey — Privacy Policy | MannaMila LLC",
-    "h1": "Skald: Odyssey — Privacy Policy"
+    "h1": "Skald: Odyssey — Privacy Policy",
+    "horizontalOverflow": false,
+    "scripts": [
+      "../retire-analytics.js"
+    ],
+    "lastUpdated": "2026-09-18",
+    "screenshot": "en-390.png"
   },
   {
     "lang": "en",
     "viewport": 1280,
     "width": 1280,
-    "clientWidth": 1265,
-    "scrollWidth": 1265,
+    "clientWidth": 1280,
+    "scrollWidth": 1280,
     "title": "Skald: Odyssey — Privacy Policy | MannaMila LLC",
-    "h1": "Skald: Odyssey — Privacy Policy"
+    "h1": "Skald: Odyssey — Privacy Policy",
+    "horizontalOverflow": false,
+    "scripts": [
+      "../retire-analytics.js"
+    ],
+    "lastUpdated": "2026-09-18",
+    "screenshot": "en-1280.png"
   },
   {
     "lang": "fr",
@@ -24,7 +36,13 @@
     "clientWidth": 390,
     "scrollWidth": 390,
     "title": "Skald: Odyssey — Politique de confidentialité | MannaMila LLC",
-    "h1": "Skald: Odyssey — Politique de confidentialité"
+    "h1": "Skald: Odyssey — Politique de confidentialité",
+    "horizontalOverflow": false,
+    "scripts": [
+      "../../retire-analytics.js"
+    ],
+    "lastUpdated": "2026-09-13",
+    "screenshot": "fr-390.png"
   },
   {
     "lang": "fr",
@@ -33,6 +51,12 @@
     "clientWidth": 1280,
     "scrollWidth": 1280,
     "title": "Skald: Odyssey — Politique de confidentialité | MannaMila LLC",
-    "h1": "Skald: Odyssey — Politique de confidentialité"
+    "h1": "Skald: Odyssey — Politique de confidentialité",
+    "horizontalOverflow": false,
+    "scripts": [
+      "../../retire-analytics.js"
+    ],
+    "lastUpdated": "2026-09-13",
+    "screenshot": "fr-1280.png"
   }
 ]
