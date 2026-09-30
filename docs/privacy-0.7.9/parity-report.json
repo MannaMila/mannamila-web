@@ -1,0 +1,33 @@
+{
+  "storeUploads": 0,
+  "renderedAt": "2026-09-30",
+  "languages": {
+    "en": {
+      "source": "MannaMila/skald docs/legal/privacy-policy.md at origin/main c3566193e (PR #494, arbitrated ios-skan-purchase-2026-09-29), with the Last updated date advanced from 2026-09-18 to 2026-09-30 to match the pending 0.7.9 release commit (no other policy text changed by that date edit)",
+      "sourceSha256": "eac53bfa6abc058eb11354012be4e7009debc6d2518242ff7bc1005518c815f8",
+      "sourceApprovedOutputSha256Record": "docs/content/reviews/ios-skan-purchase-2026-09-29/resolved-review.json (approved_output_sha256[\"docs/legal/privacy-policy.md\"] matches sourceSha256 above)",
+      "sourceLastUpdated": "2026-09-30 (release commit date; markdown file's own front matter still reads 2026-09-18 until the 0.7.9 release commit lands)",
+      "htmlSha256": "fccc974f0b442203166c9d2dbc6864601188c98add800cf2c1f83a3ffe86d993",
+      "visibleWords": 2615,
+      "visibleTextMatchesReviewedSource": true,
+      "changedParagraphVerbatimMatch": true,
+      "scriptTags": ["<script src=\"../retire-analytics.js\" defer></script>"],
+      "appRepoHostedPolicyGate": "scripts/verify_hosted_privacy_policy.sh (origin/main version) markers and placeholder check: all 15 markers + placeholder check pass against the local render (tools/render-check ran the same HTMLParser-tag-stripping method the gate script uses, against the file directly; the gate's own curl/data-url-embed steps were swapped for a direct file read since this evidence predates publication)"
+    },
+    "fr": {
+      "source": "MannaMila/skald docs/sessions/2026-09-13-ios-att/french-resolved/privacy-policy.fr.md (reviewed 2026-09-13; predates PR #411, #414, and #494 — unchanged from the 0.7.0 publication)",
+      "sourceSha256": "7dbe1796f56470dcf03a8143d2cf8fd8c6d892d7f011fb0b84a7017a3f9433b5",
+      "sourceLastUpdated": "2026-09-13",
+      "htmlSha256": "d4d3ad5baa4487020bac1a74dd21365ca7bd83410c07cef492d0de40d4f27f71",
+      "visibleWords": 2653,
+      "visibleTextMatchesReviewedSource": true,
+      "bodyChanged": false,
+      "headChanged": false,
+      "identicalToPrior0.7.0Publication": true,
+      "scriptTags": ["<script src=\"../../retire-analytics.js\" defer></script>"],
+      "staleAgainstEnglish": true
+    }
+  },
+  "verificationStage": "pre-publication",
+  "verificationMethod": "Node script stripped <script>/<style>/tags the same way the gate's HTMLParser does, collapsed whitespace, and (1) confirmed the new SKAdNetwork paragraph appears verbatim in the rendered English page, (2) checked every marker string in scripts/verify_hosted_privacy_policy.sh (origin/main) plus the unresolved-placeholder check. All checks passed; see README.md for the full marker list and pass/fail output."
+}
