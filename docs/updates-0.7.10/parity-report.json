@@ -1,0 +1,87 @@
+{
+  "brief": "docs/marketing/updates/2026-10-02-release-0.7.10.md",
+  "briefSha256": "6687a78cdb22ff4d0e09343c8122f86cb9985f591f574b1a8d3c13dd46097efd",
+  "page": "skald/updates/index.html",
+  "pageSha256": "e4794cedcafed6a6e8fa5cb3f1f220fe523fd459411a1d96dd45de2dc8de96d5",
+  "variant": "B",
+  "postIsFirstArticle": true,
+  "dateLine": "October 2, 2026",
+  "dateTriplet": {
+    "articleId": "2026-10-02",
+    "timeDatetime": "2026-10-02",
+    "visible": "October 2, 2026"
+  },
+  "headlineIdentical": true,
+  "briefBlocks": 19,
+  "pageBlocks": 19,
+  "blocksIdenticalInOrder": true,
+  "briefSentences": 49,
+  "pageSentences": 49,
+  "sentencesIdenticalInOrder": true,
+  "sentencesMissingFromPage": [],
+  "sentencesOnPageNotInBrief": [],
+  "bodyWords": 700,
+  "altTextsIdentical": true,
+  "captionsIdentical": true,
+  "captions": [
+    "Stater: Barley (obverse); Barley, Incuse (reverse) c. 530–510 BCE · silver In Skald: Book 2, line 290 — after Athena tells Telemachus to pack barley meal. Metapontion, a Greek city in South Italy, stamped its barley on this coin long after the poem. Cleveland Museum of Art",
+    "Tetradrachm (Coin) Depicting the God Dionysos Greek; minted in Maroneia, Thrace · mid–2nd century BCE In Skald: Book 9, line 197 — after Maron’s gift of wine. Maroneia, said to be named after him, put Dionysos, the god of wine, on its silver centuries later. The Art Institute of Chicago"
+  ],
+  "ariaLabels": [
+    "Two of the six new coins",
+    "Previous artwork",
+    "Next artwork"
+  ],
+  "links": [
+    [
+      "https://apps.apple.com/app/id6790579937",
+      "text-link",
+      "App Store"
+    ],
+    [
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+      "text-link",
+      "Google Play"
+    ]
+  ],
+  "linksAsBrief": true,
+  "ogDescriptionIdentical": true,
+  "titleUnchanged": true,
+  "scriptOrIframeInsidePost": [],
+  "pageScriptSrcs": [
+    "../retire-analytics.js"
+  ],
+  "images": [
+    {
+      "file": "./art/cleveland-barley-stater-1916-986.webp",
+      "sha256": "53125b173e649c7c410808c12c84e2922dd60aac47f688a159ad2edbb4e8001c",
+      "sha256MatchesBrief": true,
+      "bytes": 91064,
+      "bytesMatchBrief": true,
+      "identicalToAppRepoAsset": true,
+      "widthHeightAttrs": [
+        "800",
+        "397"
+      ],
+      "attrsMatchBrief": true,
+      "loading": "lazy",
+      "nameMatches": true
+    },
+    {
+      "file": "./art/aic-36623.webp",
+      "sha256": "13d8ff00da55d4a2d224b0769190a8e35b8ee30896f73c60ceaf3f976252736c",
+      "sha256MatchesBrief": true,
+      "bytes": 48866,
+      "bytesMatchBrief": true,
+      "identicalToAppRepoAsset": true,
+      "widthHeightAttrs": [
+        "750",
+        "375"
+      ],
+      "attrsMatchBrief": true,
+      "loading": "lazy",
+      "nameMatches": true
+    }
+  ],
+  "pass": true
+}

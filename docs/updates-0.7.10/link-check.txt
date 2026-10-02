@@ -1,0 +1,2 @@
+200 final=https://apps.apple.com/us/app/skald-odyssey/id6790579937 https://apps.apple.com/app/id6790579937
+200 final=https://play.google.com/store/apps/details?id=com.mannamila.skald https://play.google.com/store/apps/details?id=com.mannamila.skald
