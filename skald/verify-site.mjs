@@ -165,7 +165,7 @@ const expectedIndexText = [
   "Spanish, French, and German",
   "One-time purchase",
   "No subscription, ads, app account, or in-app purchases.",
-  "United States, Canada, Australia, and New Zealand",
+  "United States, Canada, Australia, New Zealand, and the 27 member states of the European Union",
   "Get the app",
   "Product updates",
   "Keep following the voyage.",
@@ -194,7 +194,7 @@ assert.match(index, /src="\.\/assets\/app-store-badge\.svg"/);
 assert.match(index, /src="\.\/assets\/google-play-badge\.png"/);
 assert.match(index, /data-updates-container/);
 assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=070-native-20260913"/);
-assert.match(index, /alt="Skald 0\.7\.0 voyage map with locations from the Odyssey\."/);
+assert.match(index, /alt="Skald voyage map with locations from the Odyssey\."/);
 assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
 assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-20261002\.jpg\?v=20261002">/);

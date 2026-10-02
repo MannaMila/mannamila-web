@@ -18,11 +18,15 @@ try {
     await page.screenshot({ path: `${out}/landing-${width}-top.png` });
     const shots = [`landing-${width}-top.png`];
     await page.evaluate(() => document.querySelectorAll('#faq details').forEach((d) => (d.open = true)));
-    for (const [name, sel] of [['totals', '.proof-strip'], ['faq', '#faq'], ['final-cta', '.final-cta']]) {
+    for (const [name, sel] of [['totals', '.proof-strip'], ['final-cta', '.final-cta']]) {
       const el = page.locator(sel).first();
       await el.scrollIntoViewIfNeeded(); await page.waitForTimeout(900);
       await el.screenshot({ path: `${out}/landing-${width}-${name}.png` }); shots.push(`landing-${width}-${name}.png`);
     }
+    // FAQ: centre the availability answer in the viewport so the sticky header cannot cover it.
+    await page.evaluate(() => document.querySelector('[data-availability-faq]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(900);
+    const faqClear = await page.evaluate(() => { const r = document.querySelector('[data-availability-faq]').getBoundingClientRect(); const h = document.querySelector('.site-header').getBoundingClientRect(); return r.top >= h.bottom && r.bottom <= innerHeight; });
+    await page.screenshot({ path: `${out}/landing-${width}-faq.png` }); shots.push(`landing-${width}-faq.png`);
     const m = await page.evaluate(() => {
       const de = document.documentElement, card = document.querySelector('.availability-card'), q = (s) => document.querySelector(s);
       const r = card.getBoundingClientRect(), first = card.firstElementChild;
@@ -33,7 +37,7 @@ try {
         scripts: [...document.scripts].map((s) => s.getAttribute('src')), ogImage: q('meta[property="og:image"]').content,
         brokenImages: [...document.images].filter((i) => i.complete && !i.naturalWidth).map((i) => i.src) };
     });
-    report.push({ page: '/', viewport: width, ...m, horizontalOverflow: m.scrollWidth > m.clientWidth, thirdPartyRequests: requests.filter((u) => /^https?:/.test(u)), failedRequests: failed, screenshots: shots });
+    report.push({ page: '/', viewport: width, availabilityAnswerClearOfHeader: faqClear, ...m, horizontalOverflow: m.scrollWidth > m.clientWidth, thirdPartyRequests: requests.filter((u) => /^https?:/.test(u)), failedRequests: failed, screenshots: shots });
     const g = await ctx.newPage(); await g.goto(base + '/get/', { waitUntil: 'networkidle' });
     await g.screenshot({ path: `${out}/get-${width}.png`, fullPage: true });
     const gm = await g.evaluate(() => ({ clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth, links: [...document.links].map((a) => a.getAttribute('href')), note: document.querySelector('.get-note').innerText }));
@@ -42,4 +46,4 @@ try {
   }
 } finally { await browser.close(); srv.kill(); }
 writeFileSync(out + '/visual-report.json', JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify(report.map((r) => ({ page: r.page, viewport: r.viewport, overflow: r.horizontalOverflow, notice: r.releaseNoticePresent, first: r.availabilityCardFirstChild, ios: r.iosLinks, faq: r.faq, failed: r.failedRequests, broken: r.brokenImages, third: r.thirdPartyRequests && r.thirdPartyRequests.filter((u) => !/fonts\.g/.test(u)), links: r.links })), null, 1));
+console.log(JSON.stringify(report.map((r) => ({ page: r.page, viewport: r.viewport, overflow: r.horizontalOverflow, notice: r.releaseNoticePresent, faqClear: r.availabilityAnswerClearOfHeader, first: r.availabilityCardFirstChild, ios: r.iosLinks, faq: r.faq, failed: r.failedRequests, broken: r.brokenImages, note: r.note })), null, 1));

@@ -2,6 +2,7 @@
   {
     "page": "/",
     "viewport": 390,
+    "availabilityAnswerClearOfHeader": true,
     "clientWidth": 390,
     "scrollWidth": 390,
     "releaseNoticePresent": false,
@@ -11,7 +12,7 @@
       193
     ],
     "availabilityCopy": "Available now on Android, iPhone, and iPad.",
-    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, and New Zealand. On iPhone and iPad it is also available in the 27 member states of the European Union.",
+    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
     "kicker": "Available on Android, iPhone, and iPad",
     "iosLinks": [
       "https://apps.apple.com/app/id6790579937",
@@ -50,83 +51,14 @@
       "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=sydk,sWGJ4b,sy5c,sy5e,sybr,sybs,sybt,sybu,EGNJFf,uu7UOe,iSvg6e,sybv,uY3Nvd,syce,soHxf",
       "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/naLogImpressions",
       "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/font/getmetadata",
-      "https://play.google.com/log?format=json&hasfast=true&authuser=0",
-      "https://fonts.gstatic.com/s/amaticsc/v28/TUZyzwprpvBS1izr_vOEDOSfU5cP1Q.woff2",
-      "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9eIOpYT5Kmgq3sw.woff2",
-      "https://fonts.gstatic.com/s/comfortaa/v47/1Pt_g8LJRfWJmhDAuUsSQamb1W0lwk4S4WjMDrUfIB1Zyc61YA.woff2",
-      "https://fonts.gstatic.com/s/ebgaramond/v33/SlGDmQSNjdsmc35JDF1K5E55YMjF_7DPuGi-6_RkAo9_WamXgHlI.woff2",
-      "https://fonts.gstatic.com/s/lexend/v26/wlptgwvFAVdoq2_F94zlCfv0bz1WCzsWzLFneoCrCEswgg.woff2",
-      "https://fonts.gstatic.com/s/lobster/v32/neILzCirqoswsqX9zoSmM4MwWJU.woff2",
-      "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787weuxJHkq18ndeYxZ0.woff2",
-      "https://fonts.gstatic.com/s/merriweather/v33/u-4D0qyriQwlOrhSvowK_l5UcA6zuSYEqOzpPe3HOZJ5eX1WtLaQwmYiScCmDxhtNOKl8yDr3icaEl31CPDaYKfF.woff2",
-      "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw_aXp-p7K4KLg.woff2",
-      "https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTI3j6zbXWjgeg.woff2",
-      "https://fonts.gstatic.com/s/oswald/v57/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUBiZSSUhiCXAA.woff2",
-      "https://fonts.gstatic.com/s/pacifico/v23/FwZY7-Qmy14u9lezJ-6B6MmBp0u-.woff2",
-      "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDRbtPK-F2qC0s.woff2",
-      "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmSiAr0klQmz24.woff2",
-      "https://fonts.gstatic.com/s/robotomono/v31/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vq_QuW4AJi8SJQt.woff2",
-      "https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcEliotl6Z8ANxaV4jcFw.woff2",
-      "https://fonts.gstatic.com/s/spectral/v15/rnCr-xNNww_2s0amA9M_knjsS_ul.woff2",
-      "https://fonts.gstatic.com/s/amaticsc/v28/TUZyzwprpvBS1izr_vO0CO6YcZU.woff2",
-      "https://fonts.gstatic.com/s/amaticsc/v28/TUZ3zwprpvBS1izr_vOMscG6fL8F3WU.woff2",
-      "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9SIejYBxOggs.woff2",
-      "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SIejYBxOggs.woff2",
-      "https://fonts.gstatic.com/s/comfortaa/v47/1Pt_g8LJRfWJmhDAuUsSQamb1W0lwk4S4WjMPrEVIT9d0c8.woff2",
-      "https://fonts.gstatic.com/s/comfortaa/v47/1Pt_g8LJRfWJmhDAuUsSQamb1W0lwk4S4Y_LPrEVIT9d0c8.woff2",
-      "https://fonts.gstatic.com/s/ebgaramond/v33/SlGDmQSNjdsmc35JDF1K5E55YMjF_7DPuGi-6_RUBoV-e62PgQ.woff2",
-      "https://fonts.gstatic.com/s/ebgaramond/v33/SlGDmQSNjdsmc35JDF1K5E55YMjF_7DPuGi-DPNUBoV-e62PgQ.woff2",
-      "https://fonts.gstatic.com/s/ebgaramond/v33/SlGFmQSNjdsmc35JDF1K5GRwUjcdlttVFm-rI7e8QI9_WamXgHlI.woff2",
-      "https://fonts.gstatic.com/s/ebgaramond/v33/SlGFmQSNjdsmc35JDF1K5GRwUjcdlttVFm-rI7dbR49_WamXgHlI.woff2",
-      "https://fonts.gstatic.com/s/lexend/v26/wlptgwvFAVdoq2_F94zlCfv0bz1WCzsW_LVte6KvEEo.woff2",
-      "https://fonts.gstatic.com/s/lexend/v26/wlptgwvFAVdoq2_F94zlCfv0bz1WC9wR_LVte6KvEEo.woff2",
-      "https://fonts.gstatic.com/s/lobster/v32/neILzCirqoswsqX9_oCsNKEy.woff2",
-      "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787weuyJDmKxemc-Z.woff2",
-      "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787z5vCJDmKxemc-Z.woff2",
-      "https://fonts.gstatic.com/s/lora/v37/0QI8MX1D_JOuMw_hLdO6T2wV9KnW-MoFkq18ndeYxZ0.woff2",
-      "https://fonts.gstatic.com/s/lora/v37/0QI8MX1D_JOuMw_hLdO6T2wV9KnW-C0Ckq18ndeYxZ0.woff2",
-      "https://fonts.gstatic.com/s/merriweather/v33/u-4D0qyriQwlOrhSvowK_l5UcA6zuSYEqOzpPe3HOZJ5eX1WtLaQwmYiScCmDxhtNOKl8yDr3icqFlf0KvTCYQ.woff2",
-      "https://fonts.gstatic.com/s/merriweather/v33/u-4D0qyriQwlOrhSvowK_l5UcA6zuSYEqOzpPe3HOZJ5eX1WtLaQwmYiScCmDxhtNOKl8yDrOSAqFlf0KvTCYQ.woff2",
-      "https://fonts.gstatic.com/s/merriweather/v33/u-4B0qyriQwlOrhSvowK_l5-eTxCVx0ZbwLvKH2Gk9hLmp0v5yA-xXPqCzLvPee1XYk_XSf-FmTCUF31CPDaYKfF.woff2",
-      "https://fonts.gstatic.com/s/merriweather/v33/u-4B0qyriQwlOrhSvowK_l5-eTxCVx0ZbwLvKH2Gk9hLmp0v5yA-xXPqCzLvPee1XYk_XSf-FmQlV131CPDaYKfF.woff2",
-      "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Ew7Y3tco6q5.woff2",
-      "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM70w7Y3tco6q5.woff2",
-      "https://fonts.gstatic.com/s/montserrat/v31/JTUFjIg1_i6t8kCHKm459Wx7xQYXK0vOoz6jq6R9aXp-p7K4KLg.woff2",
-      "https://fonts.gstatic.com/s/montserrat/v31/JTUFjIg1_i6t8kCHKm459Wx7xQYXK0vOoz6jq0N6aXp-p7K4KLg.woff2",
-      "https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshRTY9jo7fRWk.woff2",
-      "https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDFwmRTY9jo7fRWk.woff2",
-      "https://fonts.gstatic.com/s/nunito/v32/XRXK3I6Li01BKofIMPyPbj8d7IEAGXNirXA3j6zbXWjgeg.woff2",
-      "https://fonts.gstatic.com/s/nunito/v32/XRXK3I6Li01BKofIMPyPbj8d7IEAGXNiSnc3j6zbXWjgeg.woff2",
-      "https://fonts.gstatic.com/s/oswald/v57/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvgURoZAaQniE.woff2",
-      "https://fonts.gstatic.com/s/oswald/v57/TK3_WkUHHAIjg75cFRf3bXL8LICs1xZogURoZAaQniE.woff2",
-      "https://fonts.gstatic.com/s/pacifico/v23/FwZY7-Qmy14u9lezJ96F4s6jpQ.woff2",
-      "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDVZNLo_EWr.woff2",
-      "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDVZNLo_EWr.woff2",
-      "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFRD-vYSZviVYUb_rj3ij__anPXDTnCjmHKM4nYO7KN_qiTbtPK-F2qC0s.woff2",
-      "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFRD-vYSZviVYUb_rj3ij__anPXDTnCjmHKM4nYO7KN_k-UbtPK-F2qC0s.woff2",
-      "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbWmWggvWlkwn.woff2",
-      "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWuYjammWggvWlkwn.woff2",
-      "https://fonts.gstatic.com/s/roboto/v51/KFOKCnqEu92Fr1Mu53ZEC9_Vu3r1gIhOszmOClHrs6ljXfMMLoHQiAr0klQmz24.woff2",
-      "https://fonts.gstatic.com/s/roboto/v51/KFOKCnqEu92Fr1Mu53ZEC9_Vu3r1gIhOszmOClHrs6ljXfMMLmbXiAr0klQmz24.woff2",
-      "https://fonts.gstatic.com/s/robotomono/v31/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vqPRu-5IpykSQ.woff2",
-      "https://fonts.gstatic.com/s/robotomono/v31/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_Of2PRu-5IpykSQ.woff2",
-      "https://fonts.gstatic.com/s/robotomono/v31/L0xoDF4xlVMF-BfR8bXMIjhOsXG-q2oeuFoqFrlnAOW4AJi8SJQt.woff2",
-      "https://fonts.gstatic.com/s/robotomono/v31/L0xoDF4xlVMF-BfR8bXMIjhOsXG-q2oeuFoqFrmAB-W4AJi8SJQt.woff2",
-      "https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcEliotp6J2Af5eT4k.woff2",
-      "https://fonts.gstatic.com/s/robotoserif/v17/R71RjywflP6FLr3gZx7K8UyuXDs9zVwDmXCb8lxYgmuii32UGoVldX6UgfjL4-3sMM_kB_qXSEXTJQCFLH5-_bcEls0qp6J2Af5eT4k.woff2",
-      "https://fonts.gstatic.com/s/robotoserif/v17/R71XjywflP6FLr3gZx7K8UyEVQnyR1E7VN-f51xYuGCQepOvB0KLc2v0wKKB0Q4MSZxyqf2CgAchbDJ69BcVZxkDg-JuT-R8ANxaV4jcFw.woff2",
-      "https://fonts.gstatic.com/s/robotoserif/v17/R71XjywflP6FLr3gZx7K8UyEVQnyR1E7VN-f51xYuGCQepOvB0KLc2v0wKKB0Q4MSZxyqf2CgAchbDJ69BcVZxkDg-JuqON8ANxaV4jcFw.woff2",
-      "https://fonts.gstatic.com/s/spectral/v15/rnCr-xNNww_2s0amA-M7mH_OSQ.woff2",
-      "https://fonts.gstatic.com/s/spectral/v15/rnCt-xNNww_2s0amA9M8knjsS_ul.woff2",
-      "https://fonts.gstatic.com/s/spectral/v15/rnCs-xNNww_2s0amA9uCt13DY_GtWA.woff2",
-      "https://fonts.gstatic.com/s/spectral/v15/rnCu-xNNww_2s0amA9M8qsHDafaPWnII.woff2"
+      "https://play.google.com/log?format=json&hasfast=true&authuser=0"
     ],
     "failedRequests": [],
     "screenshots": [
       "landing-390-top.png",
       "landing-390-totals.png",
-      "landing-390-faq.png",
-      "landing-390-final-cta.png"
+      "landing-390-final-cta.png",
+      "landing-390-faq.png"
     ]
   },
   {
@@ -139,7 +71,7 @@
       "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
       "../"
     ],
-    "note": "Available in the United States, Canada, Australia, and New Zealand. On the App Store, also in the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
+    "note": "Available in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
     "horizontalOverflow": false,
     "screenshots": [
       "get-390.png"
@@ -148,6 +80,7 @@
   {
     "page": "/",
     "viewport": 1280,
+    "availabilityAnswerClearOfHeader": true,
     "clientWidth": 1280,
     "scrollWidth": 1280,
     "releaseNoticePresent": false,
@@ -157,7 +90,7 @@
       133
     ],
     "availabilityCopy": "Available now on Android, iPhone, and iPad.",
-    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, and New Zealand. On iPhone and iPad it is also available in the 27 member states of the European Union.",
+    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
     "kicker": "Available on Android, iPhone, and iPad",
     "iosLinks": [
       "https://apps.apple.com/app/id6790579937",
@@ -202,8 +135,8 @@
     "screenshots": [
       "landing-1280-top.png",
       "landing-1280-totals.png",
-      "landing-1280-faq.png",
-      "landing-1280-final-cta.png"
+      "landing-1280-final-cta.png",
+      "landing-1280-faq.png"
     ]
   },
   {
@@ -216,7 +149,7 @@
       "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
       "../"
     ],
-    "note": "Available in the United States, Canada, Australia, and New Zealand. On the App Store, also in the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
+    "note": "Available in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
     "horizontalOverflow": false,
     "screenshots": [
       "get-1280.png"

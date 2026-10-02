@@ -1,5 +1,7 @@
 # Landing page and /get/: candidate for content review (0.7.10)
 
+> **SUPERSEDED by [reviews/FINAL-ARBITRATION.md](reviews/FINAL-ARBITRATION.md) (2026-10-02).** This file is the review input as written, kept for the record; the arbitration's final string table governs and is what the pages now hold (see [README.md](README.md)). Twelve rows below differ from the final text (2, 12, 14, 18, 20, 21, 22 and the alt texts A1 to A5, which this file lacks). Corrections the arbitration names (LA-04), applied here: row 16's location is the FAQ "Which translations are included?"; the link count is "2 link changes in 5 customer-facing places" (hero badge, final call-to-action badge, `availability.json`, the `app.js` fallback, the `/get/` badge), plus the `verify-site.mjs` pin; rows 18 and 22 became rewrites to one sentence, on the evidence in MannaMila/skald#520, and "Google Play in four with the 27 in review" is no longer true; `google-approval-switch.patch` is spent and deleted. Hashes in this file are of the candidate, not of the final files.
+
 **Status: CANDIDATE. Not approved copy, not published.** The arbiter decides the final text; the
 review registry and `resolved-index.html` are written only after that.
 
@@ -39,7 +41,7 @@ Types: figure, removal, rewrite, new sentence, link, meta.
 | 13 | `/` | notes paragraph | References to 54 journal articles give you somewhere to go next. For 42 of them, you can follow a direct link to the full text online; … | References to 52 journal articles … For 40 of them, … | figure (×2) |
 | 14 | `/` | museum eyebrow | 230 artworks and artifacts · 48 museums and collections | 236 artworks and artifacts · 48 museums and collections | figure |
 | 15 | `/` | museum paragraph | The museum gallery has 230 artworks and objects from 48 museums and collections. Another 22 historical works appear alongside the reading, bringing the library to 252 distinct works. | … has 236 … Another 22 … to 258 distinct works. | figure (×2) |
-| 16 | `/` | FAQ "How many translations are included?" | The next update includes 24 translations: 13 in English, … | Skald includes 24 translations: 13 in English, … | rewrite |
+| 16 | `/` | FAQ "Which translations are included?" | The next update includes 24 translations: 13 in English, … | Skald includes 24 translations: 13 in English, … | rewrite |
 | 17 | `/` | FAQ "Is this a subscription?" | The next update also offers a student or teacher price on your own attestation. | A student or teacher price is available on your own attestation. | rewrite |
 | 18 | `/` | FAQ "Where is Skald available?" (and the same string in `app.js`, which writes it at load) | Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, and New Zealand. | (kept) + On iPhone and iPad it is also available in the 27 member states of the European Union. | new sentence |
 | 19 | `/` | final call to action | Books I, II and IX are free. Pick a translation and see what catches your attention. The expanded library on this page arrives with version 0.7.0. | Books I, II and IX are free. Pick a translation and see what catches your attention. | removal |
@@ -54,7 +56,7 @@ the App Store URL and the `og:image`.
 
 Counts by type: 15 figure substitutions (rows 1, 2, 9–15, 20, 21); 2 removals (5, 19);
 8 rewrites (1, 2, 3, 7, 8, 12, 16, 17; three of them are metas); 2 new sentences in 3 places
-(18 in `index.html` and `app.js`, 22); 2 link changes in 6 places (6, 23); 1 image change in 2 metas (4).
+(18 in `index.html` and `app.js`, 22); 2 link changes in 5 customer-facing places (6, 23), plus the `verify-site.mjs` pin; 1 image change in 2 metas (4).
 
 Markup after the removals: the notice was the first child of the hero availability card; the card
 now opens with "Available now on Android, iPhone, and iPad." and needs no other change
