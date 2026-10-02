@@ -1,5 +1,7 @@
 # Landing-page facts against the reviewed 0.7.10 store copy (inventory)
 
+**Superseded as a status record by [CANDIDATE.md](CANDIDATE.md):** the proposals under "Not changed" below are now applied as candidate edits, pending one content review.
+
 Read 2026-10-02. Live `/`, `/app.js` and (after the back-port) `/get/` are byte-identical to this
 source. Reviewed figures: `MannaMila/skald` `docs/store/releases/0.7.10/store-copy.json` and
 `docs/content/reviews/release-0.7.10-2026-10-01/FINAL-listing-count-corrections.md`
