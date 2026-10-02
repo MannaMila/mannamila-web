@@ -1,0 +1,60 @@
+[
+  {
+    "viewport": 390,
+    "clientWidth": 390,
+    "scrollWidth": 390,
+    "faqQuestions": [
+      "Is the whole Odyssey included?",
+      "What do the 1-, 5-, and 20-minute labels mean?",
+      "Which translations are included?",
+      "What language is Skald in?",
+      "Can I read the original Greek?",
+      "Does Skald work offline?",
+      "Is this a subscription?",
+      "Where is Skald available?",
+      "What will product updates email me?",
+      "Who publishes Skald?"
+    ],
+    "horizontalOverflow": false,
+    "changedTextClearOfHeader": {
+      "translations": true,
+      "faq-language": true,
+      "faq-greek": true
+    },
+    "failedRequests": [],
+    "screenshots": [
+      "landing-390-translations.png",
+      "landing-390-faq-language.png",
+      "landing-390-faq-greek.png"
+    ]
+  },
+  {
+    "viewport": 1280,
+    "clientWidth": 1280,
+    "scrollWidth": 1280,
+    "faqQuestions": [
+      "Is the whole Odyssey included?",
+      "What do the 1-, 5-, and 20-minute labels mean?",
+      "Which translations are included?",
+      "What language is Skald in?",
+      "Can I read the original Greek?",
+      "Does Skald work offline?",
+      "Is this a subscription?",
+      "Where is Skald available?",
+      "What will product updates email me?",
+      "Who publishes Skald?"
+    ],
+    "horizontalOverflow": false,
+    "changedTextClearOfHeader": {
+      "translations": true,
+      "faq-language": true,
+      "faq-greek": true
+    },
+    "failedRequests": [],
+    "screenshots": [
+      "landing-1280-translations.png",
+      "landing-1280-faq-language.png",
+      "landing-1280-faq-greek.png"
+    ]
+  }
+]
