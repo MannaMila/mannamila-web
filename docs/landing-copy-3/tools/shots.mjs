@@ -9,7 +9,7 @@ const srv = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.
 await new Promise((r) => setTimeout(r, 1200));
 const browser = await chromium.launch({ channel: 'chrome' });
 const report = [];
-const regions = [['journey', 'tap a stop to read about the place']];
+const regions = [['journey', 'Follow the voyage on the map and see what happens to the fleet.']];
 try {
   for (const width of [390, 1280]) {
     const ctx = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 900 }, isMobile: width === 390, hasTouch: width === 390, deviceScaleFactor: 1 });

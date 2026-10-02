@@ -1,5 +1,7 @@
 # Landing page, round 3: share card refresh and "look up a person or place" (candidate)
 
+> **SUPERSEDED by [reviews/FINAL-ARBITRATION.md](reviews/FINAL-ARBITRATION.md) and the root's ruling (2026-10-02); see [README.md](README.md).** Applied sentence: **option A**, "Follow the voyage on the map and see what happens to the fleet." Option B below ("tap a stop…") was **not approved**: the app's map tap handler opens the first stop in route order within 56 px, not the nearest. Final page hash `dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40`. The card is published as `skald/assets/skald-odyssey-og-0710.jpg` (same bytes as the `-20261003.jpg` named below), referenced with `?v=20261002`.
+
 **Status: CANDIDATE. Not approved copy, not published.** On the owner's "Refresh the … share
 card. Tastefully remove look up person". Baseline `origin/main` `1bd5d33`; live `/` sha256
 `1e424a1b…44e4`.

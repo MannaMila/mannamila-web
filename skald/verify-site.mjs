@@ -56,7 +56,7 @@ const requiredFiles = [
   "assets/skald-odyssey-og.jpg",
   "assets/skald-odyssey-og-070.jpg",
   "assets/skald-odyssey-og-20261002.jpg",
-  "assets/skald-odyssey-og-20261003.jpg",
+  "assets/skald-odyssey-og-0710.jpg",
 ];
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
@@ -198,7 +198,7 @@ assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=0710-20261002"/);
 assert.match(index, /alt="Skald voyage map with locations from the Odyssey\."/);
 assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
-assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-20261003\.jpg\?v=20261003">/);
+assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-0710\.jpg\?v=20261002">/);
 assert.doesNotMatch(
   index,
   /<meta\b[^>]+(?:property="og:description"|name="twitter:description")[^>]+content="[^"]*Coming to/i,

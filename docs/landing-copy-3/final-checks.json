@@ -1,0 +1,44 @@
+{
+  "parity": {
+    "finalSentencePresentOnce": true,
+    "absent": {
+      "look up a person or place": true,
+      "when you need a reminder": true,
+      "tap a stop": true,
+      "tap a place": true,
+      "skald-odyssey-og-20261003": true,
+      "skald-odyssey-og-20261002.jpg?v": true
+    },
+    "nextSentenceUnchanged": true
+  },
+  "shareCard": {
+    "ogImage": "https://skald.mannamila.com/assets/skald-odyssey-og-0710.jpg?v=20261002",
+    "twitterImageSame": true,
+    "fetchedFrom": "http://127.0.0.1:8765/assets/skald-odyssey-og-0710.jpg?v=20261002",
+    "status": 200,
+    "contentType": "image/jpeg",
+    "pixelSize": [
+      1200,
+      630
+    ],
+    "declared": [
+      1200,
+      630
+    ],
+    "bytes": 150151,
+    "servedSha256": "954314a111821dfba4bba607021830a605f72036c0e109b083e06d4a337f03df",
+    "generatedSha256": "954314a111821dfba4bba607021830a605f72036c0e109b083e06d4a337f03df",
+    "servedEqualsGenerated": true,
+    "alt": "Skald on iPad, with the Ancient Greek beside an English translation.",
+    "twitterAltSame": true,
+    "twitterCard": "summary_large_image",
+    "olderCardsKept": [
+      true,
+      true,
+      true
+    ]
+  },
+  "indexSha256": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+  "pass": true,
+  "note": "The card is fetched from a local static server at the path the og:image URL names; the live URL does not exist until the deploy PR is merged."
+}
