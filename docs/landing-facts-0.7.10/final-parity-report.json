@@ -1,0 +1,284 @@
+{
+  "rowsChecked": 31,
+  "finalStringsPresent": 31,
+  "liveStringsAbsent": 31,
+  "failures": [],
+  "expectedHashes": {
+    "skald/index.html": {
+      "expected": "a48fec9daa94f738408d3d8ab240039d2daf07ba5c34fe049c9f64e9bc30a132",
+      "actual": "a48fec9daa94f738408d3d8ab240039d2daf07ba5c34fe049c9f64e9bc30a132",
+      "match": true
+    },
+    "skald/app.js": {
+      "expected": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
+      "actual": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
+      "match": true
+    },
+    "skald/get/index.html": {
+      "expected": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+      "actual": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+      "match": true
+    },
+    "skald/availability.json": {
+      "expected": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559",
+      "actual": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559",
+      "match": true
+    }
+  },
+  "staticFaqEqualsAppJsFaq": true,
+  "noVersion070InIndex": true,
+  "appJsCacheKey": [
+    "20261002"
+  ],
+  "pass": true,
+  "rows": [
+    {
+      "file": "skald/index.html",
+      "row": "1",
+      "location": "meta[name=\"description\"]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "2",
+      "location": "meta[property=\"og:description\"]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "3",
+      "location": "meta[name=\"twitter:description\"]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "4",
+      "location": "meta[property=\"og:image\"] and meta[name=\"twitter:image\"]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "A5",
+      "location": "meta[property=\"og:image:alt\"] and meta[name=\"twitter:image:alt\"]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "5",
+      "location": "#get-skald p.release-preview",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": true
+    },
+    {
+      "file": "skald/index.html",
+      "row": "6",
+      "location": "a[data-store-link=\"ios\"] href, twice (hero card and final call to action)",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "A1",
+      "location": "img[src^=\"./assets/reader-art.webp\"] alt",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "7",
+      "location": "#inside .section-heading p.eyebrow",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "8",
+      "location": "ul.proof-strip aria-label",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "9",
+      "location": "ul.proof-strip, second item",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "10",
+      "location": "ul.proof-strip, third item",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "11",
+      "location": "ul.proof-strip, fourth item",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "12",
+      "location": "#notes .section-heading, first paragraph, first sentence",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "13",
+      "location": "#notes .section-heading, second paragraph",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "A2",
+      "location": "img[src^=\"./assets/greek-split.webp\"] alt",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "A3",
+      "location": "img[src^=\"./assets/nostos-route.webp\"] alt",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "14",
+      "location": "#art p.eyebrow",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "15",
+      "location": "#art .proof-copy, first paragraph, first two sentences",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "A4",
+      "location": "img[src^=\"./assets/museum-guide.webp\"] alt",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "16",
+      "location": "FAQ \"Which translations are included?\", first sentence",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "17",
+      "location": "FAQ \"Is this a subscription?\", third sentence",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "18",
+      "location": "FAQ \"Where is Skald available?\", p[data-availability-faq]",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/index.html",
+      "row": "19",
+      "location": ".final-cta-inner, paragraph under the heading",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/app.js",
+      "row": "18",
+      "location": "availabilityCopy() → faq (written into p[data-availability-faq] at load; must be string-equal to the static paragraph)",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/app.js",
+      "row": "6",
+      "location": "LAUNCHED_AVAILABILITY.ios.storeUrl",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/availability.json",
+      "row": "6",
+      "location": "ios.storeUrl",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/availability.json",
+      "row": "—",
+      "location": "lastVerifiedAt (not displayed)",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/get/index.html",
+      "row": "20, 21",
+      "location": "p.get-dek, first sentence",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/get/index.html",
+      "row": "22",
+      "location": "p.get-note, text before the <br>",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    },
+    {
+      "file": "skald/get/index.html",
+      "row": "23",
+      "location": ".get-badges, first link href",
+      "finalPresent": true,
+      "liveAbsent": true,
+      "removal": false
+    }
+  ]
+}

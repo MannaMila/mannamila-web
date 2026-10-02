@@ -55,6 +55,7 @@ const requiredFiles = [
   "assets/nostos-route.webp",
   "assets/skald-odyssey-og.jpg",
   "assets/skald-odyssey-og-070.jpg",
+  "assets/skald-odyssey-og-20261002.jpg",
 ];
 
 await Promise.all(requiredFiles.map((path) => access(join(root, path))));
@@ -138,7 +139,7 @@ assert.equal(
 );
 assert.equal(
   availability.ios.storeUrl,
-  "https://apps.apple.com/us/app/skald-odyssey/id6790579937",
+  "https://apps.apple.com/app/id6790579937",
 );
 assert.match(availability.lastVerifiedAt, /^\d{4}-\d{2}-\d{2}T/, "lastVerifiedAt must be ISO-8601");
 
@@ -164,7 +165,7 @@ const expectedIndexText = [
   "Spanish, French, and German",
   "One-time purchase",
   "No subscription, ads, app account, or in-app purchases.",
-  "United States, Canada, Australia, and New Zealand",
+  "United States, Canada, Australia, New Zealand, and the 27 member states of the European Union",
   "Get the app",
   "Product updates",
   "Keep following the voyage.",
@@ -187,16 +188,16 @@ assert.match(
 );
 assert.match(
   index,
-  /data-store-link="ios" href="https:\/\/apps\.apple\.com\/us\/app\/skald-odyssey\/id6790579937"/,
+  /data-store-link="ios" href="https:\/\/apps\.apple\.com\/app\/id6790579937"/,
 );
 assert.match(index, /src="\.\/assets\/app-store-badge\.svg"/);
 assert.match(index, /src="\.\/assets\/google-play-badge\.png"/);
 assert.match(index, /data-updates-container/);
 assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=070-native-20260913"/);
-assert.match(index, /alt="Skald 0\.7\.0 voyage map with locations from the Odyssey\."/);
+assert.match(index, /alt="Skald voyage map with locations from the Odyssey\."/);
 assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
-assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-070\.jpg\?v=070-native-20260915">/);
+assert.match(index, /<meta property="og:image" content="https:\/\/skald\.mannamila\.com\/assets\/skald-odyssey-og-20261002\.jpg\?v=20261002">/);
 assert.doesNotMatch(
   index,
   /<meta\b[^>]+(?:property="og:description"|name="twitter:description")[^>]+content="[^"]*Coming to/i,

@@ -1,0 +1,158 @@
+[
+  {
+    "page": "/",
+    "viewport": 390,
+    "availabilityAnswerClearOfHeader": true,
+    "clientWidth": 390,
+    "scrollWidth": 390,
+    "releaseNoticePresent": false,
+    "availabilityCardFirstChild": "availability-copy",
+    "availabilityCard": [
+      362,
+      193
+    ],
+    "availabilityCopy": "Available now on Android, iPhone, and iPad.",
+    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
+    "kicker": "Available on Android, iPhone, and iPad",
+    "iosLinks": [
+      "https://apps.apple.com/app/id6790579937",
+      "https://apps.apple.com/app/id6790579937"
+    ],
+    "androidLinks": [
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald"
+    ],
+    "scripts": [
+      "./retire-analytics.js",
+      "./app.js?v=20261002"
+    ],
+    "ogImage": "https://skald.mannamila.com/assets/skald-odyssey-og-20261002.jpg?v=20261002",
+    "brokenImages": [],
+    "horizontalOverflow": false,
+    "thirdPartyRequests": [
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/viewform?embedded=true",
+      "https://fonts.googleapis.com/icon?family=Material+Icons+Extended",
+      "https://www.gstatic.com/_/freebird/_/ss/k=freebird.v.u1yM2G-xww4.L.W.O/am=QAAAGA/d=1/rs=AMjVe6hY2JsCslNmOIRj-FFOGys6j0NM7g",
+      "https://fonts.googleapis.com/css?family=Google+Sans_old:400,500|Roboto_old:300,400,400i,500,700&subset=latin,vietnamese,latin-ext,cyrillic,greek,cyrillic-ext,greek-ext",
+      "https://fonts.googleapis.com/css?family=Product+Sans&subset=latin,vietnamese,latin-ext,cyrillic,greek,cyrillic-ext,greek-ext",
+      "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_dark_clr_74x24px.svg",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=1/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=viewer_base",
+      "https://ssl.gstatic.com/docs/forms/qp_sprite234.svg",
+      "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2",
+      "https://fonts.gstatic.com/s/googlesans/v60/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3SAyH6cAwhX9RPjIUvbQoi-E.woff2",
+      "https://fonts.gstatic.com/s/productsans/v21/pxiDypQkot1TnFhsFMOfGShVF9eOYktMqg.woff2",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=sy1b,vGOnYd,sya,IZT63,sy8,sy9,syb,YYmHzb,vfuNJf,MpJwZc,n73qwf,sy2,ws9Tlc,cEt90b,sy7,KUM7Z,syg,syh,syf,syj,sy4,syi,sy11,sy14,sy15,sy12,sy13,siKnQd,sy1f,sy4l,sy4y,sy1e,sy1g,sy7b,sy3n,sy3o,L1AAkb,sy2f,sy7a,sy2g,O6y8ed,aW3pY,sy7c,I6YDgd,T8YtQb,sy3u,sy3x,V3dDOb,sy4p,sy4s,sy95,sy94,sy4q,sy92,OShpD,sy5z,sy8f,sy97,sy99,sy9b,sy98,sy9a,sy93,sy96,sy9c,J8mJTc,SLqN2,gkf10d,j2YlP,syl,syp,syn,syo,syt,syx,syy,syq,sy6,syw,yxTchf,sy3,sy5,xQtZb,qddgKe,syr,wR5FRb,pXdRYb,iFQyKf,sye,syd,syk,YNjGDd,sym,sys,PrPYRd,syu,hc6Ubd,sy16,SpsfSb,dIoSBb,sy18,sy17,sy19,sy1a,sy1c,zbML3c,zr1jrb,EmZ2Bf,syz,sy10,Uas9Hd,sy53,sybh,WO9ee,sy3p,sy3q,sy3r,sy3t,sy3v,sy3w,A4UTCb,syc7,owcnme,CP1oW,KornIe,sy43,sy41,sy44,sy5o,sy25,sy2p,sy2r,syca,sy2y,sy26,sy2n,sy2z,syc8,syc9,sye5,sy2i,sy33,sye4,qTnoBf,NJ1rfe,mzzZzc,sy23,rCcCxc,sy2l,sy2w,sy2x,sy30,sy31,sy5m,sycc,sye2,sye6,gJzDyc,sy39,CHCSlb,sy3z,sy40,sy42,pxq3x,IvDHfc,sy3e,sy3g,sy3h,sy3f,sy9j,sy9m,sy9i,sy9k,sy9p,sy9u,sy9t,syad,Sk9apb,sy49,sy48,sy4a,sy4b,sy4h,sy4i,sy1d,sy45,sy46,sy47,sy4c,sy4d,sy4e,sy4f,sy4g,fgj8Rb,sy3y,VXdfxd,N5Lqpc,sy9h,syd7,syd9,syat,sydb,sydc,sydd,syde,Xhpexc,Q91hve,sy6z,sy70,sy7p,sy8x,syan",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=syao,sy8y,sy9e,syap,syaq,syal,syar,syas,syaj,mRfQQ,sydg,sydf,CFa0o,szrus,mvo1oc,ENNBBf,wPRNsd,sy2e,sye7,sye8,fmklff,QvB8bb,bCfhJc,sy90,u9ZRK,pItcJd,yZuGp,sy1h,m9oV,sy1l,sy3s,sy1x,sy28,RAnnUd,i5dxUd,sy1r,i5H9N,sy8h,sycf,etBPYb,SU9Rsf,sy1k,sy1n,sy1v,sy8i,sycg,sy4w,PHUIyb,qNG0Fc,sych,syci,sycj,sycl,sy6k,sy1j,sycd,ywOR5c,sycn,sycr,EcW08c,wg1P6b,syck,sycm,syco,sycp,sycq,t8tqF,eFy6Rc,sy6q,sy9l,sy9x,sya0,sy76,sybb,sy9n,sy9s,syb7,syb9,sybc,sy4j,sy6j,syai,syb2,sybg,p2tbsc,nV4ih,sybf,LxALBf,sycu,sycv,sybn,sybq,syct,sycw,vofJp,SM1lmd,QwQO1b,syah,sy3l,syb5,sy3k,sy6d,sy9r,syb4,syb8,syba,syb3,sy9o,syb1,QMSdQb,X16vkb,WdhPgc,Vnjw0c,sy4m,sy4n,sy4k,sy4o,Ibqgte,ok0nye,Hzqecd,Vp87Bf,JCrucd,DhgO0d,oZECf,sy3c,sy3d,zG2TEe,syda,sycx,fvFQfe,CNqcN,sbHRWb,sydh,TOfxwf,sydm,sy27,sy8v,sy8z,syav,syaw,syaz,sydn,sydl,sydr,sydt,syef,syeg,A2m8uc,sye9,syea,sy1s,sy1t,syeb,syec,sy54,syd0,syed,syee,cNHZjb,lzHmAf,sy3i,sy3j,sy3m,jjSbr,sydi,yUS4Lc,KOZzeb,KFVhZe,sy62,sya4,xKXrob,sy61,sy63,sy6x,sy89,sy9y,sya5,syay,syb6,DPwS9e,sydv,sydw,sydz,sydu,sydy,syau,sydx,riEgMd,syex,lSvzH,sye0,oCiKKc,lWjoT,sW52Ae,D8e5bc,j0HcBf,syd8,sydj,sydo,sydq,syds,sydp,RGrRJf,OkF2xb,sy9z,xmYr4,UmOCme,ID6c7,syeh,rmdjlf",
+      "https://www.gstatic.com/feedback/js/help/prod/service/lazy.min.js",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=sydk,sWGJ4b,sy5c,sy5e,sybr,sybs,sybt,sybu,EGNJFf,uu7UOe,iSvg6e,sybv,uY3Nvd,syce,soHxf",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/naLogImpressions",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/font/getmetadata",
+      "https://play.google.com/log?format=json&hasfast=true&authuser=0"
+    ],
+    "failedRequests": [],
+    "screenshots": [
+      "landing-390-top.png",
+      "landing-390-totals.png",
+      "landing-390-final-cta.png",
+      "landing-390-faq.png"
+    ]
+  },
+  {
+    "page": "/get/",
+    "viewport": 390,
+    "clientWidth": 390,
+    "scrollWidth": 390,
+    "links": [
+      "https://apps.apple.com/app/id6790579937?ct=meta-test-1",
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
+      "../"
+    ],
+    "note": "Available in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
+    "horizontalOverflow": false,
+    "screenshots": [
+      "get-390.png"
+    ]
+  },
+  {
+    "page": "/",
+    "viewport": 1280,
+    "availabilityAnswerClearOfHeader": true,
+    "clientWidth": 1280,
+    "scrollWidth": 1280,
+    "releaseNoticePresent": false,
+    "availabilityCardFirstChild": "availability-copy",
+    "availabilityCard": [
+      685,
+      133
+    ],
+    "availabilityCopy": "Available now on Android, iPhone, and iPad.",
+    "faq": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
+    "kicker": "Available on Android, iPhone, and iPad",
+    "iosLinks": [
+      "https://apps.apple.com/app/id6790579937",
+      "https://apps.apple.com/app/id6790579937"
+    ],
+    "androidLinks": [
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald"
+    ],
+    "scripts": [
+      "./retire-analytics.js",
+      "./app.js?v=20261002"
+    ],
+    "ogImage": "https://skald.mannamila.com/assets/skald-odyssey-og-20261002.jpg?v=20261002",
+    "brokenImages": [],
+    "horizontalOverflow": false,
+    "thirdPartyRequests": [
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/viewform?embedded=true",
+      "https://fonts.googleapis.com/icon?family=Material+Icons+Extended",
+      "https://www.gstatic.com/_/freebird/_/ss/k=freebird.v.u1yM2G-xww4.L.W.O/am=QAAAGA/d=1/rs=AMjVe6hY2JsCslNmOIRj-FFOGys6j0NM7g",
+      "https://fonts.googleapis.com/css?family=Google+Sans_old:400,500|Roboto_old:300,400,400i,500,700&subset=latin,vietnamese,latin-ext,cyrillic,greek,cyrillic-ext,greek-ext",
+      "https://fonts.googleapis.com/css?family=Product+Sans&subset=latin,vietnamese,latin-ext,cyrillic,greek,cyrillic-ext,greek-ext",
+      "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_dark_clr_74x24px.svg",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=1/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=viewer_base",
+      "https://ssl.gstatic.com/docs/forms/qp_sprite234.svg",
+      "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2",
+      "https://fonts.gstatic.com/s/googlesans/v60/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3SAyH6cAwhX9RPjIUvbQoi-E.woff2",
+      "https://fonts.gstatic.com/s/productsans/v21/pxiDypQkot1TnFhsFMOfGShVF9eOYktMqg.woff2",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=sy1b,vGOnYd,sya,IZT63,sy8,sy9,syb,YYmHzb,vfuNJf,MpJwZc,n73qwf,sy2,ws9Tlc,cEt90b,sy7,KUM7Z,syg,syh,syf,syj,sy4,syi,sy11,sy14,sy15,sy12,sy13,siKnQd,sy1f,sy4l,sy4y,sy1e,sy1g,sy7b,sy3n,sy3o,L1AAkb,sy2f,sy7a,sy2g,O6y8ed,aW3pY,sy7c,I6YDgd,T8YtQb,sy3u,sy3x,V3dDOb,sy4p,sy4s,sy95,sy94,sy4q,sy92,OShpD,sy5z,sy8f,sy97,sy99,sy9b,sy98,sy9a,sy93,sy96,sy9c,J8mJTc,SLqN2,gkf10d,j2YlP,syl,syp,syn,syo,syt,syx,syy,syq,sy6,syw,yxTchf,sy3,sy5,xQtZb,qddgKe,syr,wR5FRb,pXdRYb,iFQyKf,sye,syd,syk,YNjGDd,sym,sys,PrPYRd,syu,hc6Ubd,sy16,SpsfSb,dIoSBb,sy18,sy17,sy19,sy1a,sy1c,zbML3c,zr1jrb,EmZ2Bf,syz,sy10,Uas9Hd,sy53,sybh,WO9ee,sy3p,sy3q,sy3r,sy3t,sy3v,sy3w,A4UTCb,syc7,owcnme,CP1oW,KornIe,sy43,sy41,sy44,sy5o,sy25,sy2p,sy2r,syca,sy2y,sy26,sy2n,sy2z,syc8,syc9,sye5,sy2i,sy33,sye4,qTnoBf,NJ1rfe,mzzZzc,sy23,rCcCxc,sy2l,sy2w,sy2x,sy30,sy31,sy5m,sycc,sye2,sye6,gJzDyc,sy39,CHCSlb,sy3z,sy40,sy42,pxq3x,IvDHfc,sy3e,sy3g,sy3h,sy3f,sy9j,sy9m,sy9i,sy9k,sy9p,sy9u,sy9t,syad,Sk9apb,sy49,sy48,sy4a,sy4b,sy4h,sy4i,sy1d,sy45,sy46,sy47,sy4c,sy4d,sy4e,sy4f,sy4g,fgj8Rb,sy3y,VXdfxd,N5Lqpc,sy9h,syd7,syd9,syat,sydb,sydc,sydd,syde,Xhpexc,Q91hve,sy6z,sy70,sy7p,sy8x,syan",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=syao,sy8y,sy9e,syap,syaq,syal,syar,syas,syaj,mRfQQ,sydg,sydf,CFa0o,szrus,mvo1oc,ENNBBf,wPRNsd,sy2e,sye7,sye8,fmklff,QvB8bb,bCfhJc,sy90,u9ZRK,pItcJd,yZuGp,sy1h,m9oV,sy1l,sy3s,sy1x,sy28,RAnnUd,i5dxUd,sy1r,i5H9N,sy8h,sycf,etBPYb,SU9Rsf,sy1k,sy1n,sy1v,sy8i,sycg,sy4w,PHUIyb,qNG0Fc,sych,syci,sycj,sycl,sy6k,sy1j,sycd,ywOR5c,sycn,sycr,EcW08c,wg1P6b,syck,sycm,syco,sycp,sycq,t8tqF,eFy6Rc,sy6q,sy9l,sy9x,sya0,sy76,sybb,sy9n,sy9s,syb7,syb9,sybc,sy4j,sy6j,syai,syb2,sybg,p2tbsc,nV4ih,sybf,LxALBf,sycu,sycv,sybn,sybq,syct,sycw,vofJp,SM1lmd,QwQO1b,syah,sy3l,syb5,sy3k,sy6d,sy9r,syb4,syb8,syba,syb3,sy9o,syb1,QMSdQb,X16vkb,WdhPgc,Vnjw0c,sy4m,sy4n,sy4k,sy4o,Ibqgte,ok0nye,Hzqecd,Vp87Bf,JCrucd,DhgO0d,oZECf,sy3c,sy3d,zG2TEe,syda,sycx,fvFQfe,CNqcN,sbHRWb,sydh,TOfxwf,sydm,sy27,sy8v,sy8z,syav,syaw,syaz,sydn,sydl,sydr,sydt,syef,syeg,A2m8uc,sye9,syea,sy1s,sy1t,syeb,syec,sy54,syd0,syed,syee,cNHZjb,lzHmAf,sy3i,sy3j,sy3m,jjSbr,sydi,yUS4Lc,KOZzeb,KFVhZe,sy62,sya4,xKXrob,sy61,sy63,sy6x,sy89,sy9y,sya5,syay,syb6,DPwS9e,sydv,sydw,sydz,sydu,sydy,syau,sydx,riEgMd,syex,lSvzH,sye0,oCiKKc,lWjoT,sW52Ae,D8e5bc,j0HcBf,syd8,sydj,sydo,sydq,syds,sydp,RGrRJf,OkF2xb,sy9z,xmYr4,UmOCme,ID6c7,syeh,rmdjlf",
+      "https://www.gstatic.com/feedback/js/help/prod/service/lazy.min.js",
+      "https://www.gstatic.com/_/freebird/_/js/k=freebird.v.en.hiKKa6bqmts.O/am=QAAAGA/d=0/rs=AMjVe6g0nQMTVmfeQaZ8d-lNRrahuEqPkQ/m=sydk,sWGJ4b,sy5c,sy5e,sybr,sybs,sybt,sybu,EGNJFf,uu7UOe,iSvg6e,sybv,uY3Nvd,syce,soHxf",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/naLogImpressions",
+      "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/font/getmetadata",
+      "https://play.google.com/log?format=json&hasfast=true&authuser=0"
+    ],
+    "failedRequests": [],
+    "screenshots": [
+      "landing-1280-top.png",
+      "landing-1280-totals.png",
+      "landing-1280-final-cta.png",
+      "landing-1280-faq.png"
+    ]
+  },
+  {
+    "page": "/get/",
+    "viewport": 1280,
+    "clientWidth": 1280,
+    "scrollWidth": 1280,
+    "links": [
+      "https://apps.apple.com/app/id6790579937?ct=meta-test-1",
+      "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
+      "../"
+    ],
+    "note": "Available in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.\nABOUT SKALD: ODYSSEY →",
+    "horizontalOverflow": false,
+    "screenshots": [
+      "get-1280.png"
+    ]
+  }
+]
