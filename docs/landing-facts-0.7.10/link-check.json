@@ -1,0 +1,163 @@
+{
+  "checked": 20,
+  "ok": 20,
+  "failures": [],
+  "siteLinksNotInSourceTree": [
+    "./translations/"
+  ],
+  "links": [
+    {
+      "page": "skald/index.html",
+      "href": "#main-content",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "https://www.mannamila.com/",
+      "kind": "external",
+      "status": "200",
+      "final": "https://www.mannamila.com/",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#inside",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#translations",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#notes",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#faq",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./updates/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/updates/",
+      "ok": true,
+      "inSourceTree": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./translations/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/translations/",
+      "ok": true,
+      "inSourceTree": false
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#get-skald",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "https://apps.apple.com/app/id6790579937",
+      "kind": "external",
+      "status": "200",
+      "final": "https://apps.apple.com/us/app/skald-odyssey/id6790579937",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+      "kind": "external",
+      "status": "200",
+      "final": "https://play.google.com/store/apps/details?id=com.mannamila.skald",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "#updates",
+      "kind": "anchor",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./mosaic/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/mosaic/",
+      "ok": true,
+      "inSourceTree": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./privacy/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/privacy/",
+      "ok": true,
+      "inSourceTree": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./updates-privacy/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/updates-privacy/",
+      "ok": true,
+      "inSourceTree": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/viewform",
+      "kind": "external",
+      "status": "200",
+      "final": "https://docs.google.com/forms/d/e/1FAIpQLSen65qsvGdyF-93OtKCWQKFKzQTFzCdnw4M9Jvqhr2VdsSuMw/viewform",
+      "ok": true
+    },
+    {
+      "page": "skald/index.html",
+      "href": "./support/",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/support/",
+      "ok": true,
+      "inSourceTree": true
+    },
+    {
+      "page": "skald/get/index.html",
+      "href": "https://apps.apple.com/app/id6790579937?ct=meta-test-1",
+      "kind": "external",
+      "status": "200",
+      "final": "https://apps.apple.com/us/app/skald-odyssey/id6790579937?ct=meta-test-1",
+      "ok": true
+    },
+    {
+      "page": "skald/get/index.html",
+      "href": "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
+      "kind": "external",
+      "status": "200",
+      "final": "https://play.google.com/store/apps/details?id=com.mannamila.skald&referrer=utm_source%3Dmeta%26utm_medium%3Dpaid%26utm_campaign%3Dtest1",
+      "ok": true
+    },
+    {
+      "page": "skald/get/index.html",
+      "href": "../",
+      "kind": "site",
+      "status": "200",
+      "final": "https://skald.mannamila.com/",
+      "ok": true,
+      "inSourceTree": true
+    }
+  ]
+}

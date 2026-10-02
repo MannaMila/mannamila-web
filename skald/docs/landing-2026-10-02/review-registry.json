@@ -1,0 +1,161 @@
+{
+  "registry": "skald-landing-corrections-0.7.10-2026-10-02",
+  "date": "2026-10-02",
+  "decision": "APPROVED",
+  "approvalScope": {
+    "A_website": "The final string table of docs/landing-facts-0.7.10/reviews/FINAL-ARBITRATION.md applied exactly to index.html, app.js, availability.json and get/index.html, with the new social card assets/skald-odyssey-og-20261002.jpg. styles.css and the four screenshots are unchanged; the old card assets/skald-odyssey-og-070.jpg stays served.",
+    "ownerRuling": "Owner, 2026-10-02: \"Yes to landing page corrections\" (corrections, including the stale 'next update / coming in version 0.7.0' sentences; not a redesign).",
+    "notApproved": [
+      "any other customer-visible string",
+      "new content beyond the corrections (arbitration, 'For the owner', items 1 to 8)",
+      "recaptured screenshots",
+      "legal rights, privacy questions or store obligations (the arbitration is a content review, not legal advice)"
+    ]
+  },
+  "roles": [
+    {
+      "role": "Independent content reviewer 1: accuracy, source anchors, claims",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "reviewer-1-accuracy:a046a01d1facedc5",
+      "decision": {
+        "A": "APPROVED WITH MODIFICATIONS"
+      },
+      "report": {
+        "md": "docs/landing-facts-0.7.10/reviews/accuracy.md"
+      }
+    },
+    {
+      "role": "Independent content reviewer 2: reader usefulness, clarity, provenance",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "reviewer-2-clarity:b0b0e0ce57b473f9",
+      "decision": {
+        "A": "APPROVED WITH MODIFICATIONS"
+      },
+      "report": {
+        "md": "docs/landing-facts-0.7.10/reviews/clarity.md"
+      }
+    },
+    {
+      "role": "Final content arbiter",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "arbiter:5d0c9fed542558c3",
+      "decision": {
+        "A": "APPROVED"
+      },
+      "substitution": {
+        "stands_in_for": "gpt-6-sol",
+        "agents_md_role": "gpt-5.6-sol/high",
+        "reason": "Codex usage limit until 2026-10-04; owner rulings 2026-09-30."
+      },
+      "findings": "APPROVE WITH MODIFICATIONS; approved for publication once the final string table is applied exactly. 29 findings: 22 accepted, 7 accepted with modification, 0 rejected. Twelve rows depart from the candidate. The applied files hash to the arbitration's expected hashes.",
+      "report": {
+        "md": "docs/landing-facts-0.7.10/reviews/FINAL-ARBITRATION.md"
+      }
+    }
+  ],
+  "sessionIdNote": "No real session identifiers were available to the site lane. Each sessionId is the role name plus the first 16 hex characters of that role's review file sha256 (see reviewInputSha256); they are distinct labels, not harness session ids.",
+  "reviewInputSha256": {
+    "docs/landing-facts-0.7.10/reviews/accuracy.md": "a046a01d1facedc59a2fb597e87a5f2c6c714d1fe93a72823923a2c02b4f6b3d",
+    "docs/landing-facts-0.7.10/reviews/clarity.md": "b0b0e0ce57b473f9c543a86fd2420eda8a3c665b42257367f58416e189e190ba",
+    "docs/landing-facts-0.7.10/reviews/FINAL-ARBITRATION.md": "5d0c9fed542558c3cf5c0e3328dd384f71ea6835404b69a9e94af00bccb2ca9d",
+    "docs/landing-facts-0.7.10/CANDIDATE.md (as reviewed, at 5d8d4ad)": "2a2d87b61ad90b0c62642d5550ea92c333e2d6256e99f64a1a603d87fa673176",
+    "skald/index.html (candidate as reviewed)": "33022828e1731dd059aaae0466f77bf3d41549f5c922fc81102a35863abb75d1"
+  },
+  "websiteFilesSha256": {
+    "index.html": "a48fec9daa94f738408d3d8ab240039d2daf07ba5c34fe049c9f64e9bc30a132",
+    "styles.css": "d6c5c79d4ecc92a044a0b29489d560bb77d76ae3490b0debde2afa43620174b4",
+    "assets/reader-art.webp": "10088bdc800d7d373dc6c9130497b7ddf64333ce5a2477a2bb45bfcc56b505be",
+    "assets/greek-split.webp": "cf2b6955d19f5cda39e6441018ef05dfda9c360bfa05ca444a633d17eb38f3b7",
+    "assets/museum-guide.webp": "fcf9da94ee63fb38886f27156d02680bd0178fdcaf0f522426c3fff7c8095089",
+    "assets/nostos-route.webp": "2a3114e2463d3bba79f849c27f4c5be59a070e95b1c1fbfae6dce16061eb20e3",
+    "assets/skald-odyssey-og-20261002.jpg": "636ec5cfdb95771d213beece3906696a85192cba1ed85a9eba13007c693f4415",
+    "assets/skald-odyssey-og-070.jpg": "4600afb1a3311ea361bb50a419887e106a8a1356ea43b879b8ad1ad8d08f6a33",
+    "app.js": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
+    "get/index.html": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+    "availability.json": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559"
+  },
+  "websiteAssetSourceCaptures": {
+    "assets/reader-art.webp": {
+      "source": "docs/store/releases/0.7.0/captures/ios-phone/01-reader.png",
+      "sha256": "11d2aea054c9a133288649ac29238f4b90b28ff701113e4df9a2e05e78cf0bce"
+    },
+    "assets/greek-split.webp": {
+      "source": "docs/store/releases/0.7.0/captures/ios-ipad/03-parallel.png",
+      "sha256": "0fb91a8696fc916fd73e532b1afe77a7d736266f9c25e241830442acfbec4bf1"
+    },
+    "assets/museum-guide.webp": {
+      "source": "docs/store/releases/0.7.0/captures/ios-ipad/07-art.png",
+      "sha256": "b29d853d47e627cce4dd8547009e46bcd72ce3b5f944ca8ccf200a2a2d19555b"
+    },
+    "assets/nostos-route.webp": {
+      "source": "docs/store/releases/0.7.0/captures/android-tablet/08-voyage-map.png",
+      "sha256": "fdce123c1c21f32bec9051d612a0d530db6bbc84fa2f175d51206c01c06f6388"
+    },
+    "captureVersion": "0.7.0",
+    "note": "All four page screenshots and the screenshot inside the social card were captured on app version 0.7.0 and are unchanged files. The alt texts no longer state the version (arbitration, rows A1 to A5), so it is recorded here.",
+    "acceptedStale": {
+      "assets/museum-guide.webp": "Shows the Lastman note as 'hefts a great embossed shield'; 0.7.10 reads 'hefts a great fluted bronze basin'. Accepted for this publication as a known stale image (root ruling 3); recapture from 0.7.10 owed, first in the queue."
+    },
+    "assets/skald-odyssey-og-20261002.jpg": {
+      "source": "docs/store/releases/0.7.0/captures/ios-ipad/03-parallel.png",
+      "sha256": "0fb91a8696fc916fd73e532b1afe77a7d736266f9c25e241830442acfbec4bf1",
+      "generator": "docs/landing-facts-0.7.10/og-render/ (og.html, og-render.mjs); PNG then sips JPEG quality 90"
+    }
+  },
+  "websiteTextBindings": {
+    "hero_alt": "Skald on iPhone, showing Butler's opening of Book I with reading notes and historical art.",
+    "greek_alt": "Skald on iPad, with the Ancient Greek beside an English translation.",
+    "art_alt": "Skald showing Pieter Lastman’s Odysseus and Minerva with its collection details and a reading note.",
+    "map_alt": "Skald voyage map with locations from the Odyssey.",
+    "art_caption": "Open an artwork alongside the poem.",
+    "og_and_twitter_image_alt": "Skald on iPad, with the Ancient Greek beside an English translation.",
+    "og_and_twitter_image_url": "https://skald.mannamila.com/assets/skald-odyssey-og-20261002.jpg?v=20261002",
+    "og_card_text_lines": [
+      "Skald: Odyssey",
+      "Spend some time with the Odyssey."
+    ],
+    "availability_sentence": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
+    "forbidden_stale_framing": [
+      "next update",
+      "next Skald update",
+      "next app update",
+      "coming in version",
+      "arrives with version",
+      "Preview the next"
+    ],
+    "allowed_next_update_heading": "Hear about the next update."
+  },
+  "approved_sha256": {
+    "resolved-index.html": "a48fec9daa94f738408d3d8ab240039d2daf07ba5c34fe049c9f64e9bc30a132"
+  },
+  "supersession": {
+    "priorWebsiteRegistry": {
+      "path": "skald/docs/store-web-2026-09-15-native/review-registry.json",
+      "sha256": "6117bf754d7545cfcbfa6cc357e942a146f9352ea5dc8f271611bcb73d8dd8c8",
+      "supersededEntries": {
+        "approved_sha256.resolved-index.html": "2d52ae4d23fa614cb735b01920e10c6ea21b5daefb2c09f5aa8e770c24d1be2b"
+      },
+      "replacement": "a48fec9daa94f738408d3d8ab240039d2daf07ba5c34fe049c9f64e9bc30a132",
+      "note": "Supersedes the landing index hash, the og image binding, the four alt bindings and the retained_release_notice binding of the 2026-09-15 registry. Its screenshot hashes and source captures are unchanged and carried over. Its iPad store-panel approvals are untouched. Keep the history."
+    }
+  },
+  "nonBlockingFollowUps": [
+    "Recapture assets/museum-guide.webp from 0.7.10, then the other three screenshots and the card; change the image cache keys with the recapture.",
+    "Merge MannaMila/skald#520 (the Google Play evidence the availability sentence rests on).",
+    "Google Play listing still shows the 0.7.0 figures; the web Art Atlas holds 252 records against the app's 258.",
+    ".skald-source.json in deploy is stale; regenerate via promote-skald.mjs --apply rather than hand-editing.",
+    "Optional: app.js fallback lastVerifiedAt; the unused .release-preview rule in styles.css."
+  ],
+  "claimsNotMade": [
+    "no legal rights, licence, privacy or trader attestation",
+    "no install or purchase from an EU account on Google Play was checked",
+    "no determination of where the storefront-neutral App Store link lands for an EU desktop visitor"
+  ],
+  "outputs": {
+    "registry": "skald/docs/landing-2026-10-02/review-registry.json",
+    "resolvedIndex": "skald/docs/landing-2026-10-02/resolved-index.html"
+  }
+}
