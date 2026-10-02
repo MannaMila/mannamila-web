@@ -1,0 +1,140 @@
+{
+  "renderedAt": "2026-10-02",
+  "verificationStage": "pre-publication",
+  "storeUploads": 0,
+  "languages": {
+    "en": {
+      "source": "docs/legal/privacy-policy.md",
+      "sourceSha256": "3e73d5cbc64cb4b88bba65d9e619fbfb8098d6860f575e9a062c49d1f48f90cd",
+      "page": "skald/privacy/index.html",
+      "htmlSha256": "30ea8e0c6c251f61e61c2ee4290344174557df30e3591698aa9540a98e3c761b",
+      "sourceBlocks": 73,
+      "pageBodyBlocks": 73,
+      "blocksIdenticalInOrder": true,
+      "sourceSentences": 211,
+      "pageBodySentences": 211,
+      "sentencesMissingFromPage": [],
+      "sentencesOnPageNotInSource": [],
+      "visibleWords": 3240,
+      "navigationChrome": [
+        "English version · Version française",
+        "MannaMila LLC",
+        "← Skald: Odyssey Product updates privacy Support"
+      ],
+      "navigationChromeIsOnlyExtraText": true,
+      "sourceLinkTargets": [
+        "https://www.facebook.com/privacy/policy/",
+        "https://skald.mannamila.com/feedback/privacy/",
+        "https://skald.mannamila.com/updates-privacy/",
+        "https://www.facebook.com/privacy/policy/",
+        "https://www.facebook.com/legal/terms/businesstools",
+        "https://www.facebook.com/legal/controller_addendum",
+        "https://www.facebook.com/legal/EU_data_transfer_addendum"
+      ],
+      "pageExternalLinkTargets": [
+        "https://www.facebook.com/privacy/policy/",
+        "https://skald.mannamila.com/feedback/privacy/",
+        "https://skald.mannamila.com/updates-privacy/",
+        "https://www.edpb.europa.eu/about-edpb/about-edpb/members_en",
+        "https://www.facebook.com/privacy/policy/",
+        "https://www.facebook.com/legal/terms/businesstools",
+        "https://www.facebook.com/legal/controller_addendum",
+        "https://www.facebook.com/legal/EU_data_transfer_addendum"
+      ],
+      "nbspU00A0InSource": 0,
+      "nbspU00A0InPageBody": 0,
+      "nbspEntityInPage": 0,
+      "scriptTags": [
+        "<script src=\"../retire-analytics.js\" defer></script>"
+      ],
+      "htmlLang": "en",
+      "relCanonical": "https://skald.mannamila.com/privacy/",
+      "hreflang": [],
+      "hostedMirror": {
+        "path": "docs/sessions/2026-07-31-phase1-prep/hosted-privacy-policy-proposed.md",
+        "sha256": "7464a102b90aa830fa1a5ca3474b090de5e5f49c422e116a1ef003a6625f0c1a",
+        "bodyIdenticalToSourceAfterPreamble": true
+      }
+    },
+    "fr": {
+      "source": "docs/sessions/2026-10-02-eu-activation-privacy/french-resolved/privacy-policy.fr.md",
+      "sourceSha256": "618112564bd304d74850402b311f7a06a72c99997c195891421c5e6600026c3f",
+      "page": "skald/privacy/fr/index.html",
+      "htmlSha256": "56554fef209db903fcc3fc6957aece6e33bcdb3776b8762bd47157c29e6da1d5",
+      "sourceBlocks": 73,
+      "pageBodyBlocks": 73,
+      "blocksIdenticalInOrder": true,
+      "sourceSentences": 214,
+      "pageBodySentences": 214,
+      "sentencesMissingFromPage": [],
+      "sentencesOnPageNotInSource": [],
+      "visibleWords": 4161,
+      "navigationChrome": [
+        "English version · Version française",
+        "MannaMila LLC",
+        "Skald · English version"
+      ],
+      "navigationChromeIsOnlyExtraText": true,
+      "sourceLinkTargets": [
+        "https://www.facebook.com/privacy/policy/",
+        "https://skald.mannamila.com/feedback/privacy/",
+        "https://skald.mannamila.com/updates-privacy/",
+        "https://www.facebook.com/privacy/policy/",
+        "https://www.facebook.com/legal/terms/businesstools",
+        "https://www.facebook.com/legal/controller_addendum",
+        "https://www.facebook.com/legal/EU_data_transfer_addendum"
+      ],
+      "pageExternalLinkTargets": [
+        "https://www.facebook.com/privacy/policy/",
+        "https://skald.mannamila.com/feedback/privacy/",
+        "https://skald.mannamila.com/updates-privacy/",
+        "https://www.edpb.europa.eu/about-edpb/about-edpb/members_fr",
+        "https://www.facebook.com/privacy/policy/",
+        "https://www.facebook.com/legal/terms/businesstools",
+        "https://www.facebook.com/legal/controller_addendum",
+        "https://www.facebook.com/legal/EU_data_transfer_addendum"
+      ],
+      "nbspU00A0InSource": 60,
+      "nbspU00A0InPageBody": 60,
+      "nbspEntityInPage": 0,
+      "scriptTags": [
+        "<script src=\"../../retire-analytics.js\" defer></script>"
+      ],
+      "htmlLang": "fr",
+      "relCanonical": "https://skald.mannamila.com/privacy/fr/",
+      "hreflang": [
+        [
+          "en",
+          "https://skald.mannamila.com/privacy/"
+        ],
+        [
+          "fr",
+          "https://skald.mannamila.com/privacy/fr/"
+        ]
+      ]
+    }
+  },
+  "appRepoHostedPolicyGate": {
+    "script": "MannaMila/skald scripts/verify_hosted_privacy_policy.sh on legal/eu-privacy-0.7.10 (39efcde42)",
+    "markers": {
+      "Skald: Odyssey": true,
+      "privacy@mannamila.com": true,
+      "The date Skald: Odyssey 0.7.0 is first made available": true,
+      "Reading text, your saved place, selected book and translation, and reading preferences are kept in app storage": true,
+      "Advertising measurement": true,
+      "facebook-core SDK. It asks the SDK to log the events described above": true,
+      "tracking permission only after you actively finish a free book": true,
+      "It does not share events from before you allow tracking": true,
+      "advertiser-ID collection is off, and Skald does not send IDFA": true,
+      "Reading, purchasing, and restoring purchases work the same": true,
+      "sets its SKAdNetwork conversion value to": true,
+      "update the conversion value to 1 for one purchase": true,
+      "https://delivery.mannamila.com": true,
+      "Routine network information such as the request IP address is processed to serve and protect the request": true,
+      "Skald: Odyssey is offered on Google Play and the App Store in the United States, Canada, Australia, New Zealand and the 27 member states of the European Union": true
+    },
+    "allPass": true,
+    "unresolvedPlaceholder": false
+  },
+  "allChecksPass": true
+}
