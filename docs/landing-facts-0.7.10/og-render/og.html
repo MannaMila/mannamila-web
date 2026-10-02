@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Skald: Odyssey</title>
+    <link rel="stylesheet" href="./fonts.css">
+    <style>
+      :root {
+        --paper: #f2e6cf;
+        --paper-light: #fbf3e2;
+        --ink: #2a2118;
+        --ink-soft: #6f6150;
+        --copper: #9e5725;
+        --copper-dark: #743915;
+        --serif: "Cormorant Garamond", Georgia, serif;
+        --sans: Inter, system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 78% 42%, rgba(251, 243, 226, 0.95), rgba(251, 243, 226, 0) 46%),
+          radial-gradient(circle at 12% 88%, rgba(198, 146, 96, 0.16), rgba(198, 146, 96, 0) 40%),
+          var(--paper);
+        font-family: var(--sans);
+      }
+
+      .copy {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 62px;
+        display: flex;
+        width: 372px;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      h1 {
+        margin: 0;
+        font: 600 104px/0.9 var(--serif);
+        letter-spacing: -0.02em;
+      }
+
+      h1 em {
+        font-weight: 600;
+      }
+
+      .rule {
+        width: 230px;
+        height: 1px;
+        margin: 34px 0 28px;
+        background: linear-gradient(90deg, var(--copper), rgba(158, 87, 37, 0));
+      }
+
+      .dek {
+        margin: 0;
+        font: 500 42px/1.12 var(--serif);
+      }
+
+      .dek em {
+        color: var(--copper-dark);
+      }
+
+      .preview {
+        margin: 30px 0 0;
+        padding-left: 14px;
+        border-left: 2px solid var(--copper-dark);
+        color: var(--ink-soft);
+        font: 500 19px/1.4 var(--sans);
+      }
+
+      .shot {
+        position: absolute;
+        top: 54px;
+        right: 54px;
+        margin: 0;
+      }
+
+      .shot::before {
+        content: "";
+        position: absolute;
+        inset: 7% -5% -3% 9%;
+        border: 1px solid rgba(116, 57, 21, 0.24);
+        transform: rotate(2.2deg);
+      }
+
+      .mount {
+        position: relative;
+        padding: 9px;
+        border: 1px solid rgba(57, 40, 22, 0.18);
+        background: var(--paper-light);
+        box-shadow: 0 22px 60px rgba(52, 37, 20, 0.2);
+      }
+
+      .mount img {
+        display: block;
+        width: 668px;
+        height: 501px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <h1>Skald:<br><em>Odyssey</em></h1>
+      <div class="rule" aria-hidden="true"></div>
+      <p class="dek">Spend some time<br>with the <em>Odyssey.</em></p>
+    </div>
+    <figure class="shot">
+      <div class="mount">
+        <img src="./03-parallel.png" width="2752" height="2064" alt="Skald 0.7.0 on iPad, with the Ancient Greek beside an English translation.">
+      </div>
+    </figure>
+  </body>
+</html>
