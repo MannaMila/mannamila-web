@@ -1,0 +1,138 @@
+[
+  {
+    "viewport": 390,
+    "innerWidth": 390,
+    "clientWidth": 390,
+    "scrollWidth": 390,
+    "bodyScrollWidth": 390,
+    "firstArticle": "2026-10-02",
+    "elementsOutsideViewportExcludingCarouselTrack": [],
+    "images": [
+      {
+        "src": "./art/cleveland-barley-stater-1916-986.webp",
+        "complete": true,
+        "natural": [
+          800,
+          397
+        ],
+        "rendered": [
+          304,
+          264
+        ]
+      },
+      {
+        "src": "./art/aic-36623.webp",
+        "complete": true,
+        "natural": [
+          750,
+          375
+        ],
+        "rendered": [
+          304,
+          264
+        ]
+      }
+    ],
+    "scripts": [
+      "../retire-analytics.js",
+      null
+    ],
+    "ogDescription": "The updates journal: twenty-four translations, Skald in the European Union, a growing museum, and everything since launch.",
+    "title": "Updates — Skald: Odyssey",
+    "horizontalOverflow": false,
+    "thirdPartyRequests": [
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2"
+    ],
+    "requests": [
+      "/updates/",
+      "/retire-analytics.js",
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "/styles.css?v=20260722",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2",
+      "/updates/art/cleveland-barley-stater-1916-986.webp",
+      "/updates/art/aic-36623.webp"
+    ],
+    "failedRequests": [],
+    "screenshots": [
+      "updates-390-top.png",
+      "post-390.png",
+      "post-390-coins.png",
+      "post-390-coins-second.png"
+    ]
+  },
+  {
+    "viewport": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "scrollWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "firstArticle": "2026-10-02",
+    "elementsOutsideViewportExcludingCarouselTrack": [],
+    "images": [
+      {
+        "src": "./art/cleveland-barley-stater-1916-986.webp",
+        "complete": true,
+        "natural": [
+          800,
+          397
+        ],
+        "rendered": [
+          384,
+          264
+        ]
+      },
+      {
+        "src": "./art/aic-36623.webp",
+        "complete": true,
+        "natural": [
+          750,
+          375
+        ],
+        "rendered": [
+          384,
+          264
+        ]
+      }
+    ],
+    "scripts": [
+      "../retire-analytics.js",
+      null
+    ],
+    "ogDescription": "The updates journal: twenty-four translations, Skald in the European Union, a growing museum, and everything since launch.",
+    "title": "Updates — Skald: Odyssey",
+    "horizontalOverflow": false,
+    "thirdPartyRequests": [
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2"
+    ],
+    "requests": [
+      "/updates/",
+      "/retire-analytics.js",
+      "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap",
+      "/styles.css?v=20260722",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2",
+      "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3ZmX5slCNuHLi8bLeY9MK7whWMhyjYrEtImSqn7B6D.woff2",
+      "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2",
+      "/updates/art/cleveland-barley-stater-1916-986.webp",
+      "/updates/art/aic-36623.webp"
+    ],
+    "failedRequests": [],
+    "screenshots": [
+      "updates-1280-top.png",
+      "post-1280.png",
+      "post-1280-coins.png",
+      "post-1280-coins-second.png"
+    ]
+  }
+]
