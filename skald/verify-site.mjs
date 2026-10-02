@@ -586,7 +586,7 @@ assert.match(privacyText, /odyssey_full_unlock_edu/);
 assert.match(privacyText, /A pending state is not logged as a purchase/);
 assert.match(privacyText, /Reading, purchasing, and restoring purchases work the same/);
 assert.match(privacyText, /Skald does not send IDFA/);
-assert.match(privacyText, /Canada, Australia and New Zealand/);
+assert.match(privacyText, /Canada, Australia, New Zealand and the 27 member states of the European Union/);
 assert.doesNotMatch(privacyText, /SKAdNetwork is the only iOS attribution mechanism/);
 assert.doesNotMatch(privacyText, /Attribution has no in-app opt-out on either platform/);
 assert.doesNotMatch(privacy, /\{\{[^}]+\}\}/, "the hosted policy must not ship an unresolved placeholder");
