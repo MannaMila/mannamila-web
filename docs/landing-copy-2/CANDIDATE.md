@@ -1,5 +1,7 @@
 # Landing page copy edits, round 2: candidate for content review
 
+> **SUPERSEDED by [reviews/FINAL-ARBITRATION.md](reviews/FINAL-ARBITRATION.md) (2026-10-02).** This file is the review input as written, kept for the record; the pages now hold the arbitration's final string table (see [README.md](README.md)). Corrections the arbitration names: rows C1 to C4 all changed and a row N1 (the offline list) was added; C1's answer now names the eleven languages, because each FAQ answer is closed until tapped, so "the list is not repeated" no longer holds; the Glossary bullet below is wrong: the app's glossary is the legacy vocabulary list (120 entries, 93 distinct common words), replaced by concept notes and not shown; it is not a glossary of people and places, and no screen uses the word; the "Take the library with you." inventory row is therefore **change** (N1), and the "Find your bearings." row refers to notes on people and places, the voyage map and proper-name word cards; after the change the page says "word card(s)" three times, "a Homeric dictionary" once as their source, and "glossary" and "lexicon" nowhere. The screenshot checks S1 to S9 were read against the 0.7.10 captures by the root; alts and captions hold. Hashes in this file are of the candidate.
+
 **Status: CANDIDATE. Not approved copy, not published.** Three follow-up edits the 2026-10-02
 arbitration listed for the owner (`docs/landing-facts-0.7.10/reviews/FINAL-ARBITRATION.md`, "For
 the owner", items 1, 5, 6), on the owner's "Do the updated screenshots and copy edits on the

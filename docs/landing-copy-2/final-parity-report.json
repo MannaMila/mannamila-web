@@ -1,0 +1,92 @@
+{
+  "finalRows": 6,
+  "finalStringsPresent": 6,
+  "replacedLiveStrings": 3,
+  "replacedLiveStringsAbsent": 3,
+  "otherRetiredStringsAbsent": {
+    "beside a telling or translation": true,
+    "Homeric lexicon": true,
+    "Greek glossary": true,
+    "glossary": true,
+    "Choose Parallel to read two translations together.": true,
+    "The 24 translations cover 11 languages.": true,
+    "070-native": true
+  },
+  "nameCounts": {
+    "word card": 3,
+    "a Homeric dictionary": 1,
+    "glossary": 0,
+    "lexicon": 0
+  },
+  "figuresStillPresent": {
+    "24 translations": true,
+    "11 languages": true,
+    "3,285": true,
+    "258": true,
+    "236": true,
+    "52 journal articles": true,
+    "For 40 of them": true,
+    "48 museums": true
+  },
+  "unchangedFiles": {
+    "skald/app.js": true,
+    "skald/get/index.html": true
+  },
+  "indexSha256": "1e424a1b1d423f31f822c33b397da66968bab0abbb320cb9070cdfb375b244e4",
+  "pass": true,
+  "final": [
+    {
+      "row": "C2",
+      "location": "#translations .proof-copy, first paragraph, new last sentence (index.html:168)",
+      "final": "and compare how translators approach the same passage. In the reader, choose Parallel mode to read two translations together.",
+      "present": true
+    },
+    {
+      "row": "C3",
+      "location": "#translations .proof-copy, second paragraph, first sentence (:169)",
+      "final": "Tap a Greek word to open its word card, which gives the meaning and form and, for names, the pronunciation.",
+      "present": true
+    },
+    {
+      "row": "N1",
+      "location": "#offline .offline-main, first paragraph, first sentence (:216)",
+      "final": "The text, reading notes, translations, Ancient Greek with its word cards, maps and bundled art live on your device.",
+      "present": true
+    },
+    {
+      "row": "C1",
+      "location": "FAQ, new entry directly after \"Which translations are included?\" (:286-289): question",
+      "final": "What language is Skald in?",
+      "present": true
+    },
+    {
+      "row": "C1",
+      "location": "the same entry: answer",
+      "final": "The app’s interface, notes and retellings are in English. The 24 translations are in 11 languages: English, French, Spanish, German, Italian, Russian, Dutch, Danish, Swedish, Hebrew and Modern Greek.",
+      "present": true
+    },
+    {
+      "row": "C4",
+      "location": "FAQ \"Can I read the original Greek?\", answer (:292)",
+      "final": "Yes. You can place the Greek beside a retelling or translation, follow corresponding passages, and tap any Greek word to open its word card. The meanings come from a Homeric dictionary stored on your device.",
+      "present": true
+    }
+  ],
+  "gone": [
+    {
+      "where": "\"Read it in another voice.\"",
+      "live": "Tap a Greek word for the Homeric lexicon.",
+      "absent": true
+    },
+    {
+      "where": "\"Take the library with you.\"",
+      "live": "translations, Ancient Greek, glossary, maps and bundled art",
+      "absent": true
+    },
+    {
+      "where": "FAQ \"Can I read the original Greek?\"",
+      "live": "and open the on-device Greek glossary.",
+      "absent": true
+    }
+  ]
+}

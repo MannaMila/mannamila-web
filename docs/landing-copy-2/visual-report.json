@@ -1,60 +1,247 @@
-[
-  {
-    "viewport": 390,
-    "clientWidth": 390,
-    "scrollWidth": 390,
-    "faqQuestions": [
-      "Is the whole Odyssey included?",
-      "What do the 1-, 5-, and 20-minute labels mean?",
-      "Which translations are included?",
-      "What language is Skald in?",
-      "Can I read the original Greek?",
-      "Does Skald work offline?",
-      "Is this a subscription?",
-      "Where is Skald available?",
-      "What will product updates email me?",
-      "Who publishes Skald?"
-    ],
-    "horizontalOverflow": false,
-    "changedTextClearOfHeader": {
-      "translations": true,
-      "faq-language": true,
-      "faq-greek": true
+{
+  "viewports": [
+    {
+      "viewport": 390,
+      "clientWidth": 390,
+      "scrollWidth": 390,
+      "languageAnswerRight": 376,
+      "languageAnswerScrollWidth": 362,
+      "languageAnswerClientWidth": 362,
+      "pageHeight": 15728,
+      "horizontalOverflow": false,
+      "languageAnswerOverflows": false,
+      "images": {
+        "reader-art": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            310.7,
+            642.8
+          ],
+          "liveRendered": [
+            310.7,
+            642.8
+          ],
+          "src": "./assets/reader-art.webp?v=0710-20261002"
+        },
+        "greek-split": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            345.7,
+            262.6
+          ],
+          "liveRendered": [
+            345.7,
+            262.6
+          ],
+          "src": "./assets/greek-split.webp?v=0710-20261002"
+        },
+        "nostos-route": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            344.3,
+            198.9
+          ],
+          "liveRendered": [
+            344.3,
+            198.9
+          ],
+          "src": "./assets/nostos-route.webp?v=0710-20261002"
+        },
+        "museum-guide": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            345.7,
+            262.6
+          ],
+          "liveRendered": [
+            345.7,
+            262.6
+          ],
+          "src": "./assets/museum-guide.webp?v=0710-20261002"
+        }
+      },
+      "failedRequests": [],
+      "screenshots": [
+        "landing-390-hero.png",
+        "landing-390-hero-image.png",
+        "landing-390-greek-split.png",
+        "landing-390-nostos-route.png",
+        "landing-390-museum-guide.png",
+        "landing-390-translations-copy.png",
+        "landing-390-offline-list.png",
+        "landing-390-faq-language.png",
+        "landing-390-faq-greek.png"
+      ]
     },
-    "failedRequests": [],
-    "screenshots": [
-      "landing-390-translations.png",
-      "landing-390-faq-language.png",
-      "landing-390-faq-greek.png"
-    ]
-  },
-  {
-    "viewport": 1280,
-    "clientWidth": 1280,
-    "scrollWidth": 1280,
-    "faqQuestions": [
-      "Is the whole Odyssey included?",
-      "What do the 1-, 5-, and 20-minute labels mean?",
-      "Which translations are included?",
-      "What language is Skald in?",
-      "Can I read the original Greek?",
-      "Does Skald work offline?",
-      "Is this a subscription?",
-      "Where is Skald available?",
-      "What will product updates email me?",
-      "Who publishes Skald?"
-    ],
-    "horizontalOverflow": false,
-    "changedTextClearOfHeader": {
-      "translations": true,
-      "faq-language": true,
-      "faq-greek": true
+    {
+      "viewport": 1280,
+      "clientWidth": 1280,
+      "scrollWidth": 1280,
+      "languageAnswerRight": 1180,
+      "languageAnswerScrollWidth": 647,
+      "languageAnswerClientWidth": 647,
+      "pageHeight": 11959,
+      "horizontalOverflow": false,
+      "languageAnswerOverflows": false,
+      "images": {
+        "reader-art": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            360.7,
+            746.3
+          ],
+          "liveRendered": [
+            360.7,
+            746.3
+          ],
+          "src": "./assets/reader-art.webp?v=0710-20261002"
+        },
+        "greek-split": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            744.3,
+            565.5
+          ],
+          "liveRendered": [
+            744.3,
+            565.5
+          ],
+          "src": "./assets/greek-split.webp?v=0710-20261002"
+        },
+        "nostos-route": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            694.9,
+            401.5
+          ],
+          "liveRendered": [
+            694.9,
+            401.5
+          ],
+          "src": "./assets/nostos-route.webp?v=0710-20261002"
+        },
+        "museum-guide": {
+          "renderedBoxSameAsLive": true,
+          "attrsEqualNatural": true,
+          "naturalSameAsLive": true,
+          "altSameAsLive": true,
+          "captionSameAsLive": true,
+          "rendered": [
+            703.6,
+            534.6
+          ],
+          "liveRendered": [
+            703.6,
+            534.6
+          ],
+          "src": "./assets/museum-guide.webp?v=0710-20261002"
+        }
+      },
+      "failedRequests": [],
+      "screenshots": [
+        "landing-1280-hero.png",
+        "landing-1280-greek-split.png",
+        "landing-1280-nostos-route.png",
+        "landing-1280-museum-guide.png",
+        "landing-1280-translations-copy.png",
+        "landing-1280-offline-list.png",
+        "landing-1280-faq-language.png",
+        "landing-1280-faq-greek.png"
+      ]
+    }
+  ],
+  "servedImages": [
+    {
+      "viewport": 390,
+      "image": "reader-art",
+      "query": "0710-20261002",
+      "servedSha256": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
+      "captureLaneSha256": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
+      "match": true
     },
-    "failedRequests": [],
-    "screenshots": [
-      "landing-1280-translations.png",
-      "landing-1280-faq-language.png",
-      "landing-1280-faq-greek.png"
-    ]
-  }
-]
+    {
+      "viewport": 390,
+      "image": "greek-split",
+      "query": "0710-20261002",
+      "servedSha256": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
+      "captureLaneSha256": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
+      "match": true
+    },
+    {
+      "viewport": 390,
+      "image": "nostos-route",
+      "query": "0710-20261002",
+      "servedSha256": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
+      "captureLaneSha256": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
+      "match": true
+    },
+    {
+      "viewport": 390,
+      "image": "museum-guide",
+      "query": "0710-20261002",
+      "servedSha256": "b81aa9155197d374e708505d2440fe646d3bedecc8c819144e0fd5c8e5f5d0e0",
+      "captureLaneSha256": "b81aa9155197d374e708505d2440fe646d3bedecc8c819144e0fd5c8e5f5d0e0",
+      "match": true
+    },
+    {
+      "viewport": 1280,
+      "image": "reader-art",
+      "query": "0710-20261002",
+      "servedSha256": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
+      "captureLaneSha256": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
+      "match": true
+    },
+    {
+      "viewport": 1280,
+      "image": "greek-split",
+      "query": "0710-20261002",
+      "servedSha256": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
+      "captureLaneSha256": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
+      "match": true
+    },
+    {
+      "viewport": 1280,
+      "image": "nostos-route",
+      "query": "0710-20261002",
+      "servedSha256": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
+      "captureLaneSha256": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
+      "match": true
+    },
+    {
+      "viewport": 1280,
+      "image": "museum-guide",
+      "query": "0710-20261002",
+      "servedSha256": "b81aa9155197d374e708505d2440fe646d3bedecc8c819144e0fd5c8e5f5d0e0",
+      "captureLaneSha256": "b81aa9155197d374e708505d2440fe646d3bedecc8c819144e0fd5c8e5f5d0e0",
+      "match": true
+    }
+  ]
+}

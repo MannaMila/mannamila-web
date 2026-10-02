@@ -193,7 +193,7 @@ assert.match(
 assert.match(index, /src="\.\/assets\/app-store-badge\.svg"/);
 assert.match(index, /src="\.\/assets\/google-play-badge\.png"/);
 assert.match(index, /data-updates-container/);
-assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=070-native-20260913"/);
+assert.match(index, /src="\.\/assets\/nostos-route\.webp\?v=0710-20261002"/);
 assert.match(index, /alt="Skald voyage map with locations from the Odyssey\."/);
 assert.match(index, /href="\.\/updates-privacy\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
