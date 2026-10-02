@@ -1,0 +1,173 @@
+{
+  "registry": "skald-landing-copy-3-share-card-2026-10-02",
+  "date": "2026-10-02",
+  "decision": "APPROVED",
+  "approvalScope": {
+    "A_website_copy": "One sentence in the 'Find your bearings.' section of index.html: 'Follow the voyage on the map and see what happens to the fleet.' (option A), replacing 'Follow the voyage on the map, see what happens to the fleet, and look up a person or place when you need a reminder.'",
+    "rootRuling": "Option A is the arbiter's pre-approved fallback (FINAL-ARBITRATION.md, 'For the root', item 4). The root chose it over the arbiter's primary sentence because the primary sentence's claim that the map marks the place the story has reached is, by the arbiter's own finding, not true at the opening of Books XXI and XXII; option A is true without exception. 'Tap a stop/place' is not approved: the app's map tap handler opens the first stop in route order within 56 px, not the nearest (an app bug).",
+    "B_share_card": "assets/skald-odyssey-og-0710.jpg (the candidate's skald-odyssey-og-20261003.jpg, renamed; same bytes), referenced by og:image and twitter:image with ?v=20261002. Alts unchanged.",
+    "ownerRuling": "Owner, 2026-10-02: \"Refresh the … share card. Tastefully remove look up person\".",
+    "notApproved": [
+      "'tap a stop' or 'tap a place' wording",
+      "any other customer-visible string",
+      "legal rights, privacy questions or store obligations (the arbitration is a content review, not legal advice)"
+    ]
+  },
+  "roles": [
+    {
+      "role": "Independent content reviewer 1: accuracy, source anchors, claims",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "reviewer-1-accuracy:93913df86c6f6363",
+      "report": {
+        "md": "docs/landing-copy-3/reviews/accuracy.md"
+      }
+    },
+    {
+      "role": "Independent content reviewer 2: reader usefulness, clarity, provenance",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "reviewer-2-clarity:c2daa2bcb5aa3203",
+      "report": {
+        "md": "docs/landing-copy-3/reviews/clarity.md"
+      }
+    },
+    {
+      "role": "Final content arbiter",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "sessionId": "arbiter:6a1863457c036340",
+      "decision": {
+        "A": "APPROVED (option A pre-approved as fallback)",
+        "B": "APPROVED"
+      },
+      "substitution": {
+        "stands_in_for": "gpt-6-sol",
+        "agents_md_role": "gpt-5.6-sol/high",
+        "reason": "Codex usage limit until 2026-10-04; owner rulings 2026-09-30."
+      },
+      "report": {
+        "md": "docs/landing-copy-3/reviews/FINAL-ARBITRATION.md"
+      }
+    }
+  ],
+  "sessionIdNote": "No real session identifiers were available to the site lane. As in the two earlier 2026-10-02 registries, each sessionId is the role name plus the first 16 hex characters of that role's review file sha256; they are distinct labels, not harness session ids.",
+  "reviewInputSha256": {
+    "docs/landing-copy-3/reviews/accuracy.md": "93913df86c6f6363f0c28e723925a955535476abbc1923ca1cedfafbb892dfb1",
+    "docs/landing-copy-3/reviews/clarity.md": "c2daa2bcb5aa32033bc51e07a2eb113f36ed446338e46b2c20c285e3071c4763",
+    "docs/landing-copy-3/reviews/FINAL-ARBITRATION.md": "6a1863457c03634057d7ee2b4736464e1a48ea11555823294baa7eb10dbc2c83",
+    "skald/index.html (candidate as reviewed, at 3851716)": "53967dcaae5e6a7f3d2784e1cabee7fc18fd03bc3593c673cda5aa3c7b2297e9"
+  },
+  "websiteFilesSha256": {
+    "index.html": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+    "styles.css": "d6c5c79d4ecc92a044a0b29489d560bb77d76ae3490b0debde2afa43620174b4",
+    "assets/reader-art.webp": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
+    "assets/greek-split.webp": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
+    "assets/museum-guide.webp": "b81aa9155197d374e708505d2440fe646d3bedecc8c819144e0fd5c8e5f5d0e0",
+    "assets/nostos-route.webp": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
+    "assets/skald-odyssey-og-20261002.jpg": "636ec5cfdb95771d213beece3906696a85192cba1ed85a9eba13007c693f4415",
+    "assets/skald-odyssey-og-070.jpg": "4600afb1a3311ea361bb50a419887e106a8a1356ea43b879b8ad1ad8d08f6a33",
+    "app.js": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
+    "get/index.html": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+    "availability.json": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559",
+    "assets/skald-odyssey-og-0710.jpg": "954314a111821dfba4bba607021830a605f72036c0e109b083e06d4a337f03df"
+  },
+  "websiteAssetSourceCaptures": {
+    "assets/reader-art.webp": {
+      "source": "site-shots-0.7.10 (capture lane, 2026-10-02; see docs/landing-copy-2/screenshots-0.7.10/PROVENANCE.md): source/reader-art__ios-phone-01-reader.png",
+      "sha256": "b6af16ebc0a454500ea5458def8ac71169aca58d109dfbfba36e1fe0643d6ed1",
+      "captureVersion": "0.7.10"
+    },
+    "assets/greek-split.webp": {
+      "source": "site-shots-0.7.10 (capture lane, 2026-10-02; see docs/landing-copy-2/screenshots-0.7.10/PROVENANCE.md): source/greek-split__ios-ipad-03-parallel.png",
+      "sha256": "2ac6013a98174ecec7e82f652964f1a8c310d2d15184e7af9cdfe3f6070b265b",
+      "captureVersion": "0.7.10"
+    },
+    "assets/museum-guide.webp": {
+      "source": "site-shots-0.7.10 (capture lane, 2026-10-02; see docs/landing-copy-2/screenshots-0.7.10/PROVENANCE.md): source/museum-guide__ios-ipad-07-art.png",
+      "sha256": "657fbdf65a8b691c7ec60e311d14ec01b433fdf20337508cdc3a4b18e2e10cb7",
+      "captureVersion": "0.7.10"
+    },
+    "assets/nostos-route.webp": {
+      "source": "site-shots-0.7.10 (capture lane, 2026-10-02; see docs/landing-copy-2/screenshots-0.7.10/PROVENANCE.md): source/nostos-route__ios-ipad-08-voyage-map.png",
+      "sha256": "f775e79d7f5ec487ae18fb46afa3754149811311239c11b1b64e44b64a1f6beb",
+      "captureVersion": "0.7.10"
+    },
+    "captureVersion": "0.7.10",
+    "captureBuild": "tag v0.7.10, commit a73ca6dd2c5fba1643ba840b6d1434c1a5edf527, Release, iOS Simulator; 0.7.10 (24)",
+    "note": "The four page screenshots and the screenshot inside the share card are all 0.7.10 captures. The older cards assets/skald-odyssey-og-070.jpg and assets/skald-odyssey-og-20261002.jpg (0.7.0 screenshot) stay served for links already shared.",
+    "resolvedStale": {
+      "assets/museum-guide.webp": "The stale image accepted in skald/docs/landing-2026-10-02 is resolved: the note in the new capture reads 'hefts a great fluted bronze basin beside her'."
+    },
+    "acceptedDifferences": [
+      "assets/nostos-route.webp is an iPad landscape capture cropped to 16:9 (top 75% of the screen) and scaled to 1920x1080; the old one was an Android tablet capture.",
+      "The margin mark reads 'NOTE' where the 0.7.0 captures read 'RARE WORD' (reader-art, greek-split).",
+      "The museum sheet's backdrop is opaque in assets/museum-guide.webp; the reader behind the card is no longer visible."
+    ],
+    "assets/skald-odyssey-og-0710.jpg": {
+      "source": "site-shots-0.7.10 (capture lane, 2026-10-02): source/greek-split__ios-ipad-03-parallel.png",
+      "sha256": "2ac6013a98174ecec7e82f652964f1a8c310d2d15184e7af9cdfe3f6070b265b",
+      "captureVersion": "0.7.10",
+      "generator": "docs/landing-facts-0.7.10/og-render/ (og.html, og-render.mjs), unchanged; PNG then sips JPEG quality 90. With the 0.7.0 input it reproduces skald-odyssey-og-20261002.jpg byte for byte."
+    }
+  },
+  "websiteImageCacheKey": "?v=0710-20261002",
+  "websiteTextBindings": {
+    "hero_alt": "Skald on iPhone, showing Butler's opening of Book I with reading notes and historical art.",
+    "greek_alt": "Skald on iPad, with the Ancient Greek beside an English translation.",
+    "art_alt": "Skald showing Pieter Lastman’s Odysseus and Minerva with its collection details and a reading note.",
+    "map_alt": "Skald voyage map with locations from the Odyssey.",
+    "art_caption": "Open an artwork alongside the poem.",
+    "og_and_twitter_image_alt": "Skald on iPad, with the Ancient Greek beside an English translation.",
+    "og_and_twitter_image_url": "https://skald.mannamila.com/assets/skald-odyssey-og-0710.jpg?v=20261002",
+    "og_card_text_lines": [
+      "Skald: Odyssey",
+      "Spend some time with the Odyssey."
+    ],
+    "availability_sentence": "Skald is available on Android, iPhone, and iPad in the United States, Canada, Australia, New Zealand, and the 27 member states of the European Union.",
+    "forbidden_stale_framing": [
+      "next update",
+      "next Skald update",
+      "next app update",
+      "coming in version",
+      "arrives with version",
+      "Preview the next",
+      "look up a person or place",
+      "tap a stop",
+      "tap a place"
+    ],
+    "allowed_next_update_heading": "Hear about the next update.",
+    "hero_caption": "Open art alongside the passage you’re reading.",
+    "greek_caption": "Read the Greek beside a translation, with linked scrolling.",
+    "map_caption": "Trace the long route toward home without leaving the reader.",
+    "language_faq": "The app’s interface, notes and retellings are in English. The 24 translations are in 11 languages: English, French, Spanish, German, Italian, Russian, Dutch, Danish, Swedish, Hebrew and Modern Greek.",
+    "journey_sentence": "Follow the voyage on the map and see what happens to the fleet."
+  },
+  "approved_sha256": {
+    "resolved-index.html": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40"
+  },
+  "supersession": {
+    "priorWebsiteRegistry": {
+      "path": "skald/docs/landing-2026-10-02-copy-2/review-registry.json",
+      "sha256": "bd18a13d9791b8a1e0b46924b6903c36841823b9afa5e504ad42cc4d07b75ddc",
+      "supersededEntries": {
+        "approved_sha256.resolved-index.html": "1e424a1b1d423f31f822c33b397da66968bab0abbb320cb9070cdfb375b244e4"
+      },
+      "replacement": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+      "note": "Supersedes the landing index hash and the og image binding of the copy-2 registry. Chain: this registry -> landing-2026-10-02-copy-2 -> landing-2026-10-02 -> store-web-2026-09-15-native -> store-web-2026-09-13. Keep the history."
+    }
+  },
+  "nonBlockingFollowUps": [
+    "App: fix the map tap handler to open the nearest stop (arbitration, 'For the root').",
+    "The store description still says 'look up people and places as you go'.",
+    ".skald-source.json in deploy is stale; regenerate via promote-skald.mjs --apply."
+  ],
+  "claimsNotMade": [
+    "no legal rights, licence, privacy or trader attestation",
+    "nothing was tapped on a device"
+  ],
+  "outputs": {
+    "registry": "skald/docs/landing-2026-10-02-copy-3/review-registry.json",
+    "resolvedIndex": "skald/docs/landing-2026-10-02-copy-3/resolved-index.html"
+  }
+}
