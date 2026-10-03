@@ -67,8 +67,8 @@
     "assets/nostos-route.webp": "84cfa9dcc8c9de1ae036c07a409de496ef129f54e8ea7df132232bfc36546765",
     "assets/skald-odyssey-og-20261002.jpg": "636ec5cfdb95771d213beece3906696a85192cba1ed85a9eba13007c693f4415",
     "assets/skald-odyssey-og-070.jpg": "4600afb1a3311ea361bb50a419887e106a8a1356ea43b879b8ad1ad8d08f6a33",
-    "app.js": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
-    "get/index.html": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+    "app.js": "e96bbff29790f2690963566af1b0e35efdfe4dc89707bb70ffb334b999e66fa6",
+    "get/index.html": "f3352d8d48ff8a236eb7c1f88fb5d809825aca5df9b70a0f57bba02df1726007",
     "availability.json": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559",
     "assets/skald-odyssey-og-0710.jpg": "954314a111821dfba4bba607021830a605f72036c0e109b083e06d4a337f03df"
   },
@@ -169,5 +169,23 @@
   "outputs": {
     "registry": "skald/docs/landing-2026-10-02-copy-3/review-registry.json",
     "resolvedIndex": "skald/docs/landing-2026-10-02-copy-3/resolved-index.html"
-  }
+  },
+  "mechanicalAmendments": [
+    {
+      "date": "2026-10-02",
+      "file": "app.js",
+      "sha256_before": "c07ce27bbe0476577ea8dfad7490732f15d32b859ef75f0866acc020efd5c899",
+      "sha256_after": "e96bbff29790f2690963566af1b0e35efdfe4dc89707bb70ffb334b999e66fa6",
+      "change": "loads campaign-links.js and re-applies ?utm_* campaign tags to the store links after availability is applied; no copy, alt text or metadata changed (index.html untouched, hash unchanged)",
+      "review": "none required: mechanical script change (AGENTS.md content review protocol excludes mechanical changes)"
+    },
+    {
+      "date": "2026-10-02",
+      "file": "get/index.html",
+      "sha256_before": "09ced3b5ec6f4eb5c9dd6978832358266096a64e94dc74c8ba2a13318d7d2434",
+      "sha256_after": "f3352d8d48ff8a236eb7c1f88fb5d809825aca5df9b70a0f57bba02df1726007",
+      "change": "store badge hrefs reset to the plain store URLs (the stale hard-coded test tags ct=meta-test-1 / utm_campaign=test1 removed) and campaign-links.js loaded; the page copy is unchanged",
+      "review": "none required: mechanical link/script change"
+    }
+  ]
 }
