@@ -59,7 +59,7 @@
     "skald/index.html (candidate as reviewed, at 3851716)": "53967dcaae5e6a7f3d2784e1cabee7fc18fd03bc3593c673cda5aa3c7b2297e9"
   },
   "websiteFilesSha256": {
-    "index.html": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+    "index.html": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
     "styles.css": "d6c5c79d4ecc92a044a0b29489d560bb77d76ae3490b0debde2afa43620174b4",
     "assets/reader-art.webp": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
     "assets/greek-split.webp": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
@@ -68,7 +68,7 @@
     "assets/skald-odyssey-og-20261002.jpg": "636ec5cfdb95771d213beece3906696a85192cba1ed85a9eba13007c693f4415",
     "assets/skald-odyssey-og-070.jpg": "4600afb1a3311ea361bb50a419887e106a8a1356ea43b879b8ad1ad8d08f6a33",
     "app.js": "e96bbff29790f2690963566af1b0e35efdfe4dc89707bb70ffb334b999e66fa6",
-    "get/index.html": "f3352d8d48ff8a236eb7c1f88fb5d809825aca5df9b70a0f57bba02df1726007",
+    "get/index.html": "fbd7962a1ac2bcdf310590191267f75efe5870a64dd4dfece2c70de847cc979e",
     "availability.json": "c9ac00c32be7719b97a43cf8f3ebd6ea308c0125aed580936bb16e551cb52559",
     "assets/skald-odyssey-og-0710.jpg": "954314a111821dfba4bba607021830a605f72036c0e109b083e06d4a337f03df"
   },
@@ -144,7 +144,7 @@
     "journey_sentence": "Follow the voyage on the map and see what happens to the fleet."
   },
   "approved_sha256": {
-    "resolved-index.html": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40"
+    "resolved-index.html": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71"
   },
   "supersession": {
     "priorWebsiteRegistry": {
@@ -153,7 +153,7 @@
       "supersededEntries": {
         "approved_sha256.resolved-index.html": "1e424a1b1d423f31f822c33b397da66968bab0abbb320cb9070cdfb375b244e4"
       },
-      "replacement": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+      "replacement": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
       "note": "Supersedes the landing index hash and the og image binding of the copy-2 registry. Chain: this registry -> landing-2026-10-02-copy-2 -> landing-2026-10-02 -> store-web-2026-09-15-native -> store-web-2026-09-13. Keep the history."
     }
   },
@@ -186,6 +186,22 @@
       "sha256_after": "f3352d8d48ff8a236eb7c1f88fb5d809825aca5df9b70a0f57bba02df1726007",
       "change": "store badge hrefs reset to the plain store URLs (the stale hard-coded test tags ct=meta-test-1 / utm_campaign=test1 removed) and campaign-links.js loaded; the page copy is unchanged",
       "review": "none required: mechanical link/script change"
+    },
+    {
+      "date": "2026-10-13",
+      "file": "index.html",
+      "sha256_before": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
+      "sha256_after": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
+      "change": "museum figures 236 artworks and objects / 48 museums and collections -> 229 / 47 (eyebrow and paragraph); the 258 total and all other copy unchanged; resolved-index.html and the pinned hashes updated to match",
+      "review": "none required: mechanical figure correction already approved by skald docs/store/releases/0.7.11/FINAL-listing-count-corrections.md (carried into 0.7.12); AGENTS.md content review protocol excludes mechanical changes"
+    },
+    {
+      "date": "2026-10-13",
+      "file": "get/index.html",
+      "sha256_before": "f3352d8d48ff8a236eb7c1f88fb5d809825aca5df9b70a0f57bba02df1726007",
+      "sha256_after": "fbd7962a1ac2bcdf310590191267f75efe5870a64dd4dfece2c70de847cc979e",
+      "change": "line under the headline: 236 works from museums and collections -> 229; all other copy unchanged",
+      "review": "none required: mechanical figure correction already approved by skald docs/store/releases/0.7.11/FINAL-listing-count-corrections.md (carried into 0.7.12); AGENTS.md content review protocol excludes mechanical changes"
     }
   ]
 }
