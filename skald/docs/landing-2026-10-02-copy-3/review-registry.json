@@ -59,7 +59,7 @@
     "skald/index.html (candidate as reviewed, at 3851716)": "53967dcaae5e6a7f3d2784e1cabee7fc18fd03bc3593c673cda5aa3c7b2297e9"
   },
   "websiteFilesSha256": {
-    "index.html": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
+    "index.html": "a30265f71133a5f681a979400104548159e7cacb01d6c067c507f592c66534f1",
     "styles.css": "d6c5c79d4ecc92a044a0b29489d560bb77d76ae3490b0debde2afa43620174b4",
     "assets/reader-art.webp": "fec771681dd17b61f02a934d1e3a27f93533dc24032a8b8cba65441ce5bfa102",
     "assets/greek-split.webp": "4a3820095ba0bfd13ec7b1f7e904f89f9b74842ac85a552cc5806af8ea67aa89",
@@ -144,7 +144,7 @@
     "journey_sentence": "Follow the voyage on the map and see what happens to the fleet."
   },
   "approved_sha256": {
-    "resolved-index.html": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71"
+    "resolved-index.html": "a30265f71133a5f681a979400104548159e7cacb01d6c067c507f592c66534f1"
   },
   "supersession": {
     "priorWebsiteRegistry": {
@@ -153,7 +153,7 @@
       "supersededEntries": {
         "approved_sha256.resolved-index.html": "1e424a1b1d423f31f822c33b397da66968bab0abbb320cb9070cdfb375b244e4"
       },
-      "replacement": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
+      "replacement": "a30265f71133a5f681a979400104548159e7cacb01d6c067c507f592c66534f1",
       "note": "Supersedes the landing index hash and the og image binding of the copy-2 registry. Chain: this registry -> landing-2026-10-02-copy-2 -> landing-2026-10-02 -> store-web-2026-09-15-native -> store-web-2026-09-13. Keep the history."
     }
   },
@@ -191,8 +191,8 @@
       "date": "2026-10-13",
       "file": "index.html",
       "sha256_before": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40",
-      "sha256_after": "91e43c18280f055c8c0345599d466ea51291fd5dd575db0bc2aeefc80c17ad71",
-      "change": "museum figures 236 artworks and objects / 48 museums and collections -> 229 / 47 (eyebrow and paragraph); the 258 total and all other copy unchanged; resolved-index.html and the pinned hashes updated to match",
+      "sha256_after": "a30265f71133a5f681a979400104548159e7cacb01d6c067c507f592c66534f1",
+      "change": "museum figures 236 artworks and objects / 48 museums and collections -> 229 / 47 (eyebrow and paragraph); the 258 total and all other copy unchanged; resolved-index.html and the pinned hashes updated to match; also 'Another 22 historical works' -> 'Another 29' so 229 + 29 = 258 (258 unchanged). Evidence: skald origin/main docs/content/reviews/release-0.7.11-2026-10-05/listing-count-corrections.md line 14 ('The separate historical-art identity count is expected to stay 258 because removed museum entries still have plates in the text') and FINAL-listing-count-corrections.md (229 from 47; 258 unchanged)",
       "review": "none required: mechanical figure correction already approved by skald docs/store/releases/0.7.11/FINAL-listing-count-corrections.md (carried into 0.7.12); AGENTS.md content review protocol excludes mechanical changes"
     },
     {
