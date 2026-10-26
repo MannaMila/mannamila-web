@@ -37,11 +37,20 @@ After authenticated Cloudflare access, restore this record:
 | Proxy | DNS only |
 | TTL | Auto |
 
-Cloudflare login is the present access blocker. Its saved-profile Continue button
-also accepts subscription terms, so the browser confirmation rule requires the
-owner's confirmation; it was not clicked. Do not reset/reissue Pages TLS before
-the DNS record resolves correctly. Follow `docs/github-pages-custom-domains.md`,
-then verify valid HTTPS for the landing, privacy and support routes.
+The unlocked 1Password vault contains **MannaMila Cloudflare Delivery**, an API
+credential. A fresh October 26 check authenticated successfully and listed the
+correct active zone/account, but both zone-detail and DNS-record requests returned
+HTTP403, Cloudflare code10000 (Authentication error). No DNS mutation was made.
+The missing capability is DNS-authorized access, not a missing or locked vault.
+A DNS-capable token scoped to this zone, or an authenticated Cloudflare admin
+session, is required. Do not broaden or replace the existing delivery token
+without owner authorization.
+
+The existing browser tab remains at the saved-profile login screen. Its Continue
+button explicitly accepts subscription terms and was not clicked. Do not reset
+Pages TLS until the DNS record resolves correctly. Follow
+`docs/github-pages-custom-domains.md`, then verify valid HTTPS for the landing,
+privacy and support routes.
 
 ## Promotion boundary
 
