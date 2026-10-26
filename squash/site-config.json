@@ -1,3 +1,4 @@
 {
-  "waitlistFormUrl": "https://docs.google.com/forms/d/e/REPLACE_WITH_PUBLIC_FORM_ID/viewform"
+  "waitlistEnabled": false,
+  "waitlistFormUrl": null
 }

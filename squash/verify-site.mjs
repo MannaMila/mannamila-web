@@ -36,10 +36,10 @@ const [index, styles, app, privacy, waitlistPrivacy, support, availabilityRaw, c
 
 const availability = JSON.parse(availabilityRaw);
 const config = JSON.parse(configRaw);
-const allowedStates = new Set(["review", "available"]);
+const allowedStates = new Set(["preparing", "review", "available"]);
 
 assert.equal(typeof availability.quest, "object", "quest availability is required");
-assert.ok(allowedStates.has(availability.quest.state), "quest state must be review or available");
+assert.ok(allowedStates.has(availability.quest.state), "quest state must be preparing, review or available");
 if (availability.quest.state === "available") {
   assert.match(
     availability.quest.storeUrl ?? "",
@@ -48,21 +48,26 @@ if (availability.quest.state === "available") {
   );
 }
 assert.match(availability.lastVerifiedAt, /^\d{4}-\d{2}-\d{2}T/, "lastVerifiedAt must be ISO-8601");
+if (availability.quest.state === "preparing") {
+  assert.doesNotMatch(index, /currently in (?:Meta Horizon )?store review/i,
+    "HTML fallback must not claim a submission before JavaScript loads");
+}
 
-assert.equal(typeof config.waitlistFormUrl, "string", "waitlistFormUrl must be centralized in site-config.json");
-assert.match(config.waitlistFormUrl, /^https:\/\/docs\.google\.com\/forms\//, "waitlistFormUrl must be a Google Forms URL");
-if (!process.env.SQUASH_ALLOW_PLACEHOLDER_FORM) {
-  assert.doesNotMatch(
-    config.waitlistFormUrl,
-    /REPLACE_WITH_PUBLIC_FORM_ID/,
-    "replace the temporary public Google Form URL before publishing",
-  );
+assert.equal(typeof config.waitlistEnabled, "boolean", "waitlistEnabled must be explicit");
+if (config.waitlistEnabled) {
+  assert.equal(typeof config.waitlistFormUrl, "string", "enabled waitlist requires a URL");
+  assert.match(config.waitlistFormUrl, /^https:\/\/docs\.google\.com\/forms\//);
+  if (!process.env.SQUASH_ALLOW_PLACEHOLDER_FORM) {
+    assert.doesNotMatch(config.waitlistFormUrl, /REPLACE_WITH_PUBLIC_FORM_ID/);
+  }
+} else {
+  assert.equal(config.waitlistFormUrl, null, "disabled waitlist must not retain a placeholder URL");
+  assert.doesNotMatch(index, /Join the (launch )?waitlist|before the page is published/i);
 }
 
 const expectedIndexText = [
   "Mila Squash",
-  "Coming soon to Meta Quest 3.",
-  "Currently in store review.",
+  "Preparing for Early Access on Meta Quest 3.",
   "regulation-size",
   "WSF",
   "double-yellow ball",
@@ -71,7 +76,7 @@ const expectedIndexText = [
   "saved privately on your headset",
   "Built for realism over arcade fun.",
   "Standing play, controllers, solo focus.",
-  "Join the launch waitlist",
+  "Release status",
   "MannaMila LLC",
 ];
 for (const expected of expectedIndexText) {
@@ -126,7 +131,7 @@ for (const match of index.matchAll(/(?:src|href)="\.\/([^"#?]+)"/g)) {
   await access(join(root, target));
 }
 
-assert.match(app, /REVIEW_AVAILABILITY/);
+assert.match(app, /UNRELEASED_AVAILABILITY/);
 assert.match(app, /normalizePlatform/);
 assert.match(app, /www\.meta\.com/);
 assert.match(app, /availability\.json/);
@@ -150,7 +155,7 @@ assert.match(support, /href="\.\.\/privacy\/"/);
 
 const analyticsVerification = spawnSync(
   process.execPath,
-  [join(root, "../scripts/test-analytics-contract.mjs")],
+  [join(root, "../scripts/test-analytics-contract.mjs"), "--site", "squash"],
   {
     cwd: root,
     encoding: "utf8",
@@ -163,4 +168,7 @@ if (analyticsVerification.status !== 0) {
 }
 process.stdout.write(analyticsVerification.stdout);
 
+const releaseState = spawnSync(process.execPath, [join(root, "../scripts/test-squash-release-state.mjs")], { cwd: root, encoding: "utf8" });
+assert.equal(releaseState.status, 0, releaseState.stderr || releaseState.stdout);
+process.stdout.write(releaseState.stdout);
 console.log("Mila Squash site verification passed.");

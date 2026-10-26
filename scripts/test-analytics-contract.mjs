@@ -7,11 +7,15 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const sites = [
+const allSites = [
   { sourcePath: "skald", hostname: "skald.mannamila.com" },
   { sourcePath: "squash", hostname: "squash.mannamila.com" },
   { sourcePath: "inspire", hostname: "inspire.mannamila.com" },
 ];
+const args = process.argv.slice(2);
+assert.ok(args.length === 0 || (args.length === 2 && args[0] === "--site"), "usage: test-analytics-contract.mjs [--site skald|squash|inspire]");
+const sites = args.length === 0 ? allSites : allSites.filter(site => site.sourcePath === args[1]);
+assert.ok(sites.length > 0, "unknown product site");
 const forbiddenAnalyticsSource =
   /\bG-[A-Z0-9]{8,}\b|googletagmanager|google-analytics|\bgtag\b|cookie_domain/i;
 const toPosix = (path) => path.split(sep).join("/");
