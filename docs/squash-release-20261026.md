@@ -1,6 +1,6 @@
 # Mila Squash release website handoff — 2026-10-26
 
-Prepared source only; no deployment or DNS changes were made. This work supports
+Prepared website source remains unpublished. The DNS repair below is now applied; TLS is still unverified. This work supports
 the app's Serve Practice Early Access candidate in
 [squash-vr PR #143](https://github.com/MannaMila/squash-vr/pull/143).
 
@@ -19,38 +19,38 @@ the app's Serve Practice Early Access candidate in
 - Browser preview stalled and was aborted. No webpage visual approval or live
   content parity is claimed. The unused local preview server was stopped.
 
-## Concrete hosting repair
+## DNS repaired; GitHub certificate still blocked
 
-GitHub Pages for `MannaMila/squash-web` already has the correct custom domain and
-HTTPS enforcement. Its certificate was expired October 15, state `bad_authz`.
-Public DNS on October 26 has no usable address/CNAME for the subdomain; the root
-domain has no restrictive CAA record, and `mannamila.github.io` resolves normally.
+The owner explicitly approved the Cloudflare sign-in terms and repair. Computer
+control signed into the saved MannaMila Google profile and created the missing
+DNS-only CNAME on October 26:
 
-After authenticated Cloudflare access, restore this record:
-
-| Field | Value |
+| Field | Applied value |
 |---|---|
 | Zone | `mannamila.com` |
-| Type | CNAME |
 | Name | `squash` |
-| Target | `mannamila.github.io` |
-| Proxy | DNS only |
-| TTL | Auto |
+| Type/target | CNAME → `mannamila.github.io` |
+| Proxy / TTL | DNS only / Auto |
 
-The unlocked 1Password vault contains **MannaMila Cloudflare Delivery**, an API
-credential. A fresh October 26 check authenticated successfully and listed the
-correct active zone/account, but both zone-detail and DNS-record requests returned
-HTTP403, Cloudflare code10000 (Authentication error). No DNS mutation was made.
-The missing capability is DNS-authorized access, not a missing or locked vault.
-A DNS-capable token scoped to this zone, or an authenticated Cloudflare admin
-session, is required. Do not broaden or replace the existing delivery token
-without owner authorization.
+Cloudflare's saved row and authoritative chin/corey nameservers confirm the
+record. Public 1.1.1.1 and 8.8.8.8 also resolve the correct CNAME. The root and
+subdomain have no CAA restrictions. No other DNS records or API-token permissions
+were changed. The existing Delivery API token still lacks DNS-record access;
+the approved browser session supplied the required administration access.
 
-The existing browser tab remains at the saved-profile login screen. Its Continue
-button explicitly accepts subscription terms and was not clicked. Do not reset
-Pages TLS until the DNS record resolves correctly. Follow
-`docs/github-pages-custom-domains.md`, then verify valid HTTPS for the landing,
-privacy and support routes.
+GitHub Pages for `MannaMila/squash-web` retains `main` `/` and the correct custom
+domain. Its October 15-expired certificate still reports `bad_authz` as of
+2026-10-27 03:54 UTC. Documented domain remove/reattach recovery was attempted,
+including explicit null removal and waiting for the removal deployment to finish.
+The site rebuilds, but strict HTTPS requests to `/`, `/privacy/` and `/support/`
+still reject the expired certificate. GitHub refuses `https_enforced=true` with
+“The certificate has not finished being issued”; the current flag is false.
+Do not claim HTTPS or public content parity complete.
+
+The GitHub browser-settings request stalled despite its requested timeout; no
+further retries of that browser path were made. API/CLI remained available.
+Receipts are preserved in the Squash app worktree under
+`test_output/s328/cloudflare-dns-20261026/`. No support message was sent.
 
 ## Promotion boundary
 
