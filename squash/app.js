@@ -8,8 +8,8 @@ if (new URLSearchParams(window.location.search).has("embed")) {
   document.documentElement.classList.add("embed");
 }
 
-const REVIEW_AVAILABILITY = Object.freeze({
-  quest: { state: "review", storeUrl: null },
+const UNRELEASED_AVAILABILITY = Object.freeze({
+  quest: { state: "preparing", storeUrl: null },
   lastVerifiedAt: null,
 });
 
@@ -21,8 +21,9 @@ const platformRules = {
 };
 
 const normalizePlatform = (platform, name) => {
+  if (platform?.state === "review") return { state: "review", storeUrl: null };
   if (!platform || platform.state !== "available") {
-    return REVIEW_AVAILABILITY[name];
+    return UNRELEASED_AVAILABILITY[name];
   }
 
   try {
@@ -35,9 +36,9 @@ const normalizePlatform = (platform, name) => {
 
     return trusted
       ? { state: "available", storeUrl: url.toString() }
-      : REVIEW_AVAILABILITY[name];
+      : UNRELEASED_AVAILABILITY[name];
   } catch {
-    return REVIEW_AVAILABILITY[name];
+    return UNRELEASED_AVAILABILITY[name];
   }
 };
 
@@ -52,15 +53,21 @@ const availabilityCopy = (availability) => {
       status: "Available now on Meta Quest 3.",
       faq: "Mila Squash is available now for Meta Quest 3 on the Meta Horizon Store.",
       kicker: "Available on Meta Quest 3",
-      waitlist: "Get occasional Mila Squash updates",
+      waitlist: "Release status",
     };
   }
 
-  return {
+  if (availability.quest.state === "review") return {
     status: "Coming soon to Meta Quest 3. Currently in store review.",
-    faq: "Mila Squash is currently in Meta Horizon Store review for Quest 3. Join the waitlist to hear when it opens.",
+    faq: "Mila Squash is currently in Meta Horizon Store review for Quest 3. Availability will be announced here.",
     kicker: "Coming to Meta Quest 3",
-    waitlist: "Join the launch waitlist",
+    waitlist: "Release status",
+  };
+  return {
+    status: "Preparing for Early Access on Meta Quest 3.",
+    faq: "Mila Squash is in private testing. It has not been submitted for public store review. Availability will be announced here.",
+    kicker: "In development for Meta Quest 3",
+    waitlist: "Release status",
   };
 };
 
@@ -99,7 +106,7 @@ const loadAvailability = () =>
       return response.json();
     })
     .then(applyAvailability)
-    .catch(() => applyAvailability(REVIEW_AVAILABILITY));
+    .catch(() => applyAvailability(UNRELEASED_AVAILABILITY));
 
 const publicFormUrl = (value) => {
   if (typeof value !== "string" || value.includes("REPLACE_WITH_PUBLIC_FORM_ID")) return null;
@@ -115,6 +122,7 @@ const publicFormUrl = (value) => {
 };
 
 const mountWaitlist = (config) => {
+  if (config?.waitlistEnabled !== true) return;
   const mount = document.querySelector("[data-waitlist-container]");
   const configuredUrl = publicFormUrl(config?.waitlistFormUrl);
   if (!mount || !configuredUrl) return;

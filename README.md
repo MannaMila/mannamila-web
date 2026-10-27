@@ -86,7 +86,7 @@ node squash/verify-site.mjs
 node scripts/test-promote-squash.mjs
 ```
 
-The site verifier intentionally fails while `squash/site-config.json` still contains the temporary Google Form URL. During local development only, the non-publishable structure can be checked with:
+The waitlist can remain deliberately disabled with `waitlistEnabled: false` and a null URL; no signup iframe or signup promise is shown. Enabling it requires a real public Form URL. Placeholder testing is non-publishable and development-only:
 
 ```sh
 SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
@@ -106,9 +106,9 @@ This backwards-compatible lane removes the retired `analytics.js`, deploys
 It fails if any other source/deployment byte differs, so it cannot be used to
 introduce or alter the placeholder form.
 
-Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
+Store availability is controlled only by `squash/availability.json`. Keep `quest` in `preparing` before a real submission. Use `review` only when a submitted review is verified, and retain it until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
 
-After the public Form URL is configured and the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:
+After the source commit is reviewed and the optional waitlist is either disabled or validly configured, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:
 
 ```sh
 node scripts/promote-squash.mjs --target ../squash-web --dry-run
@@ -116,7 +116,9 @@ node scripts/promote-squash.mjs --target ../squash-web --apply
 node scripts/promote-squash.mjs --target ../squash-web --check
 ```
 
-Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.squash-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
+Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.squash-source.json` and refuses dirty source, an enabled but unconfigured Form, unexpected target files, or the wrong custom domain.
+
+See [the October 26 Squash release handoff](docs/squash-release-20261026.md) for prepared source, DNS/TLS recovery and remaining verification.
 
 ## Mila Inspire site
 
