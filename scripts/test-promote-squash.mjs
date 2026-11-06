@@ -24,19 +24,24 @@ try {
   await writeFile(join(target, ".github/workflows/pages.yml"), "name: Pages\n");
   await writeFile(join(target, "docs/deploy.md"), "deployment notes\n");
   await writeFile(join(target, "README.md"), "Mila Squash web deployment\n");
-  await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
+  // The currently deployed tree carries the 2026-07 retirement script; promotion must remove it.
+  await writeFile(join(target, "retire-analytics.js"), "legacy retirement script\n");
 
   const dryRun = run("--dry-run", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(dryRun.status, 0, dryRun.stderr);
   assert.match(dryRun.stdout, /Dry run/);
-  assert.match(dryRun.stdout, /remove\s+analytics\.js/);
+  assert.match(dryRun.stdout, /remove\s+retire-analytics\.js/);
+  assert.match(dryRun.stdout, /add\s+analytics\.js/);
+  assert.match(dryRun.stdout, /add\s+media\/hand-racket-ball-control\.mp4/);
   await assert.rejects(readFile(join(target, "index.html")));
 
   const apply = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(apply.status, 0, apply.stderr);
   assert.match(await readFile(join(target, "index.html"), "utf8"), /Mila Squash/);
-  await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
-  assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
+  await assert.rejects(readFile(join(target, "retire-analytics.js"), "utf8"));
+  assert.match(await readFile(join(target, "analytics.js"), "utf8"), /G-E0E4FPDPTB/);
+  await readFile(join(target, "media/hand-racket-ball-control.mp4"));
+  await readFile(join(target, "media/serve-practice.jpg"));
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "squash.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
@@ -47,54 +52,24 @@ try {
   assert.equal(typeof manifest.sourceCommit, "string");
   assert.equal(typeof manifest.sourceTreeDirty, "boolean");
   assert.ok(manifest.files["index.html"]);
-  assert.ok(manifest.files["retire-analytics.js"]);
-  assert.equal(manifest.files["analytics.js"], undefined);
+  assert.ok(manifest.files["analytics.js"]);
+  assert.ok(manifest.files["media/hand-racket-ball-control.mp4"]);
+  assert.equal(manifest.files["retire-analytics.js"], undefined);
   assert.equal(manifest.files["verify-site.mjs"], undefined);
 
   const check = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
   assert.equal(check.status, 0, check.stderr);
   assert.match(check.stdout, /Parity check passed/);
 
-  await rm(join(target, "retire-analytics.js"));
-  await writeFile(join(target, "analytics.js"), "legacy analytics loader\n");
-  for (const page of [
-    "index.html",
-    "privacy/index.html",
-    "support/index.html",
-    "waitlist-privacy/index.html",
-  ]) {
-    const pagePath = join(target, page);
-    const html = await readFile(pagePath, "utf8");
-    await writeFile(
-      pagePath,
-      html.replace(
-        /^\s*<script src="(?:\.\/|\.\.\/)retire-analytics\.js" defer><\/script>\n/m,
-        "",
-      ),
-    );
-  }
-
-  const analyticsDryRun = run("--analytics-only", "--dry-run", "--allow-dirty-source");
-  assert.equal(analyticsDryRun.status, 0, analyticsDryRun.stderr);
-  assert.match(analyticsDryRun.stdout, /Analytics-only dry run/);
-
-  const analyticsApply = run("--analytics-only", "--apply", "--allow-dirty-source");
-  assert.equal(analyticsApply.status, 0, analyticsApply.stderr);
-  await assert.rejects(readFile(join(target, "analytics.js"), "utf8"));
-  assert.match(await readFile(join(target, "retire-analytics.js"), "utf8"), /Max-Age=0/);
-
-  await writeFile(join(target, "app.js"), "changed outside analytics scope\n");
-  const unsafeAnalyticsPromotion = run("--analytics-only", "--dry-run", "--allow-dirty-source");
-  assert.notEqual(unsafeAnalyticsPromotion.status, 0);
-  assert.match(unsafeAnalyticsPromotion.stderr, /outside analytics-only scope/i);
-
-  const restore = run("--apply", "--allow-placeholder-form", "--allow-dirty-source");
-  assert.equal(restore.status, 0, restore.stderr);
-
   await writeFile(join(target, "index.html"), "changed\n");
   const brokenCheck = run("--check", "--allow-placeholder-form", "--allow-dirty-source");
   assert.notEqual(brokenCheck.status, 0);
   assert.match(brokenCheck.stderr, /parity/i);
+
+  await writeFile(join(target, "stray.txt"), "unexpected\n");
+  const strayTarget = run("--dry-run", "--allow-placeholder-form", "--allow-dirty-source");
+  assert.notEqual(strayTarget.status, 0);
+  assert.match(strayTarget.stderr, /Unexpected target entries/);
 } finally {
   await rm(target, { recursive: true, force: true });
 }

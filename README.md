@@ -10,13 +10,14 @@ python3 -m http.server 5173
 
 Then open `http://127.0.0.1:5173/`.
 
-## Product-site analytics retirement
+## Product-site analytics
 
-The reviewed Skald, Mila Squash, and Mila Inspire sources do not load Google
-Analytics. Every product route loads a small first-party retirement script that
-expires observable legacy `_ga` and `_ga_*` cookies without making a network
-request. The main MannaMila Google Site has a separate native Analytics setting
-and is outside these static deployment trees.
+The reviewed Skald and Mila Inspire sources do not load Google Analytics. Every
+route on those sites loads a small first-party retirement script that expires
+observable legacy `_ga` and `_ga_*` cookies without making a network request. The
+Mila Squash source re-enabled GA4 on 2026-11-06 through a hostname-gated loader with
+a host-scoped cookie. The main MannaMila Google Site has a separate native Analytics
+setting and is outside these static deployment trees.
 
 Verify the complete static-product-site contract with:
 
@@ -24,7 +25,7 @@ Verify the complete static-product-site contract with:
 node scripts/test-analytics-contract.mjs
 ```
 
-See [Google Analytics](docs/google-analytics.md) for retirement coverage,
+See [Google Analytics](docs/google-analytics.md) for the per-site contract,
 limitations, promotion requirements, and live verification.
 
 ## Skald site
@@ -79,36 +80,41 @@ It also refuses to run until the target already has the reviewed
 
 ## Mila Squash site
 
-The reviewed source for `squash.mannamila.com` lives under `squash/`. Verify it before promotion:
+The reviewed source for `squash.mannamila.com` lives under `squash/`. Since
+2026-11-06 it presents the private **Alpha** on Meta Quest 3 (manual approval, 18+,
+200 people) with the verified Meta enrollment link, embeds five reviewed gameplay and
+stats clips under `squash/media/`, and loads Google Analytics 4 through
+`squash/analytics.js` (see [Google Analytics](docs/google-analytics.md)). Verify it
+before promotion:
 
 ```sh
 node squash/verify-site.mjs
 node scripts/test-promote-squash.mjs
 ```
 
-The site verifier intentionally fails while `squash/site-config.json` still contains the temporary Google Form URL. During local development only, the non-publishable structure can be checked with:
+The verifier runs `scripts/test-analytics-contract.mjs --site squash` and
+`scripts/test-squash-release-state.mjs`, and pins every alpha request link to the
+verified Meta URL recorded in `squash/availability.json`.
+
+Release state is controlled only by `squash/availability.json`. Keep `quest` in
+`alpha` with the verified `inviteUrl` while the private channel is the only route in.
+Use `review` only when a store submission is verified. When the Meta Horizon Store page
+opens in a signed-out browser, set it to `available`, add the verified
+`https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the
+verifier and promotion flow again.
+
+The optional alpha email list is controlled by `squash/site-config.json`. With
+`signupEnabled: false` and a null URL, the signup section and its links stay hidden
+and no third-party iframe is mounted. Enabling it requires a real public Google Form
+URL; the form's fields must match `squash/waitlist-privacy/`. Placeholder testing is
+development-only:
 
 ```sh
 SQUASH_ALLOW_PLACEHOLDER_FORM=1 node squash/verify-site.mjs
 ```
 
-For an analytics-retirement release while that exact placeholder is already
-deployed, use the scoped lane:
-
-```sh
-node scripts/promote-squash.mjs --target ../squash-web --analytics-only --dry-run
-node scripts/promote-squash.mjs --target ../squash-web --analytics-only --apply
-node scripts/promote-squash.mjs --target ../squash-web --analytics-only --check
-```
-
-This backwards-compatible lane removes the retired `analytics.js`, deploys
-`retire-analytics.js`, and updates only the four HTML entry points that load it.
-It fails if any other source/deployment byte differs, so it cannot be used to
-introduce or alter the placeholder form.
-
-Store availability is controlled only by `squash/availability.json`. Keep `quest` in `review` until the Meta Horizon Store page opens in a signed-out browser. When it does, set it to `available`, add the verified `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the verifier and promotion flow again.
-
-After the public Form URL is configured and the source commit is reviewed, preview and apply the exact public-tree promotion into a clean `squash-web` checkout:
+After the source commit is reviewed, preview and apply the exact public-tree promotion
+into a clean `squash-web` checkout:
 
 ```sh
 node scripts/promote-squash.mjs --target ../squash-web --dry-run
@@ -116,7 +122,13 @@ node scripts/promote-squash.mjs --target ../squash-web --apply
 node scripts/promote-squash.mjs --target ../squash-web --check
 ```
 
-Promotion preserves the deployment repository's custom-domain, GitHub workflow, and documentation files. It records the source commit and SHA-256 checksums in `.squash-source.json` and refuses dirty source, an unconfigured Form, unexpected target files, or the wrong custom domain.
+Promotion preserves the deployment repository's custom-domain, GitHub workflow, and
+documentation files, removes the retired `retire-analytics.js`, and records the source
+commit and SHA-256 checksums in `.squash-source.json`. It refuses dirty source, an
+enabled but unconfigured Form, unexpected target files, or the wrong custom domain.
+
+See [the November 6 alpha website handoff](docs/squash-alpha-20261106.md) for the
+media provenance, the Google Form specification and the TLS recovery record.
 
 ## Mila Inspire site
 

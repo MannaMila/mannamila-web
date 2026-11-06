@@ -8,41 +8,42 @@ if (new URLSearchParams(window.location.search).has("embed")) {
   document.documentElement.classList.add("embed");
 }
 
-const REVIEW_AVAILABILITY = Object.freeze({
-  quest: { state: "review", storeUrl: null },
+// The verified Meta enrollment page for the Mila Squash private Alpha channel. The HTML
+// carries the same URL, so the call to action works before and without JavaScript.
+const ALPHA_INVITE_URL = "https://www.meta.com/s/8gekrWSxj";
+
+const ALPHA_AVAILABILITY = Object.freeze({
+  quest: { state: "alpha", inviteUrl: ALPHA_INVITE_URL, storeUrl: null },
   lastVerifiedAt: null,
 });
 
-const platformRules = {
-  quest: {
-    hostname: "www.meta.com",
-    pathPrefix: "/",
-  },
+const trustedMetaUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "www.meta.com" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 };
 
-const normalizePlatform = (platform, name) => {
-  if (!platform || platform.state !== "available") {
-    return REVIEW_AVAILABILITY[name];
+const normalizePlatform = (platform) => {
+  if (platform?.state === "available") {
+    const storeUrl = trustedMetaUrl(platform.storeUrl);
+    if (storeUrl) return { state: "available", inviteUrl: null, storeUrl };
   }
 
-  try {
-    const url = new URL(platform.storeUrl);
-    const rules = platformRules[name];
-    const trusted =
-      url.protocol === "https:" &&
-      url.hostname === rules.hostname &&
-      url.pathname.startsWith(rules.pathPrefix);
-
-    return trusted
-      ? { state: "available", storeUrl: url.toString() }
-      : REVIEW_AVAILABILITY[name];
-  } catch {
-    return REVIEW_AVAILABILITY[name];
+  if (platform?.state === "alpha") {
+    const inviteUrl = trustedMetaUrl(platform.inviteUrl);
+    if (inviteUrl) return { state: "alpha", inviteUrl, storeUrl: null };
   }
+
+  if (platform?.state === "review") return { state: "review", inviteUrl: null, storeUrl: null };
+
+  return ALPHA_AVAILABILITY.quest;
 };
 
 const normalizeAvailability = (value) => ({
-  quest: normalizePlatform(value?.quest, "quest"),
+  quest: normalizePlatform(value?.quest),
   lastVerifiedAt: typeof value?.lastVerifiedAt === "string" ? value.lastVerifiedAt : null,
 });
 
@@ -50,17 +51,26 @@ const availabilityCopy = (availability) => {
   if (availability.quest.state === "available") {
     return {
       status: "Available now on Meta Quest 3.",
-      faq: "Mila Squash is available now for Meta Quest 3 on the Meta Horizon Store.",
+      faq: "Mila Squash is available for Meta Quest 3 on the Meta Horizon Store.",
       kicker: "Available on Meta Quest 3",
-      waitlist: "Get occasional Mila Squash updates",
+      cta: "Get it on the Meta Horizon Store",
+    };
+  }
+
+  if (availability.quest.state === "review") {
+    return {
+      status: "Coming to Meta Quest 3. Currently in store review.",
+      faq: "Mila Squash is in Meta Horizon Store review for Quest 3. Availability will be announced here.",
+      kicker: "Coming to Meta Quest 3",
+      cta: "Request alpha access",
     };
   }
 
   return {
-    status: "Coming soon to Meta Quest 3. Currently in store review.",
-    faq: "Mila Squash is currently in Meta Horizon Store review for Quest 3. Join the waitlist to hear when it opens.",
-    kicker: "Coming to Meta Quest 3",
-    waitlist: "Join the launch waitlist",
+    status: "Private alpha on Meta Quest 3. Requests are reviewed by hand.",
+    faq: "Mila Squash is in a private alpha on Meta Quest 3. Request access through Meta; requests are reviewed by hand, testers must be 18 or older, and the channel holds 200 people. The store release date is not set.",
+    kicker: "Private alpha on Meta Quest 3",
+    cta: "Request alpha access",
   };
 };
 
@@ -70,26 +80,21 @@ const applyAvailability = (value) => {
   const status = document.querySelector("[data-availability-copy]");
   const faq = document.querySelector("[data-availability-faq]");
   const kicker = document.querySelector("[data-availability-kicker]");
-  const storeLinks = document.querySelector("[data-store-links]");
-  const questLink = document.querySelector('[data-store-link="quest"]');
 
   if (status) status.textContent = copy.status;
   if (faq) faq.textContent = copy.faq;
   if (kicker) kicker.textContent = copy.kicker;
 
-  document.querySelectorAll("[data-waitlist-link]").forEach((link) => {
-    link.textContent = copy.waitlist;
+  const destination = availability.quest.storeUrl ?? availability.quest.inviteUrl;
+  document.querySelectorAll("[data-invite-link]").forEach((link) => {
+    if (destination) {
+      link.href = destination;
+      link.hidden = false;
+    } else {
+      link.hidden = true;
+    }
+    if (link.dataset.inviteLink === "labelled") link.textContent = copy.cta;
   });
-
-  const available = availability.quest.state === "available";
-  if (questLink) {
-    questLink.hidden = !available;
-    if (available) questLink.href = availability.quest.storeUrl;
-  }
-
-  if (storeLinks) {
-    storeLinks.hidden = !available;
-  }
 };
 
 const loadAvailability = () =>
@@ -99,7 +104,7 @@ const loadAvailability = () =>
       return response.json();
     })
     .then(applyAvailability)
-    .catch(() => applyAvailability(REVIEW_AVAILABILITY));
+    .catch(() => applyAvailability(ALPHA_AVAILABILITY));
 
 const publicFormUrl = (value) => {
   if (typeof value !== "string" || value.includes("REPLACE_WITH_PUBLIC_FORM_ID")) return null;
@@ -114,9 +119,10 @@ const publicFormUrl = (value) => {
   }
 };
 
-const mountWaitlist = (config) => {
-  const mount = document.querySelector("[data-waitlist-container]");
-  const configuredUrl = publicFormUrl(config?.waitlistFormUrl);
+const mountSignup = (config) => {
+  if (config?.signupEnabled !== true) return;
+  const mount = document.querySelector("[data-signup-container]");
+  const configuredUrl = publicFormUrl(config?.signupFormUrl);
   if (!mount || !configuredUrl) return;
 
   const externalUrl = new URL(configuredUrl);
@@ -128,7 +134,7 @@ const mountWaitlist = (config) => {
   const frame = document.createElement("iframe");
   frame.className = "form-frame";
   frame.src = embeddedUrl.toString();
-  frame.title = "Join the Mila Squash launch and availability updates list";
+  frame.title = "Join the Mila Squash alpha list";
   frame.loading = "lazy";
   frame.referrerPolicy = "strict-origin-when-cross-origin";
 
@@ -144,16 +150,30 @@ const mountWaitlist = (config) => {
   fallback.append(fallbackLink, ".");
 
   mount.replaceChildren(frame, fallback);
+
+  document.querySelectorAll("[data-signup-section], [data-signup-link]").forEach((element) => {
+    element.hidden = false;
+  });
 };
 
-const loadWaitlist = () =>
+const loadSignup = () =>
   fetch("./site-config.json", { cache: "no-store" })
     .then((response) => {
       if (!response.ok) throw new Error("Site configuration was not available.");
       return response.json();
     })
-    .then(mountWaitlist)
+    .then(mountSignup)
     .catch(() => undefined);
+
+// Count clicks on the alpha request link as a Google Analytics event when the loader is
+// active. No personal data: the event carries only which link on the page was used.
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-invite-link]");
+  if (!link || typeof window.gtag !== "function") return;
+  window.gtag("event", "alpha_request_click", {
+    link_location: link.closest("[data-section]")?.dataset.section ?? "header",
+  });
+});
 
 const header = document.querySelector("[data-header]");
 const threadStage = document.querySelector(".thread-stage");
@@ -229,4 +249,4 @@ if (supportsIntersectionObserver) {
 window.addEventListener("resize", updateScrollDetails, { passive: true });
 updateScrollDetails();
 loadAvailability();
-loadWaitlist();
+loadSignup();
