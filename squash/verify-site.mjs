@@ -31,6 +31,8 @@ const requiredFiles = [
   "list/list.js",
   "assets/mila-squash-og.jpg",
   "assets/favicon.svg",
+  "assets/meta-quest-3.png",
+  "assets/meta-quest-3.webp",
   ...mediaClips.flatMap((clip) => [`media/${clip}.mp4`, `media/${clip}.jpg`]),
 ];
 
@@ -147,7 +149,8 @@ assert.match(index, /data-availability-copy/);
 assert.match(index, /href="\.\/waitlist-privacy\/"/);
 assert.match(index, /href="\.\/privacy\/"/);
 assert.match(index, /href="\.\/list\/"/);
-assert.match(index, /role="img" aria-label="Illustration of a Meta Quest 3 headset/, "the alpha section carries the Quest 3 illustration");
+assert.match(index, /<img src="\.\/assets\/meta-quest-3\.png"[^>]*alt="Meta Quest 3 headset[^"]*"/, "the alpha section carries the Meta Quest 3 product image with alt text");
+assert.doesNotMatch(index, /aria-label="Illustration of a Meta Quest 3/, "the drawn headset is retired");
 assert.doesNotMatch(index, /<h[12][^>]*>(?:(?!<\/h[12]>)[\s\S])*<em>/, "headings carry no italic taglines");
 assert.match(index, /href="\.\/support\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);

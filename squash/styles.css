@@ -606,9 +606,12 @@ p {
   box-shadow: 0 16px 40px rgba(60, 40, 15, 0.14);
 }
 
-.device svg {
-  width: 100%;
+.device picture,
+.device img {
+  display: block;
+  width: min(100%, 340px);
   height: auto;
+  margin: 0 auto;
 }
 
 .device figcaption {
