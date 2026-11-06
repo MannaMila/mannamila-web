@@ -97,8 +97,9 @@ the `squash.mannamila.com` CNAME; GitHub's domain re-registration adds "Delete C
 
 ## TLS record
 
-See the session summary in the app repository
-(`squash-vr/docs/agent-notes/`) for the certificate recovery attempt made alongside
-this source. Completion gate: Pages `status=built`, certificate `approved`,
+HTTPS is served by Cloudflare since 2026-11-06 (proxied record plus a hostname-scoped
+HTTP→HTTPS redirect rule); see the exception in
+[github-pages-custom-domains.md](github-pages-custom-domains.md). The app repository's
+session 343 note records the failed GitHub-side resets. Completion gate: Pages `status=built`, certificate `approved`,
 `https_enforced=true`, `http://` redirecting to `https://`, and the page plus
 `styles.css`, `app.js`, `analytics.js` and a clip poster returning 200 over HTTPS.

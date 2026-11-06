@@ -9,7 +9,7 @@ This repository owns MannaMila's shared public web source and the GitHub Pages w
 | `MannaMila/mannamila-web` | `https://mannamila.github.io/mannamila-web/` | None | Shared widget and product source pages, including `skald/` |
 | `MannaMila/skald-web` | `https://skald.mannamila.com/` | `skald.mannamila.com` | Standalone Skald product site at a domain root |
 | `MannaMila/inspire-web` | `https://inspire.mannamila.com/` | `inspire.mannamila.com` | Standalone Mila Inspire placeholder at a domain root |
-| `MannaMila/squash-web` | `https://squash.mannamila.com/` | `squash.mannamila.com` | Standalone Mila Squash product site at a domain root |
+| `MannaMila/squash-web` | `https://squash.mannamila.com/` | `squash.mannamila.com` | Standalone Mila Squash product site at a domain root. **Cloudflare-proxied since 2026-11-06** (see below) |
 
 The custom domain belongs to the deployment repository, not automatically to the corresponding directory in this repository. Keep any copy or promotion from a source directory to a standalone Pages repository explicit and reviewable.
 
@@ -76,6 +76,25 @@ gh api --method PUT repos/MannaMila/PAGES_REPO/pages -F https_enforced=true
 ```
 
 In the Skald recovery, the certificate was approved in roughly 30 seconds after reattaching the domain. DNS did not need to change.
+
+## Exception: `squash.mannamila.com` is proxied by Cloudflare
+
+On 2026-11-06 GitHub's certificate for `squash.mannamila.com` had been stuck in
+`bad_authz` since its 2026-10-15 expiry. DNS was correct and identical in shape to
+Skald and Inspire; settle-time domain re-registration, a Pages-site delete/recreate and a
+DNS change all returned `bad_authz` within a minute. With the owner's approval the
+`squash` CNAME was switched to **Proxied** in Cloudflare (zone SSL mode "Full", which
+tolerates the expired origin certificate) and a redirect rule
+`http://squash.mannamila.com/*` → `https://squash.mannamila.com/${1}` (301, query
+preserved) was deployed. Visitors get Cloudflare's `*.mannamila.com` certificate; the
+Pages API still reports `bad_authz` and `https_enforced=false`, which is expected while
+proxied.
+
+Consequences: Cloudflare caches static assets for GitHub's `max-age=600`, so a
+promotion can take up to ten minutes to show for CSS, JavaScript and media; the
+completion-gate items about the Pages API certificate state do not apply to this host.
+If GitHub's certificate ever reaches `approved`, the record can return to DNS only and the
+redirect rule can be disabled. Skald and Inspire remain DNS-only.
 
 ## Completion Gate
 
