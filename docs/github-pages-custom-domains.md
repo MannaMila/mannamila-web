@@ -91,8 +91,11 @@ Pages API still reports `bad_authz` and `https_enforced=false`, which is expecte
 proxied.
 
 Consequences: Cloudflare caches static assets for GitHub's `max-age=600`, so a
-promotion can take up to ten minutes to show for CSS, JavaScript and media; the
-completion-gate items about the Pages API certificate state do not apply to this host.
+promotion can take up to ten minutes to show for CSS, JavaScript and media. GitHub's
+404 responses carry `max-age=14400`, and Cloudflare caches them too: never request a
+new file's URL before the Pages build that adds it has finished, or purge that URL in
+Cloudflare (Caching → Configuration → Custom Purge) afterwards. The completion-gate
+items about the Pages API certificate state do not apply to this host.
 If GitHub's certificate ever reaches `approved`, the record can return to DNS only and the
 redirect rule can be disabled. Skald and Inspire remain DNS-only.
 
