@@ -1,4 +1,4 @@
 {
-  "signupEnabled": false,
-  "signupFormUrl": null
+  "signupEnabled": true,
+  "signupFormUrl": "https://docs.google.com/forms/d/e/1FAIpQLSe-2k82oaFx2d7ql4qZdf2RQ1hGpHF0YCPVpP8r3veAp6Ipkg/viewform"
 }
