@@ -1,4 +1,8 @@
 {
-  "quest": { "state": "review", "storeUrl": null },
-  "lastVerifiedAt": "2026-07-16T00:00:00Z"
+  "quest": {
+    "state": "alpha",
+    "inviteUrl": "https://www.meta.com/s/8gekrWSxj",
+    "storeUrl": null
+  },
+  "lastVerifiedAt": "2026-11-06T17:22:14Z"
 }
