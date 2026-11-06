@@ -47,13 +47,13 @@ live-verification steps: [google-analytics.md](google-analytics.md).
 
 ## Alpha email list — Google Form specification
 
-`site-config.json` ships with `signupEnabled: false`, so the "Hear what changes"
-section and its links stay hidden until a real form exists. The Skald product-updates
-list uses the same Google Forms → Google Sheets pattern.
-
-Create the form in the Google account that owns the Skald forms, then set
-`signupEnabled: true` and `signupFormUrl` to the public `/forms/d/e/<id>/viewform` URL
-and run `node squash/verify-site.mjs`.
+Live since 2026-11-06 under `assaf@mannamila.com`: public form
+`https://docs.google.com/forms/d/e/1FAIpQLSe-2k82oaFx2d7ql4qZdf2RQ1hGpHF0YCPVpP8r3veAp6Ipkg/viewform`,
+responses in the "Mila Squash alpha list responses" Sheet
+(`https://docs.google.com/spreadsheets/d/1M6AEXunFAO4DRX-vZHxyUJW2XVQo6ROthmzO8jxtifg/edit`).
+`site-config.json` carries `signupEnabled: true` with that URL. The Skald product-updates
+list uses the same Google Forms → Google Sheets pattern. The specification below is what
+was built; change the form and this notice together.
 
 **Title:** Mila Squash alpha list
 
