@@ -31,6 +31,7 @@ const publicRoots = [
   "privacy",
   "waitlist-privacy",
   "support",
+  "list",
 ];
 // Managed deployment files that promotion removes rather than leaving behind: the
 // 2026-07 analytics retirement script is retired now that analytics.js is live again.

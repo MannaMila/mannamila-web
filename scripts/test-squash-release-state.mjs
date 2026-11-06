@@ -28,7 +28,7 @@ const document = {
     return selector === "[data-signup-container]" ? mount : null;
   },
   querySelectorAll(selector) {
-    if (selector === "[data-signup-section], [data-signup-link]") return [signupSection, signupLink];
+    if (selector === "[data-signup-link]") return [signupSection, signupLink];
     if (selector === "[data-invite-link]") return inviteLinks;
     return [];
   },
@@ -48,10 +48,10 @@ const context = vm.createContext({
 });
 const source = readFileSync(new URL("../squash/app.js", import.meta.url), "utf8");
 vm.runInContext(
-  `${source}\nglobalThis.api = { normalizeAvailability, availabilityCopy, applyAvailability, mountSignup };`,
+  `${source}\nglobalThis.api = { normalizeAvailability, availabilityCopy, applyAvailability, revealSignupLinks };`,
   context,
 );
-const { normalizeAvailability, availabilityCopy, applyAvailability, mountSignup } = context.api;
+const { normalizeAvailability, availabilityCopy, applyAvailability, revealSignupLinks } = context.api;
 
 for (const value of [
   null,
@@ -106,17 +106,15 @@ for (const config of [
   { signupEnabled: true, signupFormUrl: "https://docs.google.com/spreadsheets/d/x/edit" },
   { signupEnabled: "true", signupFormUrl: "https://docs.google.com/forms/d/e/configured/viewform" },
 ]) {
-  mountSignup(config);
-  assert.equal(created.length, 0, `disabled/invalid form must not mount an iframe: ${JSON.stringify(config)}`);
-  assert.equal(signupSection.hidden, true, "the signup section stays hidden without a form");
-  assert.equal(signupLink.hidden, true, "signup links stay hidden without a form");
+  revealSignupLinks(config);
+  assert.equal(created.length, 0, "the landing page never creates an iframe");
+  assert.equal(signupSection.hidden, true, "email-list links stay hidden without a form");
+  assert.equal(signupLink.hidden, true, "email-list links stay hidden without a form");
 }
 
-mountSignup({ signupEnabled: true, signupFormUrl: "https://docs.google.com/forms/d/e/configured/viewform" });
-assert.equal(created.filter((node) => node.tag === "iframe").length, 1);
-assert.equal(mount.children[0].src, "https://docs.google.com/forms/d/e/configured/viewform?embedded=true");
-assert.equal(mount.children[0].referrerPolicy, "strict-origin-when-cross-origin");
-assert.equal(signupSection.hidden, false, "a configured form reveals the signup section");
-assert.equal(signupLink.hidden, false, "a configured form reveals the signup links");
+revealSignupLinks({ signupEnabled: true, signupFormUrl: "https://docs.google.com/forms/d/e/configured/viewform" });
+assert.equal(created.length, 0, "the landing page never creates an iframe");
+assert.equal(signupSection.hidden, false, "a configured form reveals the email-list links");
+assert.equal(signupLink.hidden, false, "a configured form reveals the email-list links");
 
-console.log("Mila Squash release-state, invite-link and signup-mount tests passed.");
+console.log("Mila Squash release-state, invite-link and email-list link tests passed.");

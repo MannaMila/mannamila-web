@@ -103,9 +103,10 @@ opens in a signed-out browser, set it to `available`, add the verified
 `https://www.meta.com/experiences/...` URL, update `lastVerifiedAt`, and run the
 verifier and promotion flow again.
 
-The optional alpha email list is controlled by `squash/site-config.json`. With
-`signupEnabled: false` and a null URL, the signup section and its links stay hidden
-and no third-party iframe is mounted. Enabling it requires a real public Google Form
+The optional alpha email list lives on its own route, `squash/list/`, and is
+controlled by `squash/site-config.json`. With `signupEnabled: false` and a null URL,
+the landing page hides its email-list links and the list page mounts no third-party
+iframe. Enabling it requires a real public Google Form
 URL; the form's fields must match `squash/waitlist-privacy/`. Placeholder testing is
 development-only:
 
