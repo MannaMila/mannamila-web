@@ -7,6 +7,7 @@
     <meta name="color-scheme" content="light">
     <meta name="description" content="Squash serve practice for Meta Quest 3. We modeled the physics, the sound and the rules. Your play stays on the headset. Private alpha open.">
     <link rel="canonical" href="https://squash.mannamila.com/">
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
     <meta property="og:site_name" content="Mila Squash">
@@ -51,8 +52,15 @@
 
     <main id="main-content">
       <section class="hero section" data-section="facts" aria-labelledby="hero-title">
+        <svg class="hero-streak" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path d="M-20 470 C 180 440, 380 380, 560 290 S 860 120, 1010 40" fill="none" stroke="#1b1a18" stroke-width="1.6" stroke-dasharray="2 10" stroke-linecap="round" opacity="0.26" vector-effect="non-scaling-stroke"/>
+          <path d="M-20 492 C 200 460, 400 400, 580 310 S 880 142, 1010 64" fill="none" stroke="#1b1a18" stroke-width="1" stroke-dasharray="1 8" stroke-linecap="round" opacity="0.14" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <svg class="hero-ball" viewBox="0 0 64 64" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="30" fill="#151515"/><circle cx="24" cy="22" r="9" fill="#2a2a2a" opacity="0.9"/><circle cx="27" cy="38" r="4.2" fill="#f2d24b"/><circle cx="39" cy="38" r="4.2" fill="#f2d24b"/>
+        </svg>
         <div class="hero-copy reveal">
-          <p class="eyebrow">Squash serve practice · Meta Quest 3 · private alpha</p>
+          <p class="eyebrow"><span class="eyebrow-ball" aria-hidden="true"></span>Squash serve practice · Meta Quest 3 · private alpha</p>
           <h1 id="hero-title">We modeled the physics, the sound and the rules.</h1>
           <p class="hero-dek">Join the alpha to see how we can turn this into something else. Serve practice on a regulation court, with a results card after each serve. Your play never leaves the headset.</p>
 
@@ -66,12 +74,21 @@
           <p class="microcopy"><strong>Adults 18 and over.</strong> Quest 3 or Quest 3S with controllers <span aria-hidden="true">·</span> 200 places <span aria-hidden="true">·</span> Serve Practice build</p>
         </div>
 
-        <figure class="video-card reveal reveal-delay">
-          <video controls playsinline preload="metadata" poster="./media/hand-racket-ball-control.jpg" width="1280" height="720">
-            <source src="./media/hand-racket-ball-control.mp4" type="video/mp4">
-          </video>
-          <figcaption><strong>Grip, racket and ball control</strong>Trimmed from a Quest 3 recording of the development build. Headset audio, no overlays.</figcaption>
-        </figure>
+        <div class="hero-media reveal reveal-delay">
+          <figure class="video-card">
+            <video data-hero-video controls playsinline preload="metadata" poster="./media/serve-practice.jpg" width="1280" height="720">
+              <source src="./media/serve-practice.mp4" type="video/mp4">
+            </video>
+            <figcaption>
+              <div class="clip-tabs" role="group" aria-label="Choose a clip">
+                <button type="button" class="clip-tab is-active" data-clip="serve-practice" data-caption="A run of serves with the verdict after each one. Turn the sound on." aria-pressed="true">Serve practice</button>
+                <button type="button" class="clip-tab" data-clip="hand-racket-ball-control" data-caption="Grip, racket and ball control. Turn the sound on." aria-pressed="false">Racket and ball</button>
+              </div>
+              <p data-clip-caption><strong>Serve practice</strong>A run of serves with the verdict after each one. Turn the sound on.</p>
+              <p class="clip-source">Trimmed from a Quest 3 recording of the development build. Headset audio, no overlays.</p>
+            </figcaption>
+          </figure>
+        </div>
       </section>
 
       <section class="facts section" id="facts" data-section="facts" aria-label="Physics, sound and what the app records">

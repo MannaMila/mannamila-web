@@ -12,6 +12,7 @@ const read = (path) => readFile(join(root, path), "utf8");
 const ALPHA_INVITE_URL = "https://www.meta.com/s/8gekrWSxj";
 
 const mediaClips = [
+  "serve-practice",
   "hand-racket-ball-control",
   "progress-and-consistency",
 ];
@@ -29,6 +30,7 @@ const requiredFiles = [
   "list/index.html",
   "list/list.js",
   "assets/mila-squash-og.jpg",
+  "assets/favicon.svg",
   ...mediaClips.flatMap((clip) => [`media/${clip}.mp4`, `media/${clip}.jpg`]),
 ];
 
@@ -183,7 +185,15 @@ for (const image of images) {
 }
 
 const videos = [...index.matchAll(/<video\b[^>]*>/g)].map(([tag]) => tag);
-assert.equal(videos.length, mediaClips.length, `index.html must embed exactly ${mediaClips.length} clips`);
+assert.equal(videos.length, 2, "index.html embeds one hero video (with a clip switcher) and one Stats video");
+const clipTabs = [...index.matchAll(/<button[^>]*data-clip="([a-z0-9-]+)"[^>]*>/g)].map((m) => m[1]);
+assert.deepEqual(clipTabs, ["serve-practice", "hand-racket-ball-control"], "the hero switcher offers the serve clip first, then the racket clip");
+for (const clip of clipTabs) {
+  assert.ok(mediaClips.includes(clip), `clip tab ${clip} must map to a shipped media file`);
+}
+assert.match(index, /data-hero-video[^>]*poster="\.\/media\/serve-practice\.jpg"/, "the hero opens on the serve clip");
+assert.match(index, /Turn the sound on\./, "the hero caption tells visitors to turn the sound on");
+assert.match(index, /<link rel="icon" href="\.\/assets\/favicon\.svg"/);
 for (const video of videos) {
   assert.match(video, /\bcontrols\b/, `video needs native controls: ${video}`);
   assert.match(video, /\bplaysinline\b/, `video needs playsinline: ${video}`);
@@ -222,6 +232,8 @@ assert.match(styles, /@media \(max-width: 560px\)/);
 assert.match(styles, /\.video-card/);
 assert.match(styles, /\.alpha-steps/);
 assert.match(styles, /\.privacy-list/);
+assert.match(styles, /\.clip-tab/);
+assert.match(app, /data-hero-video/);
 assert.doesNotMatch(styles, /Cormorant/, "the Squash site does not share Skald's serif");
 
 assert.match(privacy, /https:\/\/squash\.mannamila\.com\/privacy\//g);

@@ -137,6 +137,33 @@ const loadSignup = () =>
     .then(revealSignupLinks)
     .catch(() => undefined);
 
+// Hero clip switcher: swaps the poster and source of the one hero <video> between the
+// reviewed clips. Nothing autoplays; the visitor presses play and hears the headset audio.
+const heroVideo = document.querySelector("[data-hero-video]");
+const heroCaption = document.querySelector("[data-clip-caption]");
+document.querySelectorAll(".clip-tab[data-clip]").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    if (!heroVideo || tab.classList.contains("is-active")) return;
+    const clip = tab.dataset.clip;
+    if (!/^[a-z0-9-]+$/.test(clip)) return;
+    heroVideo.pause();
+    heroVideo.poster = `./media/${clip}.jpg`;
+    const source = heroVideo.querySelector("source");
+    if (source) source.src = `./media/${clip}.mp4`;
+    heroVideo.load();
+    document.querySelectorAll(".clip-tab[data-clip]").forEach((other) => {
+      const active = other === tab;
+      other.classList.toggle("is-active", active);
+      other.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    if (heroCaption) {
+      const label = document.createElement("strong");
+      label.textContent = tab.textContent;
+      heroCaption.replaceChildren(label, tab.dataset.caption ?? "");
+    }
+  });
+});
+
 // Count clicks on the alpha request link as a Google Analytics event when the loader is
 // active. No personal data: the event carries only which link on the page was used.
 document.addEventListener("click", (event) => {
