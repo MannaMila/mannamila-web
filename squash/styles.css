@@ -848,3 +848,128 @@ p {
     transform: none !important;
   }
 }
+
+/* ---- Hero clip switcher, ball accents ---- */
+
+.hero-media {
+  position: relative;
+}
+
+.hero {
+  position: relative;
+}
+
+.hero-streak {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero-ball {
+  position: absolute;
+  z-index: 0;
+  top: 2px;
+  right: -4px;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+}
+
+.hero-copy,
+.hero-media {
+  position: relative;
+  z-index: 1;
+}
+
+.clip-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.clip-tab {
+  appearance: none;
+  padding: 7px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--paper);
+  font: 700 0.64rem/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.clip-tab:hover {
+  color: var(--ink);
+  border-color: var(--ink-soft);
+}
+
+.clip-tab.is-active {
+  color: #fff;
+  border-color: var(--red-dark);
+  background: var(--red);
+}
+
+.clip-tab:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
+}
+
+.video-card figcaption p {
+  margin: 0;
+}
+
+.clip-source {
+  margin-top: 6px !important;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+/* Double-yellow ball used as a bullet. */
+.device-notes li::before,
+.list-promises li::before {
+  top: 0.3em;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%23151515'/><circle cx='24' cy='22' r='9' fill='%232a2a2a' opacity='0.9'/><circle cx='27' cy='38' r='4.2' fill='%23f2d24b'/><circle cx='39' cy='38' r='4.2' fill='%23f2d24b'/></svg>") center / contain no-repeat;
+}
+
+.device-notes li,
+.list-promises li {
+  padding-left: 22px;
+}
+
+.eyebrow-ball {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin: 0 8px -1px 0;
+  border-radius: 50%;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%23151515'/><circle cx='24' cy='22' r='9' fill='%232a2a2a' opacity='0.9'/><circle cx='27' cy='38' r='4.2' fill='%23f2d24b'/><circle cx='39' cy='38' r='4.2' fill='%23f2d24b'/></svg>") center / contain no-repeat;
+}
+
+@media (max-width: 840px) {
+  .hero-ball {
+    top: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clip-tab {
+    transition: none;
+  }
+}
