@@ -13,9 +13,6 @@ const ALPHA_INVITE_URL = "https://www.meta.com/s/8gekrWSxj";
 
 const mediaClips = [
   "hand-racket-ball-control",
-  "serve-practice",
-  "instant-coaching",
-  "shot-analysis",
   "progress-and-consistency",
 ];
 
@@ -29,6 +26,8 @@ const requiredFiles = [
   "privacy/index.html",
   "waitlist-privacy/index.html",
   "support/index.html",
+  "list/index.html",
+  "list/list.js",
   "assets/mila-squash-og.jpg",
   ...mediaClips.flatMap((clip) => [`media/${clip}.mp4`, `media/${clip}.jpg`]),
 ];
@@ -39,7 +38,7 @@ await assert.rejects(
   "squash no longer ships the analytics retirement script; analytics.js is the only loader",
 );
 
-const [index, styles, app, privacy, listPrivacy, support, availabilityRaw, configRaw] =
+const [index, styles, app, privacy, listPrivacy, support, listPage, listScript, availabilityRaw, configRaw] =
   await Promise.all([
     read("index.html"),
     read("styles.css"),
@@ -47,6 +46,8 @@ const [index, styles, app, privacy, listPrivacy, support, availabilityRaw, confi
     read("privacy/index.html"),
     read("waitlist-privacy/index.html"),
     read("support/index.html"),
+    read("list/index.html"),
+    read("list/list.js"),
     read("availability.json"),
     read("site-config.json"),
   ]);
@@ -71,7 +72,7 @@ if (availability.quest.state === "available") {
 assert.match(availability.lastVerifiedAt, /^\d{4}-\d{2}-\d{2}T/, "lastVerifiedAt must be ISO-8601");
 
 const inviteLinks = [...index.matchAll(/data-invite-link(?:="[^"]*")?\s+href="([^"]+)"/g)].map((m) => m[1]);
-assert.ok(inviteLinks.length >= 4, "the page needs invite links in the header, hero, alpha section and final call to action");
+assert.ok(inviteLinks.length >= 3, "the page needs invite links in the header, hero and alpha section");
 for (const href of inviteLinks) {
   assert.equal(href, ALPHA_INVITE_URL, `invite links must point at the verified Meta page, got ${href}`);
 }
@@ -87,16 +88,30 @@ if (config.signupEnabled) {
 } else {
   assert.equal(config.signupFormUrl, null, "a disabled signup must not retain a form URL");
 }
-assert.match(
-  index,
-  /<section[^>]*data-signup-section[^>]*\shidden>/,
-  "the signup section stays hidden until app.js confirms a configured form",
-);
-assert.match(index, /data-signup-container/);
-assert.doesNotMatch(index, /<iframe/i, "the signup form is mounted at runtime from site-config.json, never inlined");
+const signupLinks = [...index.matchAll(/<a[^>]*data-signup-link[^>]*>/g)].map(([tag]) => tag);
+assert.ok(signupLinks.length >= 2, "the landing page links to the email list page in the hero and alpha section");
+for (const tag of signupLinks) {
+  assert.match(tag, /href="\.\/list\/"/, `email-list links point at ./list/: ${tag}`);
+  assert.match(tag, /\shidden\b/, `email-list links stay hidden until app.js confirms a configured form: ${tag}`);
+}
+assert.doesNotMatch(index, /<iframe/i, "the landing page never embeds the form; it links to ./list/");
+assert.doesNotMatch(index, /data-signup-container/, "the form mounts only on the list page");
+if (config.signupEnabled) {
+  assert.ok(listPage.includes(config.signupFormUrl), "the list page's no-script link must match site-config.json");
+}
+assert.match(listPage, /<script src="\.\.\/analytics\.js" defer><\/script>/, "the list page must count visits too");
+assert.match(listPage, /data-signup-container/);
+assert.match(listPage, /href="\.\.\/waitlist-privacy\/"/);
+assert.match(listPage, /<link rel="canonical" href="https:\/\/squash\.mannamila\.com\/list\/">/);
+assert.doesNotMatch(listPage, /<iframe/i, "the list page mounts the iframe at runtime from site-config.json");
+assert.match(listScript, /site-config\.json/);
+assert.match(listScript, /docs\.google\.com/);
+assert.match(listScript, /embedded/);
+assert.doesNotMatch(listScript, /G-[A-Z0-9]{8,}|googletagmanager/, "the GA loader lives only in analytics.js");
 
 const expectedIndexText = [
   "Mila Squash",
+  "We modeled the physics, the sound and the rules.",
   "Private alpha on Meta Quest 3",
   "Requests are reviewed by hand",
   "18 and over",
@@ -108,8 +123,9 @@ const expectedIndexText = [
   "207 Hz",
   "200 frames per second",
   "depth, tightness and tempo",
-  "legal-or-fault",
+  "legal or fault",
   "never uploaded",
+  "no server",
   "not promising them",
   "Store pricing is not set",
   "World Squash Federation",
@@ -119,17 +135,18 @@ for (const expected of expectedIndexText) {
   assert.ok(index.includes(expected), `index.html must include: ${expected}`);
 }
 
-for (const id of ["inside", "physics", "sound", "tracking", "directions", "alpha", "signup", "faq"]) {
+for (const id of ["facts", "privacy", "alpha"]) {
   assert.match(index, new RegExp(`id=["']${id}["']`), `index.html must expose #${id}`);
 }
 
 assert.match(index, /<link rel="canonical" href="https:\/\/squash\.mannamila\.com\/">/);
 assert.match(index, /<script src="\.\/analytics\.js" defer><\/script>/);
 assert.match(index, /data-availability-copy/);
-assert.match(index, /data-availability-faq/);
-assert.match(index, /data-availability-kicker/);
 assert.match(index, /href="\.\/waitlist-privacy\/"/);
 assert.match(index, /href="\.\/privacy\/"/);
+assert.match(index, /href="\.\/list\/"/);
+assert.match(index, /role="img" aria-label="Illustration of a Meta Quest 3 headset/, "the alpha section carries the Quest 3 illustration");
+assert.doesNotMatch(index, /<h[12][^>]*>(?:(?!<\/h[12]>)[\s\S])*<em>/, "headings carry no italic taglines");
 assert.match(index, /href="\.\/support\/"/);
 assert.match(index, /href="https:\/\/www\.mannamila\.com\/"/);
 assert.match(index, /<meta property="og:image" content="https:\/\/squash\.mannamila\.com\/assets\/mila-squash-og\.jpg(?:\?v=\d+)?">/);
@@ -149,6 +166,7 @@ const forbiddenIndexText = [
   /retire-analytics/,
   /href="mailto:/i,
   /\bwaitlist\b(?!-)/i,
+  /seamless|elevate|unlock|dive in|game.?changer|not just .* but|whether you.re/i,
 ];
 for (const forbidden of forbiddenIndexText) {
   assert.doesNotMatch(index, forbidden, `index.html contains forbidden copy: ${forbidden}`);
@@ -178,7 +196,11 @@ assert.equal(
   videos.length,
   "every clip sits in a captioned video card",
 );
-assert.equal([...index.matchAll(/<figcaption>/g)].length, videos.length, "every clip has a caption");
+assert.equal(
+  [...index.matchAll(/<figure class="video-card[^"]*">(?:(?!<\/figure>)[\s\S])*<figcaption>/g)].length,
+  videos.length,
+  "every clip has a caption",
+);
 
 for (const match of index.matchAll(/(?:src|href|poster)="\.\/([^"#?]+)(?:\?v=\d+)?"/g)) {
   const target = match[1].endsWith("/") ? `${match[1]}index.html` : match[1];
@@ -199,6 +221,8 @@ assert.match(styles, /prefers-reduced-motion/);
 assert.match(styles, /@media \(max-width: 560px\)/);
 assert.match(styles, /\.video-card/);
 assert.match(styles, /\.alpha-steps/);
+assert.match(styles, /\.privacy-list/);
+assert.doesNotMatch(styles, /Cormorant/, "the Squash site does not share Skald's serif");
 
 assert.match(privacy, /https:\/\/squash\.mannamila\.com\/privacy\//g);
 assert.match(privacy, /<script src="\.\.\/analytics\.js" defer><\/script>/);
@@ -213,6 +237,7 @@ assert.match(listPrivacy, /https:\/\/squash\.mannamila\.com\/waitlist-privacy\//
 assert.match(listPrivacy, /<script src="\.\.\/analytics\.js" defer><\/script>/);
 assert.match(listPrivacy, /Google Forms and Google Sheets/);
 assert.match(listPrivacy, /per calendar month/i);
+assert.doesNotMatch(index, /\u2014/, "no em dashes in the landing copy");
 assert.match(listPrivacy, /unsubscribe/i);
 assert.match(listPrivacy, /18 or older/);
 assert.match(support, /https:\/\/squash\.mannamila\.com\/support\//g);

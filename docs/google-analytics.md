@@ -82,8 +82,8 @@ node scripts/test-promote-inspire.mjs
 
 After a Squash deployment, in a clean browser profile:
 
-1. every documented route (`/`, `/privacy/`, `/support/`, `/waitlist-privacy/`)
-   returns HTTP 200 over HTTPS;
+1. every documented route (`/`, `/list/`, `/privacy/`, `/support/`,
+   `/waitlist-privacy/`) returns HTTP 200 over HTTPS;
 2. `analytics.js` returns 200 and `retire-analytics.js` returns 404;
 3. the Network panel shows one request to
    `googletagmanager.com/gtag/js?id=G-E0E4FPDPTB` and collection requests to a

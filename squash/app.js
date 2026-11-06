@@ -119,39 +119,11 @@ const publicFormUrl = (value) => {
   }
 };
 
-const mountSignup = (config) => {
-  if (config?.signupEnabled !== true) return;
-  const mount = document.querySelector("[data-signup-container]");
-  const configuredUrl = publicFormUrl(config?.signupFormUrl);
-  if (!mount || !configuredUrl) return;
-
-  const externalUrl = new URL(configuredUrl);
-  externalUrl.searchParams.delete("embedded");
-
-  const embeddedUrl = new URL(configuredUrl);
-  embeddedUrl.searchParams.set("embedded", "true");
-
-  const frame = document.createElement("iframe");
-  frame.className = "form-frame";
-  frame.src = embeddedUrl.toString();
-  frame.title = "Join the Mila Squash alpha list";
-  frame.loading = "lazy";
-  frame.referrerPolicy = "strict-origin-when-cross-origin";
-
-  const fallback = document.createElement("p");
-  fallback.className = "form-fallback";
-  fallback.append("If the form does not load, ");
-
-  const fallbackLink = document.createElement("a");
-  fallbackLink.href = externalUrl.toString();
-  fallbackLink.target = "_blank";
-  fallbackLink.rel = "noreferrer";
-  fallbackLink.textContent = "open it in a new tab";
-  fallback.append(fallbackLink, ".");
-
-  mount.replaceChildren(frame, fallback);
-
-  document.querySelectorAll("[data-signup-section], [data-signup-link]").forEach((element) => {
+// The email list lives on its own page (./list/), which embeds the Google Form. The
+// landing page only reveals the links to it once site-config.json names a real form.
+const revealSignupLinks = (config) => {
+  if (config?.signupEnabled !== true || !publicFormUrl(config?.signupFormUrl)) return;
+  document.querySelectorAll("[data-signup-link]").forEach((element) => {
     element.hidden = false;
   });
 };
@@ -162,7 +134,7 @@ const loadSignup = () =>
       if (!response.ok) throw new Error("Site configuration was not available.");
       return response.json();
     })
-    .then(mountSignup)
+    .then(revealSignupLinks)
     .catch(() => undefined);
 
 // Count clicks on the alpha request link as a Google Analytics event when the loader is
@@ -176,8 +148,6 @@ document.addEventListener("click", (event) => {
 });
 
 const header = document.querySelector("[data-header]");
-const threadStage = document.querySelector(".thread-stage");
-const threadProgress = document.querySelector("[data-thread-progress]");
 const navLinks = new Map(
   [...document.querySelectorAll(".site-nav a")].map((link) => [
     link.getAttribute("href").slice(1),
@@ -187,14 +157,6 @@ const navLinks = new Map(
 
 const updateScrollDetails = () => {
   header?.classList.toggle("is-scrolled", window.scrollY > 12);
-
-  if (!threadStage || !threadProgress) return;
-
-  const bounds = threadStage.getBoundingClientRect();
-  const viewportAnchor = window.innerHeight * 0.55;
-  const traversed = viewportAnchor - bounds.top;
-  const progress = Math.min(1, Math.max(0, traversed / bounds.height));
-  threadProgress.style.setProperty("--thread-progress", progress.toFixed(3));
 };
 
 let scrollFrame;

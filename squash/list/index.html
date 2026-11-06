@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f1ea">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="Join the Mila Squash email list for occasional news about the alpha on Meta Quest 3 and store availability.">
+    <link rel="canonical" href="https://squash.mannamila.com/list/">
+    <meta name="robots" content="noindex">
+    <title>Mila Squash email list</title>
+    <script src="../analytics.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css?v=20261106b">
+    <style>
+      .list-main { width: min(760px, calc(100% - 48px)); margin: 0 auto; padding: clamp(36px, 5vw, 56px) 0 64px; }
+      .list-main h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); }
+      .list-lead { margin: 16px 0 0; color: var(--ink-soft); font-size: 1rem; }
+      .list-promises { display: grid; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 0.86rem; }
+      .list-promises li { position: relative; padding-left: 16px; }
+      .list-promises li::before { content: ""; position: absolute; top: 0.55em; left: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--red); }
+      .list-privacy { margin: 16px 0 0; color: var(--ink-soft); font-size: 0.76rem; }
+      .form-mount { margin-top: 26px; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--paper); box-shadow: 0 18px 50px rgba(27, 26, 24, 0.1); overflow: hidden; }
+      .form-frame { display: block; width: 100%; min-height: 900px; border: 0; background: var(--paper); }
+      .form-fallback { margin: 0; padding: 12px 16px; border-top: 1px solid var(--rule); color: var(--ink-soft); font-size: 0.76rem; text-align: center; }
+      .form-fallback a, .form-placeholder a { color: var(--red-dark); font-weight: 700; }
+      .form-placeholder { padding: 34px 28px; text-align: center; }
+      .form-placeholder p { margin: 0; color: var(--ink-soft); }
+      .form-placeholder .button { margin-top: 16px; }
+      .back { display: inline-block; margin-top: 26px; }
+      @media (max-width: 560px) { .list-main { width: calc(100% - 28px); } .form-frame { min-height: 1000px; } }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="header-inner">
+        <a class="brand" href="../" aria-label="Mila Squash home">
+          <span class="brand-studio">MannaMila</span>
+          <span class="brand-product">Mila Squash</span>
+        </a>
+        <span></span>
+        <a class="button button-small" href="https://www.meta.com/s/8gekrWSxj">Request alpha access</a>
+      </div>
+    </header>
+
+    <main id="main-content" class="list-main">
+      <p class="eyebrow">Email list</p>
+      <h1>Mila Squash email list</h1>
+      <p class="list-lead">Get email only about wider alpha access, builds that address tester feedback, and store availability.</p>
+      <ul class="list-promises">
+        <li>No account required</li>
+        <li>At most one email a month</li>
+        <li>Unsubscribe at any time</li>
+      </ul>
+      <p class="list-privacy">Signing up is separate from the Mila Squash app and from Meta's alpha access request. Read the <a href="../waitlist-privacy/">Alpha List Privacy Notice</a>.</p>
+
+      <div class="form-mount" data-signup-container>
+        <div class="form-placeholder">
+          <p>The form is hosted by Google Forms.</p>
+          <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe-2k82oaFx2d7ql4qZdf2RQ1hGpHF0YCPVpP8r3veAp6Ipkg/viewform" target="_blank" rel="noreferrer">Open the signup form</a>
+        </div>
+      </div>
+
+      <a class="text-link back" href="../">Back to Mila Squash <span aria-hidden="true">→</span></a>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div>
+          <a class="footer-brand" href="https://www.mannamila.com/">MannaMila</a>
+          <span>Playful, practical software.</span>
+        </div>
+        <nav aria-label="Footer">
+          <a href="../privacy/">App privacy</a>
+          <a href="../waitlist-privacy/">Alpha list privacy</a>
+          <a href="../support/">Support</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./list.js?v=20261106b" defer></script>
+  </body>
+</html>

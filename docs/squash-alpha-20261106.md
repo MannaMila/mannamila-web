@@ -28,15 +28,26 @@ credit, pricing, multiplayer or full matches, a store date.
 
 ## Media
 
-Five clips under `squash/media/`, copied byte-for-byte from the owner's revision-2
-delivery (SHA-256 prefixes): `hand-racket-ball-control` 969859fe,
-`serve-practice` 52044731, `instant-coaching` 7b1cd06e, `shot-analysis` 89c4925b,
-`progress-and-consistency` 09a9c971. Posters are the delivered first frames scaled to
-1280×720. The social card `assets/mila-squash-og.jpg` is a 1200×630 center crop of the
-hand/racket poster. No captions, logos or overlays were added. The held
-`02-close-contact.mp4` (BL-362 stringbed fallthrough) and the silent service-box clip
-were not used. Source footage is the Dev-app recording; the page does not call it
-build 808 footage.
+Two clips under `squash/media/`, copied byte-for-byte from the owner's revision-2
+delivery (SHA-256 prefixes): `hand-racket-ball-control` 969859fe (hero) and
+`progress-and-consistency` 09a9c971 (privacy section, shows the on-device Stats).
+Posters are the delivered first frames scaled to 1280×720. The social card
+`assets/mila-squash-og.jpg` is a 1200×630 center crop of the hand/racket poster. No
+captions, logos or overlays were added. The owner's 2026-11-06 restyle dropped the
+other clips to keep the page short; the held `02-close-contact.mp4` (BL-362 stringbed
+fallthrough) was never used. Source footage is the Dev-app recording; the page does
+not call it build 808 footage.
+
+## Design and copy (2026-11-06 restyle)
+
+Owner direction: a court palette instead of Skald's paper/copper (plaster off-white
+walls, maple floor band, red court lines, dark glass panel), plain headings with no
+italic taglines, the owner's own hero sentence, a privacy block that says play data is
+never sent to us and is all available on the headset, about a screen and a half of
+scroll, the email form on its own page (`/list/`) rather than embedded, and a Quest 3
+image (an inline SVG illustration; no licensed photo was available). Copy went through
+two Codex plain-language passes; the brand line "Playful, practical software." stays for
+parity with the other MannaMila sites. Fonts: Barlow Semi Condensed and Inter.
 
 ## Google Analytics
 

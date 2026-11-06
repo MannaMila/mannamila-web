@@ -41,7 +41,9 @@ try {
   await assert.rejects(readFile(join(target, "retire-analytics.js"), "utf8"));
   assert.match(await readFile(join(target, "analytics.js"), "utf8"), /G-E0E4FPDPTB/);
   await readFile(join(target, "media/hand-racket-ball-control.mp4"));
-  await readFile(join(target, "media/serve-practice.jpg"));
+  await readFile(join(target, "media/progress-and-consistency.jpg"));
+  assert.match(await readFile(join(target, "list/index.html"), "utf8"), /data-signup-container/);
+  await readFile(join(target, "list/list.js"));
   await assert.rejects(readFile(join(target, "verify-site.mjs")));
   assert.equal(await readFile(join(target, "CNAME"), "utf8"), "squash.mannamila.com\n");
   assert.equal(await readFile(join(target, ".github/workflows/pages.yml"), "utf8"), "name: Pages\n");
