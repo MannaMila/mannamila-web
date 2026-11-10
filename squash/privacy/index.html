@@ -153,6 +153,7 @@
     <h3>2. Product analytics (Amplitude)</h3>
     <p>To understand which features players use and whether the app performs well on the headset, Mila Squash can send <strong>sparse, summarized product-usage events</strong> to <strong>Amplitude</strong>, a third-party analytics service.</p>
     <p>These events are deliberately coarse — summaries and counts, not raw data. Examples of the kinds of events sent are: a session performance summary, a drill summary, a swing/contact summary, and a safety-warning summary. Events are tied to a <strong>pseudonymous, per-install identifier</strong> that is not your name and not your Meta account.</p>
+    <p>Alongside each event the app sends standard device facts: app version, Android version, headset make and model, and the <strong>language and country/region set in the headset's locale</strong> (for example <code>en-US</code> / <code>US</code>). The locale is a device setting you chose, not a measured location: the app does not send your network address to Amplitude and does not ask Amplitude to derive a location from it. It also sends a few coarse play settings as user-level properties (release channel, racket hand, graphics mode, whether the tutorial was completed, grip setting, ball type) and the month the pseudonymous identifier was first created.</p>
     <p>The app does <strong>not</strong> upload to Amplitude any: raw diagnostic streams, headset or controller pose/motion streams, ball or racket trajectory streams, video, audio, room geometry, full replay data, or exact coaching measurements. Those remain on the device. Event properties prefer buckets and counts over exact values, and the analytics layer rejects unknown events and strips any field that is not on its approved list.</p>
     <p>You can turn product analytics off (see <a href="#your-controls">Your controls</a> below); when it is off, no analytics events are uploaded.</p>
 
@@ -166,7 +167,7 @@
     <ul>
       <li><strong>Microphone / audio</strong> — the app does not request or use the microphone.</li>
       <li><strong>Camera / passthrough imagery</strong> — the app does not request or use the camera.</li>
-      <li><strong>Location</strong> — the app does not request or use device location.</li>
+      <li><strong>Location</strong> — the app does not request or use device location. (The headset's locale country/region setting is sent with analytics events, as described above; it is a preference, not a position.)</li>
       <li><strong>Eye tracking / eye gaze</strong> — not used.</li>
       <li><strong>Face tracking</strong> — not used.</li>
       <li><strong>Body tracking</strong> — not used.</li>
