@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Skald: the Greeks</title>
+    <style>
+      @font-face { font-family: "Cormorant Garamond"; font-weight: 600; font-style: normal; src: url("FONTS/cormorant_garamond_semibold.ttf"); }
+      @font-face { font-family: "Cormorant Garamond"; font-weight: 500; font-style: normal; src: url("FONTS/cormorant_garamond_medium.ttf"); }
+      @font-face { font-family: "Cormorant Garamond"; font-weight: 500; font-style: italic; src: url("FONTS/cormorant_garamond_medium_italic.ttf"); }
+      :root {
+        --paper: #f2e6cf;
+        --paper-light: #fbf3e2;
+        --ink: #2a2118;
+        --copper: #9e5725;
+        --copper-dark: #743915;
+        --serif: "Cormorant Garamond", Georgia, serif;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+      body {
+        position: relative;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 78% 42%, rgba(251, 243, 226, 0.95), rgba(251, 243, 226, 0) 46%),
+          radial-gradient(circle at 12% 88%, rgba(198, 146, 96, 0.16), rgba(198, 146, 96, 0) 40%),
+          var(--paper);
+      }
+      .copy { position: absolute; top: 0; bottom: 0; left: 62px; display: flex; width: 440px; flex-direction: column; justify-content: center; }
+      h1 { margin: 0; font: 600 98px/0.92 var(--serif); letter-spacing: -0.02em; }
+      h1 em { font-weight: 500; }
+      .rule { width: 230px; height: 1px; margin: 34px 0 28px; background: linear-gradient(90deg, var(--copper), rgba(158, 87, 37, 0)); }
+      .dek { margin: 0; font: 500 42px/1.12 var(--serif); }
+      .dek em { color: var(--copper-dark); }
+      .shots { position: absolute; top: 58px; right: 56px; display: flex; gap: 26px; }
+      .mount { position: relative; margin: 0; padding: 8px; border: 1px solid rgba(57, 40, 22, 0.18); background: var(--paper-light); box-shadow: 0 22px 60px rgba(52, 37, 20, 0.2); }
+      .mount:first-child { transform: rotate(-1.6deg); }
+      .mount:last-child { transform: rotate(1.4deg); margin-top: 14px; }
+      .mount div { width: 280px; height: 482px; overflow: hidden; }
+      .mount img { display: block; width: 280px; height: auto; margin-top: -42px; }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <h1>Skald:<br><em>the Greeks</em></h1>
+      <div class="rule" aria-hidden="true"></div>
+      <p class="dek">Spend some time<br>with <em>the Greeks.</em></p>
+    </div>
+    <div class="shots">
+      <figure class="mount"><div><img src="SHOTS/greeks-library.png" alt=""></div></figure>
+      <figure class="mount"><div><img src="SHOTS/greeks-plate.png" alt=""></div></figure>
+    </div>
+  </body>
+</html>
