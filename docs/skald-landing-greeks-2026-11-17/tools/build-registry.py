@@ -102,6 +102,7 @@ registry = {
         "replacement": index_sha,
         "note": "Supersedes the landing index hash, the share-card binding and the image bindings of the copy-3 registry. Chain: this registry -> landing-2026-10-02-copy-3 -> landing-2026-10-02-copy-2 -> landing-2026-10-02 -> store-web-2026-09-15-native -> store-web-2026-09-13. Keep the history.",
     }},
+    "ownerDirectedAmendments": extra.get("ownerDirectedAmendments", []),
     "nonBlockingFollowUps": extra["nonBlockingFollowUps"],
     "claimsNotMade": extra["claimsNotMade"],
     "outputs": {"registry": "skald/docs/landing-2026-11-17-greeks/review-registry.json",
