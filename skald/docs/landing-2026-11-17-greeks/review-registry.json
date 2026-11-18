@@ -64,7 +64,7 @@
     "skald/index.html (candidate as reviewed, at 172c616)": "2adec8ce2c088c6579ce735e835765e2c4680e00a3cf0ffce7c7d48694b85217"
   },
   "websiteFilesSha256": {
-    "index.html": "44be152631f51bc1e4f4f2cb55f0d84fdae04b653528913cc8c77673d3e8b0d6",
+    "index.html": "d7e6f482a4bdb1ac5fc2cc74e9a882e47e74b525810e1f94ddf28e71d2fe7fd2",
     "styles.css": "c31b056de46225625b2c895ea1c0f5e844299e19adf6c7fdc70693930defdfad",
     "app.js": "551e93695af53d774287e4477e4157ae91f09cca9645c004ea9dee8d611f74db",
     "get/index.html": "db8ce94c310041126eb95f6b307e44d58e2bbc185255c64fbcc798563b3e24b7",
@@ -136,7 +136,7 @@
     "allowed_next_update_heading": "Hear about the next update."
   },
   "approved_sha256": {
-    "resolved-index.html": "44be152631f51bc1e4f4f2cb55f0d84fdae04b653528913cc8c77673d3e8b0d6"
+    "resolved-index.html": "d7e6f482a4bdb1ac5fc2cc74e9a882e47e74b525810e1f94ddf28e71d2fe7fd2"
   },
   "supersession": {
     "priorWebsiteRegistry": {
@@ -145,10 +145,22 @@
       "supersededEntries": {
         "approved_sha256.resolved-index.html": "dbdecdde678d720a3b4542e5acb98340d2a498ca49a2c71001245a6751404d40"
       },
-      "replacement": "44be152631f51bc1e4f4f2cb55f0d84fdae04b653528913cc8c77673d3e8b0d6",
+      "replacement": "d7e6f482a4bdb1ac5fc2cc74e9a882e47e74b525810e1f94ddf28e71d2fe7fd2",
       "note": "Supersedes the landing index hash, the share-card binding and the image bindings of the copy-3 registry. Chain: this registry -> landing-2026-10-02-copy-3 -> landing-2026-10-02-copy-2 -> landing-2026-10-02 -> store-web-2026-09-15-native -> store-web-2026-09-13. Keep the history."
     }
   },
+  "ownerDirectedAmendments": [
+    {
+      "date": "2026-11-17",
+      "ownerRuling": "Owner, 2026-11-17, after publication: \"Actually remove all references to short retelling\" (typed \"shirt retelling\").",
+      "file": "index.html",
+      "sha256_before": "44be152631f51bc1e4f4f2cb55f0d84fdae04b653528913cc8c77673d3e8b0d6",
+      "sha256_after": "d7e6f482a4bdb1ac5fc2cc74e9a882e47e74b525810e1f94ddf28e71d2fe7fd2",
+      "change": "Deletions only: the sentence 'The Odyssey also has short retellings.' in the Read card; the whole 'Start with a translation. Or a short retelling.' section with its three depth cards and fine print; the FAQ question about the 1-, 5- and 20-minute labels; the words 'and retellings' in the language answer; the words 'place the Greek beside a retelling,' in the Greek answer (the rest of that sentence joined with 'and'). No sentence was added.",
+      "alsoChanged": "updates/index.html: the same feature is no longer named in two earlier posts (2026-10-02 'interface, notes and retellings' and the 2026-07-22 launch post's 'in source-grounded 1-, 5-, and 20-minute telling depths').",
+      "review": "No three-role review was run for this amendment: it removes text at the owner's instruction and adds none. The approved hash below is the amended page; the three reviews cover the page as it stood before these deletions."
+    }
+  ],
   "nonBlockingFollowUps": [
     "Check on a device whether tapping Greek in a library work opens a word card; widen the claim only then, in a reviewed change.",
     "Recount the museums behind the library pictures to back 'most of them' (the published announcement gives 166, 69 and 48 of 298).",
@@ -156,7 +168,8 @@
     "Layout: the 'Read · compare · explore' tag in the desktop hero is clipped at 1280 px (it was before this change).",
     "The store description still says 3,285 reading notes for the Odyssey; the site says 3,983.",
     "skald/verify-site.mjs predates the September landing and does not pass on main; this change does not repair it.",
-    "Deploy mirror: skald-web translations/guide/index.html names the app once; that sentence takes the new name in the deploy pull request."
+    "Deploy mirror: skald-web translations/guide/index.html names the app once; that sentence takes the new name in the deploy pull request.",
+    "The store listing and the app still describe the Odyssey's short retellings; this amendment only removes them from the website."
   ],
   "claimsNotMade": [
     "no legal rights, licence, privacy or trader attestation",
